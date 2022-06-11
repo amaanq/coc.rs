@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use crate::entites::_player::*;
 
 #[derive(Debug)]
-pub struct Clinet {
+pub struct Client {
     token: String,
 }
 
@@ -21,7 +21,7 @@ pub enum ApiError {
 
 const BASE_URL: &str = "https://api.clashofclans.com/v1";
 
-impl Clinet {
+impl Client {
     pub fn new(token: String) -> Self { Self { token } }
 
     async fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
