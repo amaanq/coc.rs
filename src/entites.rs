@@ -1,2 +1,2 @@
-pub mod _player;
-pub mod _clan;
+pub mod player;
+pub mod clan;

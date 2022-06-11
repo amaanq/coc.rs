@@ -1,4 +1,4 @@
-use serde::{ Serialize, Deserialize };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Clan {
@@ -21,25 +21,25 @@ pub struct Clan {
     badge_urls: BadgeUrls,
 
     #[serde(rename = "clanLevel")]
-    clan_level: i64,
+    clan_level: i32,
 
     #[serde(rename = "clanPoints")]
-    clan_points: i64,
+    clan_points: i32,
 
     #[serde(rename = "clanVersusPoints")]
-    clan_versus_points: i64,
+    clan_versus_points: i32,
 
     #[serde(rename = "requiredTrophies")]
-    required_trophies: i64,
+    required_trophies: i32,
 
     #[serde(rename = "warFrequency")]
     war_frequency: String,
 
     #[serde(rename = "warWinStreak")]
-    war_win_streak: i64,
+    war_win_streak: i32,
 
     #[serde(rename = "warWins")]
-    war_wins: i64,
+    war_wins: i32,
 
     #[serde(rename = "isWarLogPublic")]
     is_war_log_public: bool,
@@ -48,7 +48,7 @@ pub struct Clan {
     war_league: WarLeague,
 
     #[serde(rename = "members")]
-    members: i64,
+    members: i32,
 
     #[serde(rename = "memberList")]
     member_list: Vec<MemberList>,
@@ -60,10 +60,10 @@ pub struct Clan {
     chat_language: ChatLanguage,
 
     #[serde(rename = "requiredVersusTrophies")]
-    required_versus_trophies: i64,
+    required_versus_trophies: i32,
 
     #[serde(rename = "requiredTownhallLevel")]
-    required_townhall_level: i64,
+    required_townhall_level: i8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,7 +81,7 @@ pub struct BadgeUrls {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatLanguage {
     #[serde(rename = "id")]
-    id: i64,
+    id: i32,
 
     #[serde(rename = "name")]
     name: String,
@@ -93,7 +93,7 @@ pub struct ChatLanguage {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Label {
     #[serde(rename = "id")]
-    id: i64,
+    id: i32,
 
     #[serde(rename = "name")]
     name: String,
@@ -114,7 +114,7 @@ pub struct LabelIconUrls {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Location {
     #[serde(rename = "id")]
-    id: i64,
+    id: i32,
 
     #[serde(rename = "name")]
     name: String,
@@ -135,34 +135,34 @@ pub struct MemberList {
     role: Role,
 
     #[serde(rename = "expLevel")]
-    exp_level: i64,
+    exp_level: i32,
 
     #[serde(rename = "league")]
     league: League,
 
     #[serde(rename = "trophies")]
-    trophies: i64,
+    trophies: i32,
 
     #[serde(rename = "versusTrophies")]
-    versus_trophies: i64,
+    versus_trophies: i32,
 
     #[serde(rename = "clanRank")]
-    clan_rank: i64,
+    clan_rank: i32,
 
     #[serde(rename = "previousClanRank")]
-    previous_clan_rank: i64,
+    previous_clan_rank: i32,
 
     #[serde(rename = "donations")]
-    donations: i64,
+    donations: i32,
 
     #[serde(rename = "donationsReceived")]
-    donations_received: i64,
+    donations_received: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct League {
     #[serde(rename = "id")]
-    id: i64,
+    id: i32,
 
     #[serde(rename = "name")]
     name: String,
@@ -186,7 +186,7 @@ pub struct LeagueIconUrls {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WarLeague {
     #[serde(rename = "id")]
-    id: i64,
+    id: i32,
 
     #[serde(rename = "name")]
     name: String,
@@ -226,25 +226,25 @@ impl Clan {
     pub fn badge_urls(&self) -> &BadgeUrls {
         &self.badge_urls
     }
-    pub fn clan_level(&self) -> i64 {
+    pub fn clan_level(&self) -> i32 {
         self.clan_level
     }
-    pub fn clan_points(&self) -> i64 {
+    pub fn clan_points(&self) -> i32 {
         self.clan_points
     }
-    pub fn clan_versus_points(&self) -> i64 {
+    pub fn clan_versus_points(&self) -> i32 {
         self.clan_versus_points
     }
-    pub fn required_trophies(&self) -> i64 {
+    pub fn required_trophies(&self) -> i32 {
         self.required_trophies
     }
     pub fn war_frequency(&self) -> &str {
         &self.war_frequency
     }
-    pub fn war_win_streak(&self) -> i64 {
+    pub fn war_win_streak(&self) -> i32 {
         self.war_win_streak
     }
-    pub fn war_wins(&self) -> i64 {
+    pub fn war_wins(&self) -> i32 {
         self.war_wins
     }
     pub fn is_war_log_public(&self) -> bool {
@@ -253,7 +253,7 @@ impl Clan {
     pub fn war_league(&self) -> &WarLeague {
         &self.war_league
     }
-    pub fn members(&self) -> i64 {
+    pub fn members(&self) -> i32 {
         self.members
     }
     pub fn member_list(&self) -> &Vec<MemberList> {
@@ -265,11 +265,10 @@ impl Clan {
     pub fn chat_language(&self) -> &ChatLanguage {
         &self.chat_language
     }
-    pub fn required_versus_trophies(&self) -> i64 {
+    pub fn required_versus_trophies(&self) -> i32 {
         self.required_versus_trophies
     }
-    pub fn required_townhall_level(&self) -> i64 {
+    pub fn required_townhall_level(&self) -> i8 {
         self.required_townhall_level
     }
 }
-
