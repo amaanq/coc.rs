@@ -5,7 +5,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_player(){
-        let client = http::Clinet::new(std::env::var("COC_TOKEN").expect("Cannot find the specified ENV VAR"));
+        let client = http::Client::new(std::env::var("COC_TOKEN").expect("Cannot find the specified ENV VAR"));
 
         let tag = "#2PP".to_string();
         match client.get_player(tag).await {
