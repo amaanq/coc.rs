@@ -215,12 +215,12 @@ impl Clan {
         &self.name
     }
     pub fn welcome_type(&self) -> &str {
-        &self.welcome_type
+        &self.clan_type
     }
     pub fn description(&self) -> &str {
         &self.description
     }
-    pub fn location(&self) -> &Location {
+    pub fn location(&self) -> &Option<Location> {
         &self.location
     }
     pub fn badge_urls(&self) -> &BadgeUrls {
