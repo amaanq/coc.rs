@@ -12,19 +12,10 @@ pub struct Clinet {
     token: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ClashErrorType {
-    message: String,
-    reason: String,
-    #[serde(rename = "type")]
-    type_: String,
-    detail: Vec<String>,
-}
-
 #[derive(Debug)]
 pub enum ApiError {
     Request(reqwest::Error),
-    Api(ClashErrorType),
+    Api(reqwest::StatusCode),
 }
 
 impl Clinet {
@@ -53,8 +44,7 @@ impl Clinet {
                                 Ok(res.json().await.expect("Json Error 1"))
                             },
                             _ => {
-                                let result: ClashErrorType = res.json().await.expect("Json Error 2");
-                                Err(ApiError::Api(result))
+                                Err(ApiError::Api(res.status()))
                             }
                         }
                     }

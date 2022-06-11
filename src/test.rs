@@ -11,17 +11,18 @@ mod tests {
         match client.get_player(tag).await {
             Ok(body) => {
                 println!("{:?}", body);
-                assert!(true);
             }
             Err(e) => {
                 match e {
                     http::ApiError::Request(e) => {
                         println!("Request - {:?}", e);
-                        assert!(false);
                     }
                     http::ApiError::Api(e) => {
-                        println!("Api Error - {:?}", e);
-                        assert!(false);
+                        if e == reqwest::StatusCode::NOT_FOUND {
+                            println!("Not found")
+                        }else {
+                            println!("Some other variant")
+                        }
                     }
                 }
             }
