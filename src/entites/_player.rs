@@ -188,10 +188,6 @@ pub enum Village {
 }
 
 impl Player     {
-    pub fn get_name(&self) -> &str {
-        &self.name
-    }
-
     pub fn tag(&self) -> &str {
         &self.tag
     }
