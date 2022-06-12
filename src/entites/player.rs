@@ -1,5 +1,5 @@
+#[allow(dead_code)]
 use serde::{Deserialize, Serialize};
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Player {
     #[serde(rename = "tag")]
