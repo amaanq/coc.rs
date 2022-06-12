@@ -4,7 +4,10 @@ use std::error::Error;
 
 extern crate reqwest;
 
-use crate::entites::player::*;
+use crate::entites::player::Player;
+use crate::entites::clan::Clan;
+use crate::entites::current_war::War;
+
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::de::DeserializeOwned;
 
@@ -42,6 +45,10 @@ impl Client {
     pub fn get_player(&self, tag: String) -> Result<Player, ApiError> {
         let url = format!("{}/players/{}", BASE_URL, self.format_tag(tag));
         self.parse_json::<Player>(url)
+    }
+    pub fn get_current_war(&self, tag: String) -> Result<War, ApiError> {
+        let url = format!("{}/clans/{}/currentwar", BASE_URL, self.format_tag(tag));
+        self.parse_json::<War>(url)
     }
     //It should return a String of "%23+tag"
     fn format_tag(&self, tag: String) -> String {
