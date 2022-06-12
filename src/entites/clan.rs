@@ -21,7 +21,7 @@ pub struct Clan {
     badge_urls: BadgeUrls,
 
     #[serde(rename = "clanLevel")]
-    clan_level: i32,
+    clan_level: i8,
 
     #[serde(rename = "clanPoints")]
     clan_points: i32,
