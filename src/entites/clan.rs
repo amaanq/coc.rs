@@ -226,7 +226,7 @@ impl Clan {
     pub fn badge_urls(&self) -> &BadgeUrls {
         &self.badge_urls
     }
-    pub fn clan_level(&self) -> i32 {
+    pub fn clan_level(&self) -> i8 {
         self.clan_level
     }
     pub fn clan_points(&self) -> i32 {

@@ -51,7 +51,7 @@ pub struct Player {
     donations_received: i32,
 
     #[serde(rename = "clan")]
-    clan: Option<Clan>,
+    clan: Option<PlayerClan>,
 
     #[serde(rename = "achievements")]
     achievements: Vec<Achievement>,
@@ -122,7 +122,7 @@ pub struct Achievement {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Clan {
+pub struct PlayerClan {
     #[serde(rename = "tag")]
     tag: String,
 
@@ -236,7 +236,7 @@ impl Player {
     pub fn donations_received(&self) -> i32 {
         self.donations_received
     }
-    pub fn clan(&self) -> &Option<Clan> {
+    pub fn clan(&self) -> &Option<PlayerClan> {
         &self.clan
     }
     pub fn achievements(&self) -> &Vec<Achievement> {
@@ -259,7 +259,7 @@ impl Player {
     }
 }
 
-impl Clan {
+impl PlayerClan {
     pub fn tag(&self) -> &str {
         &self.tag
     }
