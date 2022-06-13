@@ -1,5 +1,7 @@
 #[allow(dead_code)]
 use serde::{Deserialize, Serialize};
+use crate::entites::badge_urls::BadgeUrls;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Clan {
     #[serde(rename = "tag")]
@@ -67,18 +69,6 @@ pub struct Clan {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct BadgeUrls {
-    #[serde(rename = "small")]
-    small: String,
-
-    #[serde(rename = "large")]
-    large: String,
-
-    #[serde(rename = "medium")]
-    medium: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct ChatLanguage {
     #[serde(rename = "id")]
     id: i32,
@@ -124,7 +114,7 @@ pub struct Location {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MemberList {
+pub struct ClanMember {
     #[serde(rename = "tag")]
     tag: String,
 
@@ -270,5 +260,130 @@ impl Clan {
     }
     pub fn required_townhall_level(&self) -> i8 {
         self.required_townhall_level
+    }
+}
+
+impl Role {
+    pub fn to_string(&self) -> &str {
+        match self {
+            Role::Admin => "admin",
+            Role::CoLeader => "coLeader",
+            Role::Leader => "leader",
+            Role::Member => "member",
+        }
+    }
+}
+
+impl WarLeague {
+    pub fn id(&self) -> i32 {
+        self.id
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+}
+
+impl LeagueIconUrls {
+    pub fn small(&self) -> &str {
+        &self.small
+    }
+    pub fn tiny(&self) -> &str {
+        &self.tiny
+    }
+    pub fn medium(&self) -> &Option<String> {
+        &self.medium
+    }
+}
+
+impl League {
+    pub fn id(&self) -> i32 {
+        self.id
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn icon_urls(&self) -> &LeagueIconUrls {
+        &self.icon_urls
+    }
+}
+
+impl ClanMember {
+    pub fn tag(&self) -> &str {
+        &self.tag
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn role(&self) -> &Role {
+        &self.role
+    }
+    pub fn exp_level(&self) -> i32 {
+        self.exp_level
+    }
+    pub fn league(&self) -> &League {
+        &self.league
+    }
+    pub fn trophies(&self) -> i32 {
+        self.trophies
+    }
+    pub fn versus_trophies(&self) -> i32 {
+        self.versus_trophies
+    }
+    pub fn clan_rank(&self) -> i32 {
+        self.clan_rank
+    }
+    pub fn previous_clan_rank(&self) -> i32 {
+        self.previous_clan_rank
+    }
+    pub fn donations(&self) -> i32 {
+        self.donations
+    }
+    pub fn donations_received(&self) -> i32 {
+        self.donations_received
+    }
+}
+
+impl Location {
+    pub fn id(&self) -> i32 {
+        self.id
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn is_country(&self) -> bool {
+        self.is_country
+    }
+}
+
+impl LabelIconUrls {
+    pub fn small(&self) -> &str {
+        &self.small
+    }
+    pub fn medium(&self) -> &str {
+        &self.medium
+    }
+}
+
+impl Label {
+    pub fn id(&self) -> i32 {
+        self.id
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn icon_urls(&self) -> &LabelIconUrls {
+        &self.icon_urls
+    }
+}
+
+impl ChatLanguage {
+    pub fn id(&self) -> i32 {
+        self.id
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn language_code(&self) -> &str {
+        &self.language_code
     }
 }

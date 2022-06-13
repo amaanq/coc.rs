@@ -1,5 +1,6 @@
 #[allow(dead_code)]
 use serde::{Deserialize, Serialize};
+use crate::entites::badge_urls::BadgeUrls;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Player {
     #[serde(rename = "tag")]
@@ -137,18 +138,6 @@ pub struct PlayerClan {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct BadgeUrls {
-    #[serde(rename = "small")]
-    small: String,
-
-    #[serde(rename = "large")]
-    large: String,
-
-    #[serde(rename = "medium")]
-    medium: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct Spell {
     #[serde(rename = "name")]
     name: String,
@@ -271,18 +260,6 @@ impl PlayerClan {
     }
     pub fn badge_urls(&self) -> &BadgeUrls {
         &self.badge_urls
-    }
-}
-
-impl BadgeUrls {
-    pub fn small(&self) -> &str {
-        &self.small
-    }
-    pub fn large(&self) -> &str {
-        &self.large
-    }
-    pub fn medium(&self) -> &str {
-        &self.medium
     }
 }
 
