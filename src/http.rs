@@ -59,7 +59,7 @@ impl Client {
         };
     }
 
-    pub fn parse_json<T: DeserializeOwned>(&self, url: String) -> Result<T, ApiError> {
+    fn parse_json<T: DeserializeOwned>(&self, url: String) -> Result<T, ApiError> {
         let rb = self.get(url);
 
         match rb {
