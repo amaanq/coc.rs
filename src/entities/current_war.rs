@@ -1,5 +1,5 @@
 use serde::{ Serialize, Deserialize };
-use crate::entites::badge_urls::BadgeUrls;
+use crate::entities::badge_urls::BadgeUrls;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct War {

@@ -1,3 +1,3 @@
-mod entites;
+mod entities;
 pub mod http;
 mod test;
