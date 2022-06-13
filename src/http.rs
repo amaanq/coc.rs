@@ -4,9 +4,9 @@ use std::error::Error;
 
 extern crate reqwest;
 
-use crate::entites::player::Player;
-use crate::entites::clan::Clan;
-use crate::entites::current_war::War;
+use crate::entities::player::Player;
+use crate::entities::clan::Clan;
+use crate::entities::current_war::War;
 
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::de::DeserializeOwned;
