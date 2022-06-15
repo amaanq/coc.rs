@@ -53,7 +53,7 @@ pub struct Clan {
     members: i32,
 
     #[serde(rename = "memberList")]
-    member_list: Vec<MemberList>,
+    member_list: Vec<ClanMember>,
 
     #[serde(rename = "labels")]
     labels: Vec<Label>,
@@ -246,7 +246,7 @@ impl Clan {
     pub fn members(&self) -> i32 {
         self.members
     }
-    pub fn member_list(&self) -> &Vec<MemberList> {
+    pub fn member_list(&self) -> &Vec<ClanMember> {
         &self.member_list
     }
     pub fn labels(&self) -> &Vec<Label> {
