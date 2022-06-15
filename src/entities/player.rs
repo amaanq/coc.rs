@@ -316,3 +316,25 @@ impl Troop {
         &self.village
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlayerToken {
+    #[serde(rename = "tag")]
+    tag: String,
+    #[serde(rename = "token")]
+    token: String,
+    #[serde(rename = "status")]
+    status: String,
+}
+
+impl PlayerToken{
+    pub fn tag(&self) -> &str {
+        &self.tag
+    }
+    pub fn token(&self) -> &str {
+        &self.token
+    }
+    pub fn status(&self) -> &str {
+        &self.status
+    }
+}

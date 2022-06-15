@@ -72,4 +72,35 @@ mod tests {
             },
         }
     }
+
+    #[test]
+    fn test_player_token(){
+        let client = http::Client::new(
+            std::env::var("COC_TOKEN").unwrap(),
+        );
+        let tag = "#CVJLQOLR".to_string();
+        let token = "".to_string();
+
+        let x = client.get_verified_player(tag, token);
+        match x {
+            Ok(body) => {
+                println!("{:?}", body);
+            }
+            Err(e) => match e {
+                http::ApiError::Request(e) => {
+                    println!("Request - {:?}", e);
+                }
+                http::ApiError::Api(e) => {
+                    if e == reqwest::StatusCode::NOT_FOUND {
+                        println!("Not found");
+                        assert!(true)
+                    }else {
+                        println!("Some other variant {}", e.as_u16())
+                    }
+                    assert!(false)
+                }
+            },
+        }
+    }
+
 }
