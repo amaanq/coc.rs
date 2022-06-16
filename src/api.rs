@@ -4,9 +4,9 @@ use std::error::Error;
 
 extern crate reqwest;
 
-use crate::entities::player::{Player, PlayerToken};
-use crate::entities::clan::Clan;
-use crate::entities::current_war::War;
+use crate::models::player::{Player, PlayerToken};
+use crate::models::clan::Clan;
+use crate::models::current_war::War;
 
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::RequestBuilder;
