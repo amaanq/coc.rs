@@ -1,3 +1,3 @@
-mod entites;
-pub mod http;
+mod models;
+pub mod api;
 mod test;

@@ -2,11 +2,12 @@ use tokio;
 
 #[cfg(test)]
 mod tests {
-    use crate::http;
+    use crate::api;
 
     #[tokio::test]
     async fn test_player() {
-        let client = http::Client::new(
+        let client = api::Client::new(
+            // automate making tokens
             std::env::var("COC_TOKEN").expect("Cannot find the specified ENV VAR"),
         );
 
@@ -16,10 +17,10 @@ mod tests {
                 println!("{:?}", body);
             }
             Err(e) => match e {
-                http::ApiError::Request(e) => {
+                api::ApiError::Request(e) => {
                     println!("Request - {:?}", e);
                 }
-                http::ApiError::Api(e) => {
+                api::ApiError::Api(e) => {
                     if e == reqwest::StatusCode::NOT_FOUND {
                         println!("Not found")
                     } else {

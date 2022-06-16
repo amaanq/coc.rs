@@ -4,7 +4,7 @@ use std::error::Error;
 
 extern crate reqwest;
 
-use crate::entites::player::*;
+use crate::models::player::*;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::de::DeserializeOwned;
 
@@ -33,6 +33,8 @@ impl Client {
         let res = reqwest::Client::new().get(url).headers(headers);
         Ok(res)
     }
+
+    
 
     pub async fn get_clan() {}
 
