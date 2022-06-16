@@ -7,52 +7,52 @@ pub struct War {
     state: String,
 
     #[serde(rename = "teamSize")]
-    team_size: i32,
+    team_size: Option<i32>,
 
     #[serde(rename = "attacksPerMember")]
-    attacks_per_member: i8,
+    attacks_per_member: Option<i8>,
 
     #[serde(rename = "preparationStartTime")]
-    preparation_start_time: String,
+    preparation_start_time: Option<String>,
 
     #[serde(rename = "startTime")]
-    start_time: String,
+    start_time: Option<String>,
 
     #[serde(rename = "endTime")]
-    end_time: String,
+    end_time: Option<String>,
 
     #[serde(rename = "clan")]
-    clan: WarClan,
+    clan: Option<WarClan>,
 
     #[serde(rename = "opponent")]
-    opponent: WarClan,
+    opponent: Option<WarClan>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WarClan {
     #[serde(rename = "tag")]
-    tag: String,
+    tag: Option<String>,
 
     #[serde(rename = "name")]
-    name: String,
+    name: Option<String>,
 
     #[serde(rename = "badgeUrls")]
     badge_urls: BadgeUrls,
 
     #[serde(rename = "clanLevel")]
-    clan_level: i8,
+    clan_level: Option<i8>,
 
     #[serde(rename = "attacks")]
-    attacks: i32,
+    attacks: Option<i32>,
 
     #[serde(rename = "stars")]
-    stars: i32,
+    stars: Option<i32>,
 
     #[serde(rename = "destructionPercentage")]
-    destruction_percentage: f64,
+    destruction_percentage: Option<f64>,
 
     #[serde(rename = "members")]
-    members: Vec<Member>,
+    members: Option<Vec<Member>>,
 }
 
 
@@ -71,7 +71,7 @@ pub struct Member {
     map_position: i32,
 
     #[serde(rename = "attacks")]
-    attacks: Vec<Attack>,
+    attacks: Option<Vec<Attack>>,
 
     #[serde(rename = "opponentAttacks")]
     opponent_attacks: i32,
@@ -105,52 +105,52 @@ impl War {
     pub fn state(&self) -> &str {
         &self.state
     }
-    pub fn team_size(&self) -> i32 {
+    pub fn team_size(&self) -> Option<i32> {
         self.team_size
     }
-    pub fn attacks_per_member(&self) -> i8 {
+    pub fn attacks_per_member(&self) -> Option<i8> {
         self.attacks_per_member
     }
-    pub fn preparation_start_time(&self) -> &str {
+    pub fn preparation_start_time(&self) -> &Option<String> {
         &self.preparation_start_time
     }
-    pub fn start_time(&self) -> &str {
+    pub fn start_time(&self) -> &Option<String> {
         &self.start_time
     }
-    pub fn end_time(&self) -> &str {
+    pub fn end_time(&self) -> &Option<String> {
         &self.end_time
     }
-    pub fn clan(&self) -> &WarClan {
+    pub fn clan(&self) -> &Option<WarClan> {
         &self.clan
     }
-    pub fn opponent(&self) -> &WarClan {
+    pub fn opponent(&self) -> &Option<WarClan> {
         &self.opponent
     }
 }
 
 impl WarClan {
-    pub fn tag(&self) -> &str {
+    pub fn tag(&self) -> &Option<String> {
         &self.tag
     }
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &Option<String> {
         &self.name
     }
     pub fn badge_urls(&self) -> &BadgeUrls {
         &self.badge_urls
     }
-    pub fn clan_level(&self) -> i8 {
+    pub fn clan_level(&self) -> Option<i8> {
         self.clan_level
     }
-    pub fn attacks(&self) -> i32 {
+    pub fn attacks(&self) -> Option<i32> {
         self.attacks
     }
-    pub fn stars(&self) -> i32 {
+    pub fn stars(&self) -> Option<i32> {
         self.stars
     }
-    pub fn destruction_percentage(&self) -> f64 {
+    pub fn destruction_percentage(&self) -> Option<f64> {
         self.destruction_percentage
     }
-    pub fn members(&self) -> &Vec<Member> {
+    pub fn members(&self) -> &Option<Vec<Member>> {
         &self.members
     }
 }
@@ -168,7 +168,7 @@ impl Member {
     pub fn map_position(&self) -> i32 {
         self.map_position
     }
-    pub fn attacks(&self) -> &Vec<Attack> {
+    pub fn attacks(&self) -> &Option<Vec<Attack>> {
         &self.attacks
     }
     pub fn opponent_attacks(&self) -> i32 {
