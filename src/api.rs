@@ -7,6 +7,7 @@ extern crate reqwest;
 use crate::models::player::{Player, PlayerToken};
 use crate::models::clan::Clan;
 use crate::models::current_war::War;
+use crate::models::gold_pass::GoldPass;
 
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::RequestBuilder;
@@ -57,6 +58,12 @@ impl Client {
         let url = format!("{}/clans/{}/currentwar", BASE_URL, self.format_tag(tag));
         self.parse_json::<War>(self.get(url)).await
     }
+
+    pub async fn get_goldpass(&self, tag: String) -> Result<GoldPass, ApiError> {
+        let url = format!("{}/goldpass/seasons/current", BASE_URL);
+        self.parse_json::<GoldPass>(self.get(url)).await
+    }
+
     pub async fn get_verified_player(&self, tag: String, token: String) -> Result<PlayerToken, ApiError> {
         let url = format!("{}/players/{}/verifytoken", BASE_URL, self.format_tag(tag));
         let token = format!("{{\"token\":\"{}\"}}", token);
