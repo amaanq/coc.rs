@@ -3,14 +3,14 @@ mod tests {
     use std::mem::transmute;
     use crate::api;
 
-    #[test]
-    fn test_player() {
+    #[tokio::test]
+    async fn test_player() {
         let client = api::Client::new(
             std::env::var("COC_TOKEN").unwrap(),
         );
 
         let tag = "#2PP".to_string();
-        match client.get_player(tag) {
+        match client.get_player(tag).await {
             Ok(body) => {
                 println!("{:?}", body);
             }
@@ -31,28 +31,28 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_clan(){
+    #[tokio::test]
+    async fn test_clan(){
         let client = api::Client::new(
             std::env::var("COC_TOKEN").unwrap(),
         );
         let tag = "#2pp".to_string();
 
-        let x = client.get_clan(tag).expect("Unable to get clan");
+        let x = client.get_clan(tag).await.expect("Unable to get clan");
 
         println!("{:?}", x);
         assert!(true)
     }
 
-    #[test]
-    fn test_current_war(){
+    #[tokio::test]
+    async fn test_current_war(){
         let client = api::Client::new(
             std::env::var("COC_TOKEN").unwrap(),
         );
         let tag = "r8j".to_string();
 
         let x = client.get_current_war(tag);
-        match x {
+        match x.await {
             Ok(body) => {
                 println!("{:?}", body);
             }
@@ -73,8 +73,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_player_token(){
+    #[tokio::test]
+    async fn test_player_token(){
         let client = api::Client::new(
             std::env::var("COC_TOKEN").unwrap(),
         );
@@ -82,7 +82,7 @@ mod tests {
         let token = "".to_string();
 
         let x = client.get_verified_player(tag, token);
-        match x {
+        match x.await {
             Ok(body) => {
                 println!("{:?}", body);
             }
