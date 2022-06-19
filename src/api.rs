@@ -1,12 +1,13 @@
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::error::Error;
 
 extern crate reqwest;
 
-use crate::entities::player::{Player, PlayerToken};
-use crate::entities::clan::Clan;
-use crate::entities::current_war::War;
+use crate::models::clan::Clan;
+use crate::models::current_war::War;
+use crate::models::player::{Player, PlayerToken};
 
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::RequestBuilder;
@@ -14,6 +15,8 @@ use serde::de::DeserializeOwned;
 
 #[derive(Debug)]
 pub struct Client {
+    use_cache: bool,
+
     token: String,
 }
 
@@ -38,11 +41,18 @@ impl Client {
         Ok(res)
     }
 
-    fn post(&self, url: String, body: String) -> Result<reqwest::blocking::RequestBuilder, reqwest::Error> {
+    fn post(
+        &self,
+        url: String,
+        body: String,
+    ) -> Result<reqwest::blocking::RequestBuilder, reqwest::Error> {
         let string = format!("Bearer {}", &self.token);
         let mut headers = HeaderMap::new();
         headers.insert("Authorization", HeaderValue::from_str(&string).unwrap());
-        let res = reqwest::blocking::Client::new().post(url).headers(headers).body(body);
+        let res = reqwest::blocking::Client::new()
+            .post(url)
+            .headers(headers)
+            .body(body);
         Ok(res)
     }
     pub fn get_clan(&self, tag: String) -> Result<Clan, ApiError> {
@@ -62,7 +72,7 @@ impl Client {
         let token = format!("{{\"token\":\"{}\"}}", token);
         self.parse_json::<PlayerToken>(self.post(url, token))
     }
-    //It should return a String of "%23+tag"
+
     fn format_tag(&self, tag: String) -> String {
         return if tag[0..1].eq_ignore_ascii_case("#") {
             tag.replace("#", "%23")
@@ -71,11 +81,24 @@ impl Client {
         };
     }
 
-    fn parse_json<T: DeserializeOwned>(&self, rb: Result<reqwest::blocking::RequestBuilder, reqwest::Error>) -> Result<T, ApiError> {
+    fn fix_tag(&self, tag: String) -> String {
+        let re = Regex::new("[^A-Z0-9]+").unwrap();
+        "#".to_owned()
+            + &re
+                .replace_all(tag.to_uppercase().as_str(), "")
+                .replace("O", "0")
+    }
+
+    fn parse_json<T: DeserializeOwned>(
+        &self,
+        rb: Result<reqwest::blocking::RequestBuilder, reqwest::Error>,
+    ) -> Result<T, ApiError> {
         match rb {
             Ok(rb) => match rb.send() {
                 Ok(res) => match res.status() {
-                    reqwest::StatusCode::OK => Ok(res.json().expect("Unexpected json response from the API, cannot parse json")),
+                    reqwest::StatusCode::OK => Ok(res
+                        .json()
+                        .expect("Unexpected json response from the API, cannot parse json")),
                     _ => Err(ApiError::Api(res.status())),
                 },
                 Err(e) => Err(ApiError::Request(e)),
