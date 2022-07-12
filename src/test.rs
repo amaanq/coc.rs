@@ -3,6 +3,33 @@ mod tests {
     use std::mem::transmute;
     use crate::api;
     use crate::api::{Client, ConfigForRezponse};
+    use std::time::Instant;
+
+
+    #[tokio::test]
+    async fn benchmark() {
+        println!("starting");
+        let now = Instant::now();
+
+        {
+            let client = api::Client::new(
+                std::env::var("COC_TOKEN").unwrap(),
+            );
+
+            let tag = "#2PP".to_string();
+            match client.get_player(tag).await {
+                Ok(body) => {
+                    println!("good lololol")
+                }
+                Err(e) => {
+                    panic!("panic lololol")
+                },
+            }
+        }
+
+        let elapsed = now.elapsed();
+        println!("Elapsed: {:.2?}", elapsed);
+    }
 
     #[tokio::test]
     async fn test_player() {
