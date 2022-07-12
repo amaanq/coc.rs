@@ -4,7 +4,6 @@ use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt::format;
 use std::ops::Index;
-use std::sync::Mutex;
 
 extern crate reqwest;
 
@@ -18,9 +17,15 @@ use reqwest::RequestBuilder;
 use serde::de::DeserializeOwned;
 use crate::models::war_log::WarLog;
 
+use std::sync::Mutex;
+use lazy_static::lazy_static;
+#[macro_use]
+
+
 #[derive(Debug)]
 pub struct Client {
-    token: String,
+    username: String,
+    password: String
 }
 
 #[derive(Debug)]
@@ -28,35 +33,37 @@ pub enum ApiError {
     Request(reqwest::Error),
     Api(reqwest::StatusCode),
 }
-
-static TOKEN_LIST: Vec<String> = Vec::new();
+lazy_static! {
+    static ref TOKEN_LIST: Mutex<Vec<String>> = Mutex::new(vec![]);
+}
 
 const BASE_URL: &str = "https://api.clashofclans.com/v1";
 
 impl Client {
-    pub fn new(token: String) -> Self {
+    pub fn new(username: String, password: String) -> Self {
         Self {
-            token,
+            username,
+            password,
         }
     }
 
-    pub fn login(username: String, password: String) -> Self {
-        Self {
-            token: username,
-        }
+    async fn get_ip(&self) -> Result<String, reqwest::Error> {
+        let res = self.client.get(IP_URL).send().await?;
+        let ip = res.text().await?;
+        Ok(ip)
     }
 
     fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
         let res = reqwest::Client::new()
             .get(url)
-            .bearer_auth(&self.token);
+            .bearer_auth(&self.cycle());
         Ok(res)
     }
 
     fn post(&self, url: String, body: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
         let res = reqwest::Client::new()
             .post(url)
-            .bearer_auth(&self.token)
+            .bearer_auth(&self.cycle())
             .body(body);
         Ok(res)
     }
@@ -102,7 +109,7 @@ impl Client {
         self.parse_json::<Rezponse<ClanMember>>(self.get(url)).await
     }
 
-    pub async fn get_clan_warlog(&self, tag: String, config: ConfigForRezponse) -> Result<Rezponse<WarLog>, ApiError>{
+    pub async fn get_clan_warlog(&self, tag: String, config: ConfigForRezponse) -> Result<Rezponse<WarLog>, ApiError> {
         let mut url = format!("https://api.clashofclans.com/v1/clans/{}/warlog", self.format_tag(tag));
         url = self.get_cursor_url(url, config);
         self.parse_json::<Rezponse<WarLog>>(self.get(url)).await
@@ -117,33 +124,32 @@ impl Client {
     fn get_cursor_url(&self, mut url: String, config: ConfigForRezponse) -> String {
         match config.limit {
             Some(s) => {
-                url = format!("{}?limit={}",url,  s);
+                url = format!("{}?limit={}", url, s);
                 match config.time {
                     None => {
                         url
                     }
                     Some(s1) => {
                         match s1 {
-                            Time::After(a) => { format!("{}&after={}",url, a)}
-                            Time::Before(b) => { format!("{}&before={}",url, b)}
+                            Time::After(a) => { format!("{}&after={}", url, a) }
+                            Time::Before(b) => { format!("{}&before={}", url, b) }
                         }
                     }
                 }
             }
             None => {
-                match config.time{
+                match config.time {
                     None => {
                         url
                     }
                     Some(s) => {
                         match s {
-                            Time::After(a) => { format!("{}?after={}",url, a)}
-                            Time::Before(b) => { format!("{}?before={}",url, b)}
+                            Time::After(a) => { format!("{}?after={}", url, a) }
+                            Time::Before(b) => { format!("{}?before={}", url, b) }
                         }
                     }
                 }
             }
-
         }
     }
 
@@ -187,7 +193,7 @@ impl Client {
                             .expect("Unexpected json response from the API, cannot parse json");
                         //println!("{}", &t);
                         Ok(serde_json::from_str(t.as_str()).unwrap())
-                    },
+                    }
                     _ => Err(ApiError::Api(res.status())),
                 },
                 Err(e) => Err(ApiError::Request(e)),
@@ -195,15 +201,16 @@ impl Client {
             Err(e) => return Err(ApiError::Request(e)),
         }
     }
-    //
-    // fn cycle() {
-    //     TOKEN_LIST.lock().unwrap().rotate_left(1);
-    // }
+
+    fn cycle(&self) ->  String {
+        TOKEN_LIST.lock().unwrap().rotate_left(1);
+        TOKEN_LIST.lock().unwrap().get(0).unwrap().to_string().clone()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Paging {
-    #[serde(rename= "cursors")]
+    #[serde(rename = "cursors")]
     cursor: Cursor,
 }
 
@@ -215,9 +222,9 @@ pub struct Cursor {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rezponse<T> {
-    #[serde(rename="items")]
+    #[serde(rename = "items")]
     items: Vec<T>,
-    #[serde(rename="paging")]
+    #[serde(rename = "paging")]
     paging: Paging,
 }
 
@@ -226,6 +233,7 @@ pub struct ConfigForRezponse {
     pub limit: Option<u32>,
     pub time: Option<Time>,
 }
+
 #[derive(Debug)]
 pub enum Time {
     After(String),
