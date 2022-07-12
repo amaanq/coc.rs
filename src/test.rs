@@ -2,6 +2,7 @@
 mod tests {
     use std::mem::transmute;
     use crate::api;
+    use crate::api::{Client, ConfigForRezponse};
 
     #[tokio::test]
     async fn test_player() {
@@ -101,6 +102,42 @@ mod tests {
                 }
             },
         }
+    }
+
+    #[tokio::test]
+    async fn test_clan_members(){
+        let client = api::Client::new(
+            std::env::var("COC_TOKEN").unwrap(),
+        );
+
+        let x = client.get_clan_members(
+            "2pp".to_string(),
+            ConfigForRezponse {
+                limit: None,
+                time: Some(api::Time::Before("eyJwb3MiOjF9".to_string()))
+            }
+        ).await.unwrap();
+
+        println!("{:?}", x)
+
+    }
+
+    #[tokio::test]
+    async fn test_clan_warlog(){
+        let client = api::Client::new(
+            std::env::var("COC_TOKEN").unwrap(),
+        );
+
+        let x = client.get_clan_warlog(
+            "r8j".to_string(),
+            ConfigForRezponse {
+                limit: None,
+                time: None
+            }
+        ).await.unwrap();
+
+        println!("{:?}", x)
+
     }
 
 }
