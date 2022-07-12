@@ -29,7 +29,7 @@ pub enum ApiError {
     Api(reqwest::StatusCode),
 }
 
-//static TOKEN_LIST: Mutex<Vec<String>> = Mutex::new(Vec::new());
+static TOKEN_LIST: Vec<String> = Vec::new();
 
 const BASE_URL: &str = "https://api.clashofclans.com/v1";
 
@@ -70,10 +70,12 @@ impl Client {
         let url = format!("{}/clans/{}", BASE_URL, self.format_tag(tag));
         self.parse_json::<Clan>(self.get(url)).await
     }
+
     pub async fn get_player(&self, tag: String) -> Result<Player, ApiError> {
         let url = format!("{}/players/{}", BASE_URL, self.format_tag(tag));
         self.parse_json::<Player>(self.get(url)).await
     }
+
     pub async fn get_current_war(&self, tag: String) -> Result<War, ApiError> {
         let url = format!("{}/clans/{}/currentwar", BASE_URL, self.format_tag(tag));
         self.parse_json::<War>(self.get(url)).await
@@ -183,7 +185,7 @@ impl Client {
                             .text()
                             .await
                             .expect("Unexpected json response from the API, cannot parse json");
-                        println!("{}", &t);
+                        //println!("{}", &t);
                         Ok(serde_json::from_str(t.as_str()).unwrap())
                     },
                     _ => Err(ApiError::Api(res.status())),
