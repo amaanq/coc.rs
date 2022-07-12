@@ -19,6 +19,8 @@ use crate::models::war_log::WarLog;
 
 use std::sync::Mutex;
 use lazy_static::lazy_static;
+use crate::dev;
+
 #[macro_use]
 
 
@@ -40,17 +42,21 @@ lazy_static! {
 const BASE_URL: &str = "https://api.clashofclans.com/v1";
 
 impl Client {
-    pub fn new(username: String, password: String) -> Self {
-        Self {
-            username,
-            password,
-        }
+    pub async fn new(username: String, password: String) -> Self {
+
+        let s = Self {
+            username : username.clone(),
+            password : password.clone(),
+        };
+
+        s.test().await;
+
+        s
     }
 
-    async fn get_ip(&self) -> Result<String, reqwest::Error> {
-        let res = self.client.get(IP_URL).send().await?;
-        let ip = res.text().await?;
-        Ok(ip)
+    async fn test(&self){
+        let result = dev::login(self.username.clone(), self.password.clone());
+        println!("{}", result.await.unwrap().text().await.unwrap());
     }
 
     fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
