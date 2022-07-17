@@ -21,9 +21,8 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 use crate::dev;
 
+
 #[macro_use]
-
-
 #[derive(Debug)]
 pub struct Client {
     username: String,
@@ -43,20 +42,21 @@ const BASE_URL: &str = "https://api.clashofclans.com/v1";
 
 impl Client {
     pub async fn new(username: String, password: String) -> Self {
-
-        let s = Self {
-            username : username.clone(),
-            password : password.clone(),
+        let client = Self {
+            username,
+            password,
         };
-
-        s.test().await;
-
-        s
+        client
     }
 
-    async fn test(&self){
-        let result = dev::login(self.username.clone(), self.password.clone());
-        println!("{}", result.await.unwrap().text().await.unwrap());
+    pub async fn init(&self) {
+        let mut result = dev::get_keys(self.username.to_string(), self.password.to_string()).await;
+        result.remove_all_invalid_keys(dev::get_ip().await.unwrap());
+
+        //add keys to global list
+        for key in result.keys() {
+            TOKEN_LIST.lock().unwrap().push(key.key().to_string())
+        }
     }
 
     fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
@@ -208,7 +208,7 @@ impl Client {
         }
     }
 
-    fn cycle(&self) ->  String {
+    fn cycle(&self) -> String {
         TOKEN_LIST.lock().unwrap().rotate_left(1);
         TOKEN_LIST.lock().unwrap().get(0).unwrap().to_string().clone()
     }
