@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt::format;
+use std::future::Future;
 use std::ops::Index;
 
 extern crate reqwest;
@@ -161,7 +162,7 @@ impl Client {
 
 
     fn format_tag(&self, tag: String) -> String {
-        return if tag[0..1].eq_ignore_ascii_case("#") {
+        return if tag[0..1].contains("#") {
             tag.replace("#", "%23")
         } else {
             format!("%23{}", tag)
@@ -194,7 +195,7 @@ impl Client {
                 Ok(res) => match res.status() {
                     reqwest::StatusCode::OK => {
                         let t = res
-                            .text()
+                            .json()
                             .await
                             .expect("Unexpected json response from the API, cannot parse json");
                         //println!("{}", &t);
