@@ -13,19 +13,9 @@ mod tests {
 
         {
             let client = api::Client::new(
-                "email".to_string(),
-                "password".to_string()
+                std::env::var("CLASH_EMAIL").unwrap(),
+                std::env::var("CLASH_PASS").unwrap()
             ).await;
-
-            let tag = "#2PP".to_string();
-            match client.get_player(tag).await {
-                Ok(body) => {
-                    println!("good lololol")
-                }
-                Err(e) => {
-                    panic!("panic lololol")
-                },
-            }
         }
 
         let elapsed = now.elapsed();
