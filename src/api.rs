@@ -22,6 +22,8 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 use crate::dev;
 
+use futures;
+
 
 #[macro_use]
 #[derive(Debug)]
@@ -37,6 +39,7 @@ pub enum ApiError {
 }
 lazy_static! {
     static ref TOKEN_LIST: Mutex<Vec<String>> = Mutex::new(vec![]);
+    static ref s_Client: reqwest::Client = reqwest::Client::new();
 }
 
 const BASE_URL: &str = "https://api.clashofclans.com/v1";
@@ -47,10 +50,11 @@ impl Client {
             username,
             password,
         };
+        let _ = futures::future::join_all(client.init());
         client
     }
 
-    pub async fn init(&self) {
+    async fn init(&self) {
         let mut result = dev::get_keys(self.username.to_string(), self.password.to_string()).await;
         result.remove_all_invalid_keys(dev::get_ip().await.unwrap());
 
@@ -61,14 +65,14 @@ impl Client {
     }
 
     fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
-        let res = reqwest::Client::new()
+        let res = s_Client
             .get(url)
             .bearer_auth(&self.cycle());
         Ok(res)
     }
 
     fn post(&self, url: String, body: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
-        let res = reqwest::Client::new()
+        let res = s_Client
             .post(url)
             .bearer_auth(&self.cycle())
             .body(body);
