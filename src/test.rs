@@ -1,25 +1,19 @@
 #[cfg(test)]
 mod tests {
-    use std::mem::transmute;
-    use crate::api;
-    use crate::api::{Client, ConfigForRezponse};
-    use std::time::Instant;
-
+    use crate::api::Client;
+    use std::{env, time::Instant};
 
     #[tokio::test]
-    async fn benchmark() {
+    async fn benchmark_login() {
         println!("starting");
         let now = Instant::now();
-
+        // load .env file
+        
         {
-            let client = api::Client::new(
-                std::env::var("CLASH_EMAIL").unwrap(),
-                std::env::var("CLASH_PASS").unwrap()
-            ).await;
+            let client = Client::new(env::var("email").unwrap(), env::var("pass").unwrap()).await;
         }
 
-        let elapsed = now.elapsed();
-        println!("Elapsed: {:.2?}", elapsed);
+        println!("Elapsed: {:.2?}", now.elapsed());
     }
 
     // #[tokio::test]
@@ -157,5 +151,4 @@ mod tests {
     //     println!("{:?}", x)
     //
     // }
-
 }

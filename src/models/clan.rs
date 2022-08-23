@@ -1,6 +1,5 @@
-#[allow(dead_code)]
-use serde::{Deserialize, Serialize};
 use crate::models::badge_urls::BadgeUrls;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Clan {
