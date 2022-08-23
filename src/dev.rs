@@ -1,8 +1,5 @@
-use std::{default, sync::Arc};
-
-use crate::{api::Client, credentials::Credential};
+use crate::credentials::Credential;
 use lazy_static::lazy_static;
-use reqwest::{Error, RequestBuilder, Response};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default)]
@@ -19,53 +16,34 @@ pub struct APIAccount {
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct Keys(pub Vec<Key>);
-
-// type LoginResponse struct {
-// 	Status                  Status    `json:"status"`
-// 	SessionExpiresInSeconds int       `json:"sessionExpiresInSeconds"`
-// 	Auth                    Auth      `json:"auth"`
-// 	Developer               Developer `json:"developer"`
-// 	TemporaryAPIToken       string    `json:"temporaryAPIToken"`
-// 	SwaggerURL              string    `json:"swaggerUrl"`
-// }
+pub struct Keys {
+    pub status: Status,
+    #[serde(rename = "sessionExpiresInSeconds")]
+    pub session_expires_in_seconds: i32,
+    pub keys: Vec<Key>,
+}
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct LoginResponse {
     pub status: Status,
+    #[serde(rename = "sessionExpiresInSeconds")]
     pub session_expires_in_seconds: i32,
     pub auth: Auth,
     pub developer: Developer,
+    #[serde(rename = "temporaryAPIToken")]
     pub temporary_api_token: String,
+    #[serde(rename = "swaggerUrl")]
     pub swagger_url: String,
 }
 
-// type Auth struct {
-// 	Uid   string `json:"uid"`
-// 	Token string `json:"token"`
-// 	Ua    any    `json:"ua"`
-// 	IP    any    `json:"ip"`
-// }
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Auth {
     pub uid: String,
     pub token: String,
-    pub ua: String,
-    pub ip: String,
+    pub ua: Option<String>,
+    pub ip: Option<String>,
 }
 
-// type Developer struct {
-// 	ID            string `json:"id"`
-// 	Name          string `json:"name"`
-// 	Game          string `json:"game"`
-// 	Email         string `json:"email"`
-// 	Tier          string `json:"tier"`
-// 	AllowedScopes any    `json:"allowedScopes"`
-// 	MaxCidrs      any    `json:"maxCidrs"`
-// 	PrevLoginTs   string `json:"prevLoginTs"`
-// 	PrevLoginIP   string `json:"prevLoginIp"`
-// 	PrevLoginUa   string `json:"prevLoginUa"`
-// }
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Developer {
     pub id: String,
@@ -73,10 +51,13 @@ pub struct Developer {
     pub game: String,
     pub email: String,
     pub tier: String,
-    pub allowed_scopes: String,
-    pub max_cidrs: String,
+    pub allowed_scopes: Option<String>,
+    pub max_cidrs: Option<String>,
+    #[serde(rename = "prevLoginTs")]
     pub prev_login_ts: String,
+    #[serde(rename = "prevLoginIp")]
     pub prev_login_ip: String,
+    #[serde(rename = "prevLoginUa")]
     pub prev_login_ua: String,
 }
 
@@ -104,7 +85,7 @@ pub enum Scope {
     Clash,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Status {
     code: i32,
     message: String,
@@ -120,7 +101,7 @@ pub struct KeyResponse {
 }
 
 // manage a session
-pub const BASE_DEV_URL: &str = "https://developer.clashofclans.com/api";
+pub const BASE_DEV_URL: &str = "https://developer.clashofclans.com";
 const IP_URL: &str = "https://api.ipify.org";
 
 lazy_static! {
@@ -133,19 +114,6 @@ lazy_static! {
 pub async fn get_ip() -> Result<String, reqwest::Error> {
     Ok(CLIENT.get(IP_URL).send().await?.text().await?)
 }
-
-// pub async fn get_keys(username: String, password: String) -> Keys {
-//     /*let client =*/
-//     login(username, password).await;
-//     CLIENT
-//         .post(format!("{}/apikey/list", BASE_DEV_URL))
-//         .send()
-//         .await
-//         .unwrap()
-//         .json()
-//         .await
-//         .unwrap()
-// }
 
 impl APIAccount {
     const LOGIN_ENDPOINT: &str = "/api/login";
@@ -163,6 +131,7 @@ impl APIAccount {
     pub async fn login(credential: &Credential, ip: String) -> Self {
         let login_response = CLIENT
             .post(format!("{}{}", BASE_DEV_URL, Self::LOGIN_ENDPOINT))
+            .header("Content-Type", "application/json")
             .json::<Credential>(credential)
             .send()
             .await
@@ -174,12 +143,12 @@ impl APIAccount {
         let mut account = Self {
             credential: credential.clone(),
             response: login_response,
-            keys: Keys(vec![]),
+            keys: Keys::default(),
         };
 
         account.get_keys().await;
 
-        if account.keys.0.is_empty() {
+        if account.keys.keys.is_empty() {
             for _ in 0..10 {
                 account.create_key(ip.clone()).await;
             }
@@ -196,7 +165,7 @@ impl APIAccount {
             .send()
             .await
             .unwrap()
-            .json()
+            .json::<Keys>()
             .await
             .unwrap();
     }
@@ -204,7 +173,7 @@ impl APIAccount {
     pub async fn update_all_keys(&mut self, ip: String) {
         let cloned_keys = self.keys.clone();
         let bad_keys = cloned_keys
-            .0
+            .keys
             .iter()
             .filter(|key| !key.cidr_ranges.iter().any(|cidr| ip.contains(cidr)))
             .collect::<Vec<_>>();
@@ -231,22 +200,27 @@ impl APIAccount {
             //     scopes: vec![Scope::Clash],
             // })
             // body as string
-            .body(format!(
+            .body({
+                let body = format!(
                 "{{\"name\":\"coc.rs\",\"description\":\"Created on {} by coc.rs\",\"cidrRanges\":[\"{}\"],\"scopes\":[\"clash\"]}}",
                 chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ"),
                 ip
-            ))
+            );
+            println!("{}", body);
+            body
+        })
             .send()
             .await
             .unwrap()
-            .json()
+            .text()
             .await
             .unwrap();
+        println!("KEY CREATE: {}", key);
 
         // asynchronously call self.get_keys()
         self.get_keys().await;
 
-        key
+        serde_json::from_str(&key).unwrap()
     }
 
     pub async fn revoke_key(&mut self, key_id: &str) -> KeyResponse {
@@ -277,13 +251,15 @@ impl APIAccount {
 }
 
 impl Keys {
+    #[allow(dead_code)]
     pub fn get_key(&self, index: usize) -> Key {
-        self.0[index].clone()
+        self.keys[index].clone()
     }
 
+    #[allow(dead_code)]
     pub fn remove_invalid_keys(&mut self, ip: &str) {
         // get ip
-        self.0
+        self.keys
             .retain(|key| key.cidr_ranges.iter().any(|cidr| cidr.contains(&ip)));
     }
 }
