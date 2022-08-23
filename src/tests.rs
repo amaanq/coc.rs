@@ -1,17 +1,27 @@
 #[cfg(test)]
 mod tests {
-    use crate::api::Client;
+    use crate::{api::Client, credentials::CredentialsBuilder};
     use std::{env, time::Instant};
+
+    #[test]
+    fn test_credentials() {
+        let credentials = CredentialsBuilder::new()
+            .add_credential("user1".to_owned(), "pass1".to_owned())
+            .add_credential("user2".to_owned(), "pass2".to_owned())
+            .build();
+        assert_eq!(credentials.0.len(), 2);
+        assert_eq!(credentials.0[0].email(), "user1");
+        assert_eq!(credentials.0[0].password(), "pass1");
+        assert_eq!(credentials.0[1].email(), "user2");
+        assert_eq!(credentials.0[1].password(), "pass2");
+    }
 
     #[tokio::test]
     async fn benchmark_login() {
         println!("starting");
         let now = Instant::now();
         // load .env file
-        
-        {
-            let client = Client::new(env::var("email").unwrap(), env::var("pass").unwrap()).await;
-        }
+        //Client::new(env::var("username").unwrap(), env::var("password").unwrap()).await;
 
         println!("Elapsed: {:.2?}", now.elapsed());
     }

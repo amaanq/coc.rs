@@ -4,10 +4,10 @@ use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt::format;
 use std::future::Future;
-use std::ops::Index;
 
 extern crate reqwest;
 
+use crate::credentials::Credentials;
 use crate::models::clan::{Clan, ClanMember};
 use crate::models::current_war::War;
 use crate::models::gold_pass::GoldPass;
@@ -18,17 +18,18 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::RequestBuilder;
 use serde::de::DeserializeOwned;
 
-use crate::dev;
-use lazy_static::lazy_static;
-use std::sync::Mutex;
+use crate::dev::{self, get_ip, APIAccount, CLIENT};
+use std::sync::{Arc, Mutex};
 
-use futures;
-
-#[macro_use]
 #[derive(Debug)]
 pub struct Client {
-    username: String,
-    password: String,
+    credentials: Credentials,
+    ready: bool,
+
+    accounts: Arc<Mutex<Vec<dev::APIAccount>>>,
+    index: Arc<Mutex<dev::Index>>,
+
+    ip_address: Arc<Mutex<String>>,
 }
 
 #[derive(Debug)]
@@ -37,46 +38,58 @@ pub enum ApiError {
     Api(reqwest::StatusCode),
 }
 
-lazy_static! {
-    static ref TOKEN_LIST: Mutex<Vec<String>> = Mutex::new(vec![]);
-    static ref s_Client: reqwest::Client = reqwest::Client::new();
-}
+// lazy_static! {
+//     static ref TOKEN_LIST: Mutex<Vec<String>> = Mutex::new(vec![]);
+//     static ref s_Client: reqwest::Client = reqwest::Client::new();
+// }
 
 const BASE_URL: &str = "https://api.clashofclans.com/v1";
 
 impl Client {
-    pub async fn new(username: String, password: String) -> Self {
-        let client = Self { username, password };
+    pub async fn new(credentials: Credentials) -> Self {
+        let client = Self {
+            credentials,
+            ready: false,
+            accounts: Arc::new(Mutex::new(vec![])),
+            index: Arc::new(Mutex::new(dev::Index::default())),
+            ip_address: Arc::new(Mutex::new(String::new())),
+        };
         client.init().await;
-        // let _ = futures::future::join_all(client.init());
         client
     }
 
     async fn init(&self) {
-        let mut result = dev::get_keys(self.username.to_string(), self.password.to_string()).await;
-        result.remove_all_invalid_keys(dev::get_ip().await.unwrap());
+        // let mut result = dev::get_keys(self.username.to_string(), self.password.to_string()).await;
+        // result.remove_all_invalid_keys(dev::get_ip().await.unwrap());
 
-        //add keys to global list
-        for key in result.keys() {
-            TOKEN_LIST.lock().unwrap().push(key.key().to_string())
+        // //add keys to global list
+        // for key in result.keys() {
+        //     TOKEN_LIST.lock().unwrap().push(key.key().to_string())
+        // }
+
+        let ip = get_ip().await.unwrap();
+
+        for credential in self.credentials.0.iter() {
+            let account = APIAccount::login(credential, ip.clone()).await;
+            self.accounts.lock().unwrap().push(account);
         }
     }
 
     fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
-        let res = s_Client.get(url).bearer_auth(&self.cycle());
+        let res = CLIENT.get(url).bearer_auth(&self.cycle());
         Ok(res)
     }
 
     fn post(&self, url: String, body: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
-        let res = s_Client.post(url).bearer_auth(&self.cycle()).body(body);
+        let res = CLIENT.post(url).bearer_auth(&self.cycle()).body(body);
         Ok(res)
     }
 
-    ///                                                            ///
-    ///                                                            ///
-    /// --------------------------ENDPOINTS----------------------- ///
-    ///                                                            ///
-    ///                                                            ///
+    //                                                            //
+    //                                                            //
+    // --------------------------ENDPOINTS----------------------- //
+    //                                                            //
+    //                                                            //
     pub async fn get_clan(&self, tag: String) -> Result<Clan, ApiError> {
         let url = format!("{}/clans/{}", BASE_URL, self.format_tag(tag));
         self.parse_json::<Clan>(self.get(url)).await
@@ -133,11 +146,11 @@ impl Client {
         self.parse_json::<Rezponse<WarLog>>(self.get(url)).await
     }
 
-    ///                                                            ///
-    ///                                                            ///
-    /// --------------------------END POINTS-----------------------///
-    ///                                                            ///
-    ///                                                            ///
+    //                                                            //
+    //                                                            //
+    // --------------------------END POINTS-----------------------//
+    //                                                            //
+    //                                                            //
 
     fn get_cursor_url(&self, mut url: String, config: ConfigForRezponse) -> String {
         match config.limit {
@@ -215,14 +228,52 @@ impl Client {
     }
 
     fn cycle(&self) -> String {
-        TOKEN_LIST.lock().unwrap().rotate_left(1);
-        TOKEN_LIST
+        // TOKEN_LIST.lock().unwrap().rotate_left(1);
+        // TOKEN_LIST
+        //     .lock()
+        //     .unwrap()
+        //     .get(0)
+        //     .unwrap()
+        //     .to_string()
+        //     .clone()
+
+        // increment key_token_index, unless it would be larger than the account's token size (10), then reset to 0 and increment key_account_index
+        let unlocked = self.index.lock().unwrap();
+        let mut key_token_index = unlocked.key_token_index;
+        let mut key_account_index = unlocked.key_account_index;
+        if key_token_index
+            == (self.accounts.lock().unwrap()[key_account_index as usize]
+                .keys
+                .0
+                .len()
+                - 1) as i8
+        {
+            key_token_index = 0;
+            if key_account_index == (self.accounts.lock().unwrap().len() - 1) as i8 {
+                key_account_index = 0;
+            } else {
+                key_account_index += 1;
+            }
+        } else {
+            key_token_index += 1;
+        }
+
+        self.index.lock().unwrap().key_token_index = key_token_index;
+        self.index.lock().unwrap().key_account_index = key_account_index;
+
+        let token = self
+            .accounts
             .lock()
             .unwrap()
-            .get(0)
+            .get(key_account_index as usize)
             .unwrap()
-            .to_string()
-            .clone()
+            .keys
+            .0
+            .get(key_token_index as usize)
+            .unwrap()
+            .clone();
+
+        token.id
     }
 }
 
