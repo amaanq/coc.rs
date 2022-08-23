@@ -1,9 +1,5 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::borrow::Borrow;
-use std::error::Error;
-use std::fmt::format;
-use std::future::Future;
 
 extern crate reqwest;
 
@@ -14,7 +10,6 @@ use crate::models::gold_pass::GoldPass;
 use crate::models::player::{Player, PlayerToken};
 
 use crate::models::war_log::WarLog;
-use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::RequestBuilder;
 use serde::de::DeserializeOwned;
 
@@ -47,27 +42,22 @@ const BASE_URL: &str = "https://api.clashofclans.com/v1";
 
 impl Client {
     pub async fn new(credentials: Credentials) -> Self {
-        let client = Self {
+        let mut client = Self {
             credentials,
             ready: false,
             accounts: Arc::new(Mutex::new(vec![])),
             index: Arc::new(Mutex::new(dev::Index::default())),
             ip_address: Arc::new(Mutex::new(String::new())),
         };
+
         client.init().await;
+        client.ready = true;
         client
     }
 
     async fn init(&self) {
-        // let mut result = dev::get_keys(self.username.to_string(), self.password.to_string()).await;
-        // result.remove_all_invalid_keys(dev::get_ip().await.unwrap());
-
-        // //add keys to global list
-        // for key in result.keys() {
-        //     TOKEN_LIST.lock().unwrap().push(key.key().to_string())
-        // }
-
         let ip = get_ip().await.unwrap();
+        self.ip_address.lock().unwrap().push_str(&ip);
 
         for credential in self.credentials.0.iter() {
             let account = APIAccount::login(credential, ip.clone()).await;
@@ -105,7 +95,7 @@ impl Client {
         self.parse_json::<War>(self.get(url)).await
     }
 
-    pub async fn get_goldpass(&self, tag: String) -> Result<GoldPass, ApiError> {
+    pub async fn get_goldpass(&self) -> Result<GoldPass, ApiError> {
         let url = format!("{}/goldpass/seasons/current", BASE_URL);
         self.parse_json::<GoldPass>(self.get(url)).await
     }
@@ -190,12 +180,14 @@ impl Client {
         };
     }
 
+    #[allow(dead_code)]
     fn is_valid_tag(&self, tag: String) -> bool {
         Regex::new("^#[PYLQGRJCUV0289]+$")
             .unwrap()
             .is_match(tag.to_uppercase().replace("O", "0").as_str())
     }
 
+    #[allow(dead_code)]
     fn fix_tag(&self, tag: String) -> String {
         let re = Regex::new("[^A-Z0-9]+").unwrap();
         "#".to_owned()
@@ -216,7 +208,6 @@ impl Client {
                             .json()
                             .await
                             .expect("Unexpected json response from the API, cannot parse json");
-                        //println!("{}", &t);
                         Ok(serde_json::from_str(t.as_str()).unwrap())
                     }
                     _ => Err(ApiError::Api(res.status())),
@@ -244,7 +235,7 @@ impl Client {
         if key_token_index
             == (self.accounts.lock().unwrap()[key_account_index as usize]
                 .keys
-                .0
+                .keys
                 .len()
                 - 1) as i8
         {
@@ -268,7 +259,7 @@ impl Client {
             .get(key_account_index as usize)
             .unwrap()
             .keys
-            .0
+            .keys
             .get(key_token_index as usize)
             .unwrap()
             .clone();

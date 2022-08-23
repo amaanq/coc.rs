@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::{api::Client, credentials::CredentialsBuilder};
+    use crate::{
+        api::{ApiError, Client},
+        credentials::CredentialsBuilder,
+    };
     use std::{env, time::Instant};
 
     #[test]
@@ -17,6 +20,17 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_login() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("{:#?}", client);
+        println!("Time elapsed! {:?}", now.elapsed());
+    }
+
+    #[tokio::test]
     async fn benchmark_login() {
         println!("starting");
         let now = Instant::now();
@@ -26,33 +40,36 @@ mod tests {
         println!("Elapsed: {:.2?}", now.elapsed());
     }
 
-    // #[tokio::test]
-    // async fn test_player() {
-    //     let client = api::Client::new(
-    //         std::env::var("COC_TOKEN").unwrap(),
-    //     );
-    //
-    //     let tag = "#2PP".to_string();
-    //     match client.get_player(tag).await {
-    //         Ok(body) => {
-    //             println!("{:?}", body);
-    //         }
-    //         Err(e) => match e {
-    //             api::ApiError::Request(e) => {
-    //                 println!("Request - {:?}", e);
-    //                 assert!(true);
-    //             }
-    //             api::ApiError::Api(e) => {
-    //                 if e == reqwest::StatusCode::NOT_FOUND {
-    //                     println!("Not found")
-    //                 } else {
-    //                     println!("Some other variant {}", e.as_u16());
-    //                 }
-    //                 assert!(false);
-    //             }
-    //         },
-    //     }
-    // }
+    #[tokio::test]
+    async fn test_player() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+
+        let tag = "#2PP".to_string();
+        match client.get_player(tag).await {
+            Ok(body) => {
+                println!("{:?}", body);
+            }
+            Err(e) => match e {
+                ApiError::Request(e) => {
+                    println!("Request - {:?}", e);
+                    assert!(true);
+                }
+                ApiError::Api(e) => {
+                    if e == reqwest::StatusCode::NOT_FOUND {
+                        println!("Not found")
+                    } else {
+                        println!("Some other variant {}", e.as_u16());
+                    }
+                    assert!(false);
+                }
+            },
+        }
+        println!("Time elapsed! {:?}", now.elapsed());
+    }
     //
     // #[tokio::test]
     // async fn test_clan(){
