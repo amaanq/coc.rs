@@ -25,9 +25,14 @@ mod tests {
         let credentials = CredentialsBuilder::new()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
+
         let client = Client::new(credentials).await;
         println!("{:#?}", client);
         println!("Time elapsed! {:?}", now.elapsed());
+
+        
+
+        client.print_keys().await;
     }
 
     #[tokio::test]

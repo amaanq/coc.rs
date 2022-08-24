@@ -65,6 +65,14 @@ impl Client {
         }
     }
 
+    pub async fn print_keys(&self) {
+        for account in self.accounts.lock().unwrap().iter() {
+            for key in account.keys.keys.iter() {
+                println!("KEY: {:#?}", key);
+            }
+        }
+    }
+
     fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
         let res = CLIENT.get(url).bearer_auth(&self.cycle());
         Ok(res)
