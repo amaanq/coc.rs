@@ -128,17 +128,25 @@ impl APIAccount {
     // const LOCATION_ENDPOINT: &str = "/locations";
     // const GOLDPASS_ENDPOINT: &str = "/goldpass/seasons/current";
     // const LABEL_ENDPOINT: &str = "/labels";
+
     pub async fn login(credential: &Credential, ip: String) -> Self {
-        let login_response = CLIENT
+        let _login_response = CLIENT
             .post(format!("{}{}", BASE_DEV_URL, Self::LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
             .json::<Credential>(credential)
             .send()
             .await
             .unwrap()
-            .json::<LoginResponse>()
+            .text()
             .await
             .unwrap();
+        println!("LOGIN RESPONSE: {}", _login_response);
+
+        let login_response =
+            serde_json::from_str::<LoginResponse>(_login_response.as_str()).unwrap();
+        // .json::<LoginResponse>()
+        // .await
+        // .unwrap();
 
         let mut account = Self {
             credential: credential.clone(),
@@ -148,13 +156,19 @@ impl APIAccount {
 
         account.get_keys().await;
 
-        if account.keys.keys.is_empty() {
-            for _ in 0..10 {
-                account.create_key(ip.clone()).await;
-            }
-        }
-        account.update_all_keys(ip).await;
+        // if account.keys.keys.len() != 10 {
+        //     println!("CREATING {} KEYS", 10 - account.keys.keys.len());
+        //     for _ in 0..(10 - account.keys.keys.len()) {
+        //         account.create_key(ip.clone()).await;
+        //     }
+        // }
 
+        // account.update_all_keys(ip).await;
+        println!("CREATING A KEY");
+        account.create_key(ip).await;
+        println!("CREATED A KEY");
+
+        println!("LOGGED INTO {}", credential.email());
         account
     }
 
@@ -192,7 +206,11 @@ impl APIAccount {
         // description = "Created on %s by coc.rs", time.Now().Format(time.RFC3339)
         // post to KEY_CREATE_ENDPOINT with header application/json and body {"name":"%s","description":"%s", "cidrRanges": ["%s"], "scopes": ["clash"]}, where cidrRanges is self ip
         let key = CLIENT
-            .post(format!("{}{}", BASE_DEV_URL, APIAccount::KEY_CREATE_ENDPOINT))
+            .post({
+                let url = format!("{}{}", BASE_DEV_URL, APIAccount::KEY_CREATE_ENDPOINT);
+                println!("CREATING KEY AT {}", url);
+                url
+            })
             // .json::<Key>(&Key {
             //     name: "coc.rs".to_string(),
             //     description: "Created on %s by coc.rs".to_string(),
@@ -200,15 +218,16 @@ impl APIAccount {
             //     scopes: vec![Scope::Clash],
             // })
             // body as string
+            // sample json {"name":"coc-rs","description":"Created on 2022-08-24T06:34:28Z","cidrRanges":["1.1.1.1"],"scopes":["clash"]}
             .body({
                 let body = format!(
-                "{{\"name\":\"coc.rs\",\"description\":\"Created on {} by coc.rs\",\"cidrRanges\":[\"{}\"],\"scopes\":[\"clash\"]}}",
-                chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ"),
-                ip
-            );
-            println!("{}", body);
-            body
-        })
+                    r#"{{"name":"hi","description":"hi","cidrRanges":["{}"]}}"#,
+                    //chrono::Utc::now().to_rfc3339(),
+                    ip
+                );
+                println!("{}", body);
+                body
+            })
             .send()
             .await
             .unwrap()
