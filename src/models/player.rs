@@ -1,6 +1,8 @@
-#[allow(dead_code)]
-use serde::{Deserialize, Serialize};
 use crate::models::badge_urls::BadgeUrls;
+use serde::{Deserialize, Serialize};
+
+use super::clan::LabelIconUrls;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Player {
     #[serde(rename = "tag")]
@@ -40,16 +42,19 @@ pub struct Player {
     versus_battle_wins: i32,
 
     #[serde(rename = "role")]
-    role: String,
+    role: Option<Role>,
 
     #[serde(rename = "warPreference")]
-    war_preference: String,
+    war_preference: Option<WarPreference>,
 
     #[serde(rename = "donations")]
     donations: i32,
 
     #[serde(rename = "donationsReceived")]
     donations_received: i32,
+
+    #[serde(rename = "clanCapitalContributions")]
+    clan_capital_contributions: i32,
 
     #[serde(rename = "clan")]
     clan: Option<PlayerClan>,
@@ -61,17 +66,40 @@ pub struct Player {
     versus_battle_win_count: i32,
 
     #[serde(rename = "labels")]
-    labels: Vec<Option<Label>>,
+    labels: Vec<Label>,
 
     #[serde(rename = "troops")]
     troops: Vec<Troop>,
 
     #[serde(rename = "heroes")]
-    heroes: Vec<Option<Hero>>,
+    heroes: Vec<Hero>,
 
     #[serde(rename = "spells")]
     spells: Vec<Spell>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Role {
+    #[serde(rename = "notMember")]
+    NotMember,
+    #[serde(rename = "member")]
+    Member,
+    #[serde(rename = "admin")]
+    Elder,
+    #[serde(rename = "coLeader")]
+    CoLeader,
+    #[serde(rename = "leader")]
+    Leader,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum WarPreference {
+    #[serde(rename = "in")]
+    In,
+    #[serde(rename = "out")]
+    Out,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Label {
     #[serde(rename = "name")]
@@ -81,7 +109,7 @@ pub struct Label {
     id: i32,
 
     #[serde(rename = "iconUrls")]
-    icon_urls: Vec<String>,
+    icon_urls: LabelIconUrls,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -173,7 +201,7 @@ pub enum Village {
     BuilderBase,
 
     #[serde(rename = "home")]
-    Home,
+    HomeVillage,
 }
 
 impl Player {
@@ -213,10 +241,10 @@ impl Player {
     pub fn versus_battle_wins(&self) -> i32 {
         self.versus_battle_wins
     }
-    pub fn role(&self) -> &str {
+    pub fn role(&self) -> &Option<Role> {
         &self.role
     }
-    pub fn war_preference(&self) -> &str {
+    pub fn war_preference(&self) -> &Option<WarPreference> {
         &self.war_preference
     }
     pub fn donations(&self) -> i32 {
@@ -234,13 +262,13 @@ impl Player {
     pub fn versus_battle_win_count(&self) -> i32 {
         self.versus_battle_win_count
     }
-    pub fn labels(&self) -> &Vec<Option<Label>> {
+    pub fn labels(&self) -> &Vec<Label> {
         &self.labels
     }
     pub fn troops(&self) -> &Vec<Troop> {
         &self.troops
     }
-    pub fn heroes(&self) -> &Vec<Option<Hero>> {
+    pub fn heroes(&self) -> &Vec<Hero> {
         &self.heroes
     }
     pub fn spells(&self) -> &Vec<Spell> {
@@ -327,7 +355,7 @@ pub struct PlayerToken {
     status: String,
 }
 
-impl PlayerToken{
+impl PlayerToken {
     pub fn tag(&self) -> &str {
         &self.tag
     }

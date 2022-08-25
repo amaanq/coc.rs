@@ -1,7 +1,13 @@
 pub mod badge_urls;
 pub mod clan;
+pub mod clan_ranking;
+pub mod clan_search;
 pub mod current_war;
 pub mod gold_pass;
+pub mod labels;
+pub mod leagues;
+pub mod locations;
 pub mod paging;
 pub mod player;
+pub mod player_ranking;
 pub mod war_log;
