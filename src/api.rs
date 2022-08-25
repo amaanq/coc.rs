@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 extern crate reqwest;
 
 use crate::credentials::Credentials;
-use crate::models::clan::{Clan, ClanMember, League as ClanLeague, WarLeague as ClanWarLeague};
+use crate::models::clan::{
+    Clan, ClanMember, Label, League as ClanLeague, WarLeague as ClanWarLeague,
+};
 use crate::models::clan_ranking::ClanRanking;
 use crate::models::clan_search::ClanSearchOptions;
 use crate::models::current_war::War;
@@ -14,7 +16,7 @@ use crate::models::leagues::{League, Season, WarLeague};
 use crate::models::locations::{Local, Location};
 use crate::models::player::{Player, PlayerToken};
 
-use crate::models::player_ranking::PlayerRanking;
+use crate::models::player_ranking::{PlayerRanking, PlayerVersusRanking};
 use crate::models::war_log::WarLog;
 use reqwest::{RequestBuilder, Url};
 use serde::de::DeserializeOwned;
@@ -110,17 +112,12 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Clan Methods
     //_______________________________________________________________________
-    pub async fn get_clan_warlog(
-        &self,
-        tag: String,
-        config: ConfigForRezponse,
-    ) -> Result<APIResponse<WarLog>, APIError> {
+    pub async fn get_clan_warlog(&self, tag: String) -> Result<APIResponse<WarLog>, APIError> {
         let url = format!(
             "{}/clans/{}/warlog",
             Self::BASE_URL,
             urlencoding::encode(tag.as_str())
         );
-        // url = self.get_cursor_url(url, config);
         self.parse_json(self.get(url)).await
     }
 
@@ -152,17 +149,12 @@ impl Client {
         self.parse_json(self.get(url)).await
     }
 
-    pub async fn get_clan_members(
-        &self,
-        tag: String,
-        config: ConfigForRezponse,
-    ) -> Result<APIResponse<ClanMember>, APIError> {
-        let mut url = format!(
+    pub async fn get_clan_members(&self, tag: String) -> Result<APIResponse<ClanMember>, APIError> {
+        let url = format!(
             "{}/clans/{}/members",
             Self::BASE_URL,
             urlencoding::encode(tag.as_str())
         );
-        //url = self.get_cursor_url(url, config);
         self.parse_json(self.get(url)).await
     }
 
@@ -178,7 +170,7 @@ impl Client {
         self.parse_json(self.get(url)).await
     }
 
-    pub async fn get_verified_player(
+    pub async fn verify_player_token(
         &self,
         tag: String,
         token: String,
@@ -213,7 +205,7 @@ impl Client {
             ));
         }
         let url = format!(
-            "{}/leagues/{}/seasons/{}/rankings",
+            "{}/leagues/{}/seasons/{}",
             Self::BASE_URL,
             league_id as i32,
             season_id.to_string()
@@ -293,7 +285,7 @@ impl Client {
     pub async fn get_versus_player_rankings(
         &self,
         location: Local,
-    ) -> Result<APIResponse<PlayerRanking>, APIError> {
+    ) -> Result<APIResponse<PlayerVersusRanking>, APIError> {
         let url = format!(
             "{}/locations/{}/rankings/players-versus",
             Self::BASE_URL,
@@ -323,12 +315,12 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Label Methods
     //_______________________________________________________________________
-    pub async fn get_player_labels(&self) -> Result<APIResponse<PlayerLabel>, APIError> {
+    pub async fn get_player_labels(&self) -> Result<APIResponse<Label>, APIError> {
         let url = format!("{}/labels/players", Self::BASE_URL);
         self.parse_json(self.get(url)).await
     }
 
-    pub async fn get_clan_labels(&self) -> Result<APIResponse<ClanLabels>, APIError> {
+    pub async fn get_clan_labels(&self) -> Result<APIResponse<Label>, APIError> {
         let url = format!("{}/labels/clans", Self::BASE_URL);
         self.parse_json(self.get(url)).await
     }

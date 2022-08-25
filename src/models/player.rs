@@ -1,7 +1,7 @@
 use crate::models::badge_urls::BadgeUrls;
 use serde::{Deserialize, Serialize};
 
-use super::clan::LabelIconUrls;
+use super::clan::{Label, LabelIconUrls, Role};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Player {
@@ -79,37 +79,11 @@ pub struct Player {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Role {
-    #[serde(rename = "notMember")]
-    NotMember,
-    #[serde(rename = "member")]
-    Member,
-    #[serde(rename = "admin")]
-    Elder,
-    #[serde(rename = "coLeader")]
-    CoLeader,
-    #[serde(rename = "leader")]
-    Leader,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub enum WarPreference {
     #[serde(rename = "in")]
     In,
     #[serde(rename = "out")]
     Out,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Label {
-    #[serde(rename = "name")]
-    name: String,
-
-    #[serde(rename = "id")]
-    id: i32,
-
-    #[serde(rename = "iconUrls")]
-    icon_urls: LabelIconUrls,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

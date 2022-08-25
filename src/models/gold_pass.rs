@@ -1,14 +1,23 @@
-use serde::{ Serialize, Deserialize };
+use chrono::TimeZone;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GoldPass {
-    #[serde(rename = "stratTime")]
-    start_time: String, 
-    #[serde(rename = "endTime")]
+    start_time: String,
     end_time: String,
 }
 
 impl GoldPass {
-    pub fn start_time(&self) -> &str{ &self.start_time }
-    pub fn end_time(&self) -> &str { &self.end_time }
+    pub fn start_time(&self) -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc.from_utc_datetime(
+            &chrono::NaiveDateTime::parse_from_str(&self.start_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
+        )
+    }
+
+    pub fn end_time(&self) -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc.from_utc_datetime(
+            &chrono::NaiveDateTime::parse_from_str(&self.end_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
+        )
+    }
 }

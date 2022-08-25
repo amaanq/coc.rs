@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use time::Month;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum League {
@@ -69,7 +70,11 @@ impl SeasonBuilder {
 
     pub fn new() -> SeasonBuilder {
         SeasonBuilder {
-            season: Season::default(),
+            season: Season {
+                id: String::new(),
+                year: 2015,
+                month: Month::July,
+            },
         }
     }
 
@@ -78,50 +83,38 @@ impl SeasonBuilder {
         self
     }
 
-    pub fn month(mut self, month: i32) -> SeasonBuilder {
+    pub fn month(mut self, month: Month) -> SeasonBuilder {
         self.season.month = month;
         self
     }
 
-    pub fn build(&mut self) -> Result<String, SeasonError> {
-        // first check if year is between Self::YEAR_MIN and Self::YEAR_MAX
-        // if year IS Self::YEAR_MAX, check if month is less than or equal to Self::CURRENT_YEAR_MONTH_MAX, else just check if between Self::MONTH_MIN and Self::MONTH_MAX
-        // then call .to_string() on the season struct
-        if self.season.year < Self::YEAR_MIN || self.season.year > Self::YEAR_MAX {
-            return Err(SeasonError::InvalidSeason);
-        }
-        if self.season.year == Self::YEAR_MAX {
-            if self.season.month < Self::MONTH_MIN
-                || self.season.month > Self::CURRENT_YEAR_MONTH_MAX
-            {
-                return Err(SeasonError::InvalidSeason);
-            } else {
-                return Ok(self.season.to_string());
-            }
-        } else {
-            if self.season.month < Self::MONTH_MIN || self.season.month > Self::MONTH_MAX {
-                return Err(SeasonError::InvalidSeason);
-            } else {
-                return Ok(self.season.to_string());
-            }
-        }
+    pub fn build(self) -> Season {
+        self.season
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Season {
     #[serde(rename = "id")]
     id: String,
     #[serde(skip_serializing)]
     year: i32,
-    #[serde(skip_serializing)]
-    month: i32,
+    #[serde(
+        skip_deserializing,
+        skip_serializing,
+        default = "Season::default_month"
+    )]
+    month: Month,
 }
 
 impl Season {
     pub fn to_string(&mut self) -> String {
         //YYYY-MM
-        self.id = format!("{}-{}", self.year, self.month);
+        self.id = format!("{}-{:02}", self.year, self.month as i32);
         self.id.clone()
+    }
+
+    pub fn default_month() -> Month {
+        Month::July
     }
 }
