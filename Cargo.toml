@@ -2,9 +2,11 @@
 name = "coc-rs"
 version = "0.1.0"
 edition = "2021"
-authors = ["SaHiL"]
-description = "A Rust library for Clash of clans API"
-License = "MIT"
+authors = ["amaanq", "SaHiL"]
+description = "A Rust crate wrapper around the Clash of Clans public API"
+license = "MIT"
+homepage = "https://github.com/amaanq/coc.rs"
+repository = "https://github.com/amaanq/coc.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
