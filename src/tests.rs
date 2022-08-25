@@ -1,17 +1,20 @@
 #[cfg(test)]
 mod tests {
     use bytestream_rs::logiclong::LogicLong;
+    use time::Month;
     use tokio::sync::Mutex;
 
     use crate::{
         api::{APIError, Client, ConfigForRezponse, Time},
         credentials::CredentialsBuilder,
+        models::{
+            clan::Role,
+            clan_search::ClanSearchOptionsBuilder,
+            leagues::{League, SeasonBuilder, WarLeague},
+            locations::Local,
+        },
     };
-    use std::{
-        env,
-        sync::Arc,
-        time::{Duration, Instant},
-    };
+    use std::{env, sync::Arc, time::Instant};
 
     #[test]
     fn test_credentials() {
@@ -52,50 +55,120 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_player() {
+    async fn test_get_clan_warlog() {
         let now = Instant::now();
         let credentials = CredentialsBuilder::new()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await;
         println!("Logged in! {:?}", now.elapsed());
-        let tag = "#LQL".to_string();
-        let player = client.get_player(tag).await.unwrap();
 
+        let clan_warlog = client
+            .get_clan_warlog("#2PJP2Q0PY".to_string())
+            .await
+            .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("Player: {:#?}", player);
+
+        println!("Clan warlog: {:#?}", clan_warlog);
     }
 
     #[tokio::test]
-    async fn test_clan() {
+    async fn test_get_clans() {
         let now = Instant::now();
         let credentials = CredentialsBuilder::new()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
-
         let client = Client::new(credentials).await;
-        let tag = "#2pp".to_string();
+        println!("Logged in! {:?}", now.elapsed());
 
-        let clan = client.get_clan(tag).await.expect("Unable to get clan");
-
+        let clans = client
+            .get_clans(
+                ClanSearchOptionsBuilder::new()
+                    //.name("hello".to_string())
+                    .location_id(Local::UnitedStates)
+                    .max_members(5)
+                    .min_clan_level(20)
+                    .build(),
+            )
+            .await
+            .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
+
+        clans.items.iter().for_each(|clan| {
+            println!("{} - {}", clan.tag, clan.name);
+        });
+    }
+
+    #[tokio::test]
+    async fn test_get_current_war() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let current_war = client
+            .get_current_war("#2L29GJ0G0".to_string())
+            .await
+            .unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("Current war: {:#?}", current_war);
+    }
+
+    #[tokio::test]
+    async fn test_get_clan() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let clan = client.get_clan("#2PP".to_string()).await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
         println!("Clan: {:?}", clan);
     }
 
     #[tokio::test]
-    async fn test_current_war() {
+    async fn test_get_clan_members() {
         let now = Instant::now();
         let credentials = CredentialsBuilder::new()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
-
         let client = Client::new(credentials).await;
-        let tag = "r8j".to_string();
+        println!("Logged in! {:?}", now.elapsed());
 
-        let war = client.get_current_war(tag).await.unwrap();
-
+        let clan_members = client.get_clan_members("#2PP".to_string()).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("War: {:?}", war);
+
+        // retain clan members where role is Role::CoLeader and print each one when iterating, then collect
+        let co_leaders = clan_members
+            .items
+            .iter()
+            .filter(|member| member.role == Role::CoLeader)
+            .collect::<Vec<_>>();
+        co_leaders.iter().for_each(|member| {
+            println!("{} - {}", member.tag, member.name);
+        });
+        println!("And there are {} co-leaders", co_leaders.len());
+    }
+
+    #[tokio::test]
+    async fn test_get_player() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let player = client.get_player("#LQL".to_string()).await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("Player: {:#?}", player);
     }
 
     #[tokio::test]
@@ -106,61 +179,292 @@ mod tests {
             .build();
 
         let client = Client::new(credentials).await;
-        let tag = "#CVJLQOLR".to_string();
         let token = "".to_string();
 
-        let verified = client.get_verified_player(tag, token).await.unwrap();
+        let verified = client
+            .verify_player_token("#CVJLQOLR".to_string(), token)
+            .await
+            .unwrap();
 
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Verified: {:?}", verified);
     }
 
     #[tokio::test]
-    async fn test_clan_members() {
+    async fn test_get_leagues() {
         let now = Instant::now();
         let credentials = CredentialsBuilder::new()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
-
         let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
 
-        let members = client
-            .get_clan_members(
-                "#2PP".to_string(),
-                ConfigForRezponse {
-                    limit: None,
-                    time: Some(Time::Before("eyJwb3MiOjF9".to_string())),
-                },
-            )
-            .await
-            .unwrap();
-
+        let leagues = client.get_leagues().await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("{:?}", members.items);
+
+        println!("Leagues: {:#?}", leagues);
     }
 
     #[tokio::test]
-    async fn test_clan_warlog() {
+    async fn test_get_league_season_rankings() {
         let now = Instant::now();
         let credentials = CredentialsBuilder::new()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
-
         let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
 
-        let war_log = client
-            .get_clan_warlog(
-                "#R8J".to_string(),
-                ConfigForRezponse {
-                    limit: None,
-                    time: None,
-                },
+        let league_season_rankings = client
+            .get_league_season_rankings(
+                League::LegendLeague,
+                SeasonBuilder::new().year(2015).month(Month::July).build(),
             )
             .await
             .unwrap();
-
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("War Log: {:?}", war_log)
+
+        league_season_rankings
+            .items
+            .iter()
+            .filter(|ranking| ranking.clan.is_some())
+            .for_each(|ranking| {
+                let clan = ranking.clan.as_ref().unwrap();
+                println!(
+                    "We had a clan! {} - {} (Clan: {} - {})",
+                    ranking.tag, ranking.name, clan.tag, clan.name
+                );
+            });
+    }
+
+    #[tokio::test]
+    async fn test_get_league() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let league = client.get_league(League::LegendLeague).await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("League: {:#?}", league);
+    }
+
+    #[tokio::test]
+    async fn test_get_war_league() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let war_league = client
+            .get_war_league(WarLeague::ChampionLeagueI)
+            .await
+            .unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("War league: {:#?}", war_league);
+    }
+
+    #[tokio::test]
+    async fn test_get_war_leagues() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let war_leagues = client.get_war_leagues().await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("War leagues: {:#?}", war_leagues);
+    }
+
+    #[tokio::test]
+    async fn test_get_clan_rankings() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let mut clan_rankings = client.get_clan_rankings(Local::UnitedStates).await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        clan_rankings
+            .items
+            .sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
+        for c in clan_rankings.items.iter().rev().take(100) {
+            println!(
+                "{:>3}. {:>9} - {:>15} ({})",
+                c.rank, c.tag, c.name, c.clan_level
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_player_rankings() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let player_rankings = client
+            .get_player_rankings(Local::UnitedStates)
+            .await
+            .unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        for p in player_rankings
+            .items
+            .iter()
+            .filter(|player| player.clan.is_some() && player.trophies > 5800)
+            .take(100)
+        {
+            println!(
+                "{:>3}. {:>9} - {:>15} ({} - {})",
+                p.rank,
+                p.tag,
+                p.name,
+                p.clan.as_ref().unwrap().tag,
+                p.clan.as_ref().unwrap().name,
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_versus_clan_rankings() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let mut versus_clan_rankings = client
+            .get_versus_clan_rankings(Local::UnitedStates)
+            .await
+            .unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        versus_clan_rankings
+            .items
+            .sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
+        for c in versus_clan_rankings.items.iter().rev().take(100) {
+            println!(
+                "{:>3}. {:>9} - {:>15} ({})",
+                c.rank, c.tag, c.name, c.clan_level
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_versus_player_rankings() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let mut versus_player_rankings = client
+            .get_versus_player_rankings(Local::UnitedStates)
+            .await
+            .unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        versus_player_rankings
+            .items
+            .sort_by(|a, b| a.exp_level.cmp(&b.exp_level));
+        for c in versus_player_rankings.items.iter().rev().take(100) {
+            println!(
+                "{:>3}. {:>9} - {:>15} ({})",
+                c.rank, c.tag, c.name, c.exp_level
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_locations() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let locations = client.get_locations().await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("Locations: {:#?}", locations);
+    }
+
+    #[tokio::test]
+    async fn test_get_location() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let location = client.get_location(Local::UnitedStates).await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("Location: {:#?}", location);
+    }
+
+    #[tokio::test]
+    async fn test_get_goldpass() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let goldpass = client.get_goldpass().await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("Goldpass Start: {}", goldpass.start_time());
+        println!("Goldpass End: {}", goldpass.end_time());
+    }
+
+    #[tokio::test]
+    async fn test_get_player_labels() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let player_labels = client.get_player_labels().await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("Player Labels: {:#?}", player_labels);
+    }
+
+    #[tokio::test]
+    async fn test_get_clan_labels() {
+        let now = Instant::now();
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let player_label = client.get_clan_labels().await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        println!("Player Label: {:#?}", player_label);
     }
 
     #[test]

@@ -1,3 +1,5 @@
+use super::locations::Local;
+
 #[derive(Debug, Default)]
 pub struct ClanSearchOptionsBuilder {
     options: ClanSearchOptions,
@@ -41,9 +43,9 @@ impl ClanSearchOptionsBuilder {
         self.options.items[1] = ("warFrequency".to_string(), war_frequency);
         self
     }
-    pub fn location_id(mut self, location_id: i32) -> Self {
-        self.options.location_id = Some(location_id);
-        self.options.items[2] = ("locationId".to_string(), location_id.to_string());
+    pub fn location_id(mut self, location_id: Local) -> Self {
+        self.options.location_id = Some(location_id as i32);
+        self.options.items[2] = ("locationId".to_string(), (location_id as i32).to_string());
         self
     }
     pub fn min_members(mut self, min_members: i32) -> Self {
