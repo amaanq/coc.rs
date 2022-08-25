@@ -1,2 +1,2 @@
 # coc.rs
-coc wrapper in rust
+A Rust crate wrapper around the Clash of Clans public API
