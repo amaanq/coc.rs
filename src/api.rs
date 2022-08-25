@@ -14,6 +14,7 @@ use crate::models::gold_pass::GoldPass;
 use crate::models::labels::{ClanLabels, PlayerLabel};
 use crate::models::leagues::{League, Season, WarLeague};
 use crate::models::locations::{Local, Location};
+use crate::models::paging::Paging;
 use crate::models::player::{Player, PlayerToken};
 
 use crate::models::player_ranking::{PlayerRanking, PlayerVersusRanking};
@@ -197,6 +198,7 @@ impl Client {
         &self,
         league_id: League,
         mut season_id: Season,
+        paging: Paging,
     ) -> Result<APIResponse<PlayerRanking>, APIError> {
         if league_id != League::LegendLeague {
             return Err(APIError::InvalidParameters(
@@ -204,12 +206,17 @@ impl Client {
                     .to_string(),
             ));
         }
-        let url = format!(
+        let mut url = format!(
             "{}/leagues/{}/seasons/{}",
             Self::BASE_URL,
             league_id as i32,
             season_id.to_string()
         );
+        if paging.is_some() {
+            url = Url::parse_with_params(&url, paging.to_vec())
+                .unwrap()
+                .to_string();
+        }
         self.parse_json(self.get(url)).await
     }
 
@@ -330,35 +337,6 @@ impl Client {
     // --------------------------END POINTS-----------------------//
     //                                                            //
     //                                                            //
-    fn get_cursor_url(&self, mut url: String, config: ConfigForRezponse) -> String {
-        match config.limit {
-            Some(s) => {
-                url = format!("{}?limit={}", url, s);
-                match config.time {
-                    None => url,
-                    Some(s1) => match s1 {
-                        Time::After(a) => {
-                            format!("{}&after={}", url, a)
-                        }
-                        Time::Before(b) => {
-                            format!("{}&before={}", url, b)
-                        }
-                    },
-                }
-            }
-            None => match config.time {
-                None => url,
-                Some(s) => match s {
-                    Time::After(a) => {
-                        format!("{}?after={}", url, a)
-                    }
-                    Time::Before(b) => {
-                        format!("{}?before={}", url, b)
-                    }
-                },
-            },
-        }
-    }
 
     #[allow(dead_code)]
     fn is_valid_tag(&self, tag: String) -> bool {
@@ -440,33 +418,14 @@ impl Client {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Paging {
-    #[serde(rename = "cursors")]
-    cursor: Cursor,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Cursor {
-    before: Option<String>,
-    after: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct APIResponse<T> {
-    #[serde(rename = "items")]
     pub items: Vec<T>,
-    #[serde(rename = "paging")]
     pub paging: Paging,
 }
 
-#[derive(Debug)]
-pub struct ConfigForRezponse {
-    pub limit: Option<u32>,
-    pub time: Option<Time>,
-}
-
-#[derive(Debug)]
-pub enum Time {
-    After(String),
-    Before(String),
-}
+// #[derive(Debug)]
+// pub enum Time {
+//     After(String),
+//     Before(String),
+// }
