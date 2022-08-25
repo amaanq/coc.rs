@@ -124,16 +124,17 @@ lazy_static! {
 
 
 
+const BASE_DEV_URL: &str = "https://developer.clashofclans.com";
+const LOGIN_ENDPOINT: &str = "/api/login";
+const KEY_LIST_ENDPOINT: &str = "/api/apikey/list";
+const KEY_CREATE_ENDPOINT: &str = "/api/apikey/create";
+const KEY_REVOKE_ENDPOINT: &str = "/api/apikey/revoke";
+
 impl APIAccount {
-    const BASE_DEV_URL: &str = "https://developer.clashofclans.com";
-    const LOGIN_ENDPOINT: &str = "/api/login";
-    const KEY_LIST_ENDPOINT: &str = "/api/apikey/list";
-    const KEY_CREATE_ENDPOINT: &str = "/api/apikey/create";
-    const KEY_REVOKE_ENDPOINT: &str = "/api/apikey/revoke";
-    
+
     pub async fn login(credential: &Credential, ip: String) -> Self {
         let login_response = CLIENT
-            .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
+            .post(format!("{}{}", BASE_DEV_URL, LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
             .json::<Credential>(credential)
             .send()
@@ -164,7 +165,7 @@ impl APIAccount {
 
     pub async fn get_keys(&mut self) {
         self.keys = CLIENT
-            .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_LIST_ENDPOINT))
+            .post(format!("{}{}", BASE_DEV_URL, KEY_LIST_ENDPOINT))
             .send()
             .await
             .unwrap()
@@ -195,7 +196,7 @@ impl APIAccount {
     pub async fn create_key(&mut self, ip: String) -> KeyResponse {
         // sample json {"name":"coc-rs","description":"Created on 2022-08-24T06:34:28Z","cidrRanges":["1.1.1.1"],"scopes":["clash"]}
         let key = CLIENT
-            .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_CREATE_ENDPOINT))
+            .post(format!("{}{}", BASE_DEV_URL,KEY_CREATE_ENDPOINT))
             .header("Content-Type", "application/json")
             .body(format!(
                 r#"{{"name":"coc-rs","description":"Created on {} by coc.rs","cidrRanges":["{}"],"scopes":["clash"]}}"#,
@@ -218,7 +219,7 @@ impl APIAccount {
     pub async fn revoke_key(&mut self, key_id: &str) -> KeyResponse {
         // post to KEY_REVOKE_ENDPOINT with header application/json and body {"id":"%s"}, where id is key_id
         let key = CLIENT
-            .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
+            .post(format!("{}{}", BASE_DEV_URL, KEY_REVOKE_ENDPOINT))
             .header("Content-Type", "application/json")
             .body(format!("{{\"id\":\"{}\"}}", key_id))
             .send()
