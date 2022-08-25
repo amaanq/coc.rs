@@ -22,6 +22,7 @@ use reqwest::{RequestBuilder, Url};
 use serde::de::DeserializeOwned;
 
 use crate::dev::{self, APIAccount, CLIENT};
+use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug, Default)]
@@ -37,7 +38,8 @@ pub struct Client {
 
 #[derive(Debug)]
 pub enum APIError {
-    BadRequest(reqwest::Error), // this is useless?
+    ClientNotReady,
+    BadRequest, // this is useless?
     RequestFailed(reqwest::Error),
     BadResponse(String, reqwest::StatusCode),
     InvalidParameters(String),
@@ -70,6 +72,13 @@ impl Client {
         client
     }
 
+    pub async fn load(&mut self, credentials: Credentials) {
+        self.credentials = credentials;
+        self.ready = false;
+        self.init().await;
+        self.ready = true;
+    }
+
     async fn get_ip() -> Result<String, reqwest::Error> {
         Ok(CLIENT.get(Self::IP_URL).send().await?.text().await?)
     }
@@ -95,11 +104,17 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // HTTP Methods
     //_______________________________________________________________________
-    fn get(&self, url: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
+    fn get(&self, url: String) -> Result<reqwest::RequestBuilder, APIError> {
+        if !self.ready {
+            return Err(APIError::ClientNotReady);
+        }
         Ok(CLIENT.get(url).bearer_auth(&self.cycle()))
     }
 
-    fn post(&self, url: String, body: String) -> Result<reqwest::RequestBuilder, reqwest::Error> {
+    fn post(&self, url: String, body: String) -> Result<reqwest::RequestBuilder, APIError> {
+        if !self.ready {
+            return Err(APIError::ClientNotReady);
+        }
         Ok(CLIENT.post(url).bearer_auth(&self.cycle()).body(body))
     }
 
@@ -355,7 +370,7 @@ impl Client {
 
     async fn parse_json<T: DeserializeOwned>(
         &self,
-        rb: Result<RequestBuilder, reqwest::Error>,
+        rb: Result<RequestBuilder, APIError>,
     ) -> Result<T, APIError> {
         match rb {
             Ok(rb) => match rb.send().await {
@@ -372,7 +387,7 @@ impl Client {
                 },
                 Err(e) => Err(APIError::RequestFailed(e)),
             },
-            Err(e) => return Err(APIError::BadRequest(e)),
+            Err(_) => return Err(APIError::BadRequest),
         }
     }
 
