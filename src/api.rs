@@ -11,21 +11,20 @@ use crate::models::clan_ranking::ClanRanking;
 use crate::models::clan_search::ClanSearchOptions;
 use crate::models::current_war::War;
 use crate::models::gold_pass::GoldPass;
-use crate::models::labels::{ClanLabels, PlayerLabel};
 use crate::models::leagues::{League, Season, WarLeague};
 use crate::models::locations::{Local, Location};
 use crate::models::paging::Paging;
 use crate::models::player::{Player, PlayerToken};
-
 use crate::models::player_ranking::{PlayerRanking, PlayerVersusRanking};
 use crate::models::war_log::WarLog;
+
 use reqwest::{RequestBuilder, Url};
 use serde::de::DeserializeOwned;
 
 use crate::dev::{self, APIAccount, CLIENT};
 use std::sync::{Arc, Mutex};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Client {
     credentials: Credentials,
     ready: bool,
