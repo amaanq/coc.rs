@@ -5,7 +5,7 @@ pub struct CredentialsBuilder {
     pub credentials: Credentials,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Credentials(pub Vec<Credential>);
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

@@ -1,6 +1,8 @@
 use crate::models::badge_urls::BadgeUrls;
 use serde::{Deserialize, Serialize};
 
+use super::locations::Location;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Clan {
     #[serde(rename = "tag")]
@@ -10,10 +12,10 @@ pub struct Clan {
     name: String,
 
     #[serde(rename = "type")]
-    clan_type: String,
+    privacy: Privacy,
 
     #[serde(rename = "description")]
-    description: String,
+    description: Option<String>,
 
     #[serde(rename = "location")]
     location: Option<Location>,
@@ -34,13 +36,19 @@ pub struct Clan {
     required_trophies: i32,
 
     #[serde(rename = "warFrequency")]
-    war_frequency: String,
+    war_frequency: WarFrequency,
 
     #[serde(rename = "warWinStreak")]
     war_win_streak: i32,
 
     #[serde(rename = "warWins")]
     war_wins: i32,
+
+    #[serde(rename = "warTies")]
+    war_ties: Option<i32>,
+
+    #[serde(rename = "warLosses")]
+    war_losses: Option<i32>,
 
     #[serde(rename = "isWarLogPublic")]
     is_war_log_public: bool,
@@ -52,19 +60,51 @@ pub struct Clan {
     members: i32,
 
     #[serde(rename = "memberList")]
-    member_list: Vec<ClanMember>,
+    member_list: Option<Vec<ClanMember>>,
 
     #[serde(rename = "labels")]
     labels: Vec<Label>,
-
-    #[serde(rename = "chatLanguage")]
-    chat_language: ChatLanguage,
 
     #[serde(rename = "requiredVersusTrophies")]
     required_versus_trophies: i32,
 
     #[serde(rename = "requiredTownhallLevel")]
     required_townhall_level: i8,
+
+    #[serde(rename = "clanCapital")]
+    clan_capital: Option<ClanCapital>,
+
+    #[serde(rename = "chatLanguage")]
+    chat_language: Option<ChatLanguage>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Privacy {
+    #[serde(rename = "open")]
+    Open,
+    #[serde(rename = "inviteOnly")]
+    InviteOnly,
+    #[serde(rename = "closed")]
+    Closed,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum WarFrequency {
+    // UNKNOWN, ALWAYS, MORE_THAN_ONCE_PER_WEEK, ONCE_PER_WEEK, LESS_THAN_ONCE_PER_WEEK, NEVER, ANY
+    #[serde(rename = "unknown")]
+    Unknown,
+    #[serde(rename = "always")]
+    Always,
+    #[serde(rename = "moreThanOncePerWeek")]
+    MoreThanOncePerWeek,
+    #[serde(rename = "oncePerWeek")]
+    OncePerWeek,
+    #[serde(rename = "lessThanOncePerWeek")]
+    LessThanOncePerWeek,
+    #[serde(rename = "never")]
+    Never,
+    #[serde(rename = "any")]
+    Any,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -98,18 +138,6 @@ pub struct LabelIconUrls {
 
     #[serde(rename = "medium")]
     medium: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Location {
-    #[serde(rename = "id")]
-    id: i32,
-
-    #[serde(rename = "name")]
-    name: String,
-
-    #[serde(rename = "isCountry")]
-    is_country: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -196,6 +224,24 @@ pub enum Role {
     Member,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClanCapital {
+    #[serde(rename = "capitalHallLevel")]
+    capital_hall_level: i8,
+    #[serde(rename = "districts")]
+    districts: Vec<District>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct District {
+    #[serde(rename = "id")]
+    id: i32,
+    #[serde(rename = "name")]
+    name: String,
+    #[serde(rename = "districtHallLevel")]
+    district_hall_level: i8,
+}
+
 impl Clan {
     pub fn tag(&self) -> &str {
         &self.tag
@@ -203,10 +249,10 @@ impl Clan {
     pub fn name(&self) -> &str {
         &self.name
     }
-    pub fn welcome_type(&self) -> &str {
-        &self.clan_type
+    pub fn privacy(&self) -> &Privacy {
+        &self.privacy
     }
-    pub fn description(&self) -> &str {
+    pub fn description(&self) -> &Option<String> {
         &self.description
     }
     pub fn location(&self) -> &Option<Location> {
@@ -227,7 +273,7 @@ impl Clan {
     pub fn required_trophies(&self) -> i32 {
         self.required_trophies
     }
-    pub fn war_frequency(&self) -> &str {
+    pub fn war_frequency(&self) -> &WarFrequency {
         &self.war_frequency
     }
     pub fn war_win_streak(&self) -> i32 {
@@ -245,13 +291,13 @@ impl Clan {
     pub fn members(&self) -> i32 {
         self.members
     }
-    pub fn member_list(&self) -> &Vec<ClanMember> {
+    pub fn member_list(&self) -> &Option<Vec<ClanMember>> {
         &self.member_list
     }
     pub fn labels(&self) -> &Vec<Label> {
         &self.labels
     }
-    pub fn chat_language(&self) -> &ChatLanguage {
+    pub fn chat_language(&self) -> &Option<ChatLanguage> {
         &self.chat_language
     }
     pub fn required_versus_trophies(&self) -> i32 {
@@ -265,7 +311,7 @@ impl Clan {
 impl Role {
     pub fn to_string(&self) -> &str {
         match self {
-            Role::Admin => "admin",
+            Role::Admin => "elder",
             Role::CoLeader => "coLeader",
             Role::Leader => "leader",
             Role::Member => "member",
@@ -339,18 +385,6 @@ impl ClanMember {
     }
     pub fn donations_received(&self) -> i32 {
         self.donations_received
-    }
-}
-
-impl Location {
-    pub fn id(&self) -> i32 {
-        self.id
-    }
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-    pub fn is_country(&self) -> bool {
-        self.is_country
     }
 }
 

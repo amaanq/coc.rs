@@ -78,6 +78,20 @@ pub struct Key {
     pub key: String,
 }
 
+impl std::fmt::Display for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "Key {{ id: {}, name: {}, description: {}, key: {}, cidr_ranges: {} }}",
+            self.id,
+            self.name,
+            self.description,
+            self.key,
+            self.cidr_ranges.join(", ")
+        )
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub enum Scope {
     #[serde(rename = "clash")]
@@ -97,13 +111,10 @@ pub struct KeyResponse {
     status: Status,
     #[serde(rename = "sessionExpiresInSeconds")]
     session_expires_in_seconds: i64,
-    keys: Vec<Key>,
+    key: Key,
 }
 
 // manage a session
-pub const BASE_DEV_URL: &str = "https://developer.clashofclans.com";
-const IP_URL: &str = "https://api.ipify.org";
-
 lazy_static! {
     pub static ref CLIENT: reqwest::Client = reqwest::Client::builder()
         .cookie_store(true)
@@ -111,42 +122,26 @@ lazy_static! {
         .unwrap();
 }
 
-pub async fn get_ip() -> Result<String, reqwest::Error> {
-    Ok(CLIENT.get(IP_URL).send().await?.text().await?)
-}
+
 
 impl APIAccount {
+    const BASE_DEV_URL: &str = "https://developer.clashofclans.com";
     const LOGIN_ENDPOINT: &str = "/api/login";
     const KEY_LIST_ENDPOINT: &str = "/api/apikey/list";
     const KEY_CREATE_ENDPOINT: &str = "/api/apikey/create";
     const KEY_REVOKE_ENDPOINT: &str = "/api/apikey/revoke";
-
-    // const CLAN_ENDPOINT: &str = "/clans";
-    // const PLAYER_ENDPOINT: &str = "/players";
-    // const LEAGUE_ENDPOINT: &str = "/leagues";
-    // const WAR_LEAGUE_ENDPOINT: &str = "/warleagues";
-    // const LOCATION_ENDPOINT: &str = "/locations";
-    // const GOLDPASS_ENDPOINT: &str = "/goldpass/seasons/current";
-    // const LABEL_ENDPOINT: &str = "/labels";
-
+    
     pub async fn login(credential: &Credential, ip: String) -> Self {
-        let _login_response = CLIENT
-            .post(format!("{}{}", BASE_DEV_URL, Self::LOGIN_ENDPOINT))
+        let login_response = CLIENT
+            .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
             .json::<Credential>(credential)
             .send()
             .await
             .unwrap()
-            .text()
+            .json()
             .await
             .unwrap();
-        println!("LOGIN RESPONSE: {}", _login_response);
-
-        let login_response =
-            serde_json::from_str::<LoginResponse>(_login_response.as_str()).unwrap();
-        // .json::<LoginResponse>()
-        // .await
-        // .unwrap();
 
         let mut account = Self {
             credential: credential.clone(),
@@ -156,26 +151,20 @@ impl APIAccount {
 
         account.get_keys().await;
 
-        // if account.keys.keys.len() != 10 {
-        //     println!("CREATING {} KEYS", 10 - account.keys.keys.len());
-        //     for _ in 0..(10 - account.keys.keys.len()) {
-        //         account.create_key(ip.clone()).await;
-        //     }
-        // }
+        if account.keys.keys.len() != 10 {
+            for _ in 0..(10 - account.keys.keys.len()) {
+                account.create_key(ip.clone()).await;
+            }
+        }
 
-        // account.update_all_keys(ip).await;
-        println!("CREATING A KEY");
-        account.create_key(ip).await;
-        println!("CREATED A KEY");
+        account.update_all_keys(ip).await;
 
-        println!("LOGGED INTO {}", credential.email());
         account
     }
 
     pub async fn get_keys(&mut self) {
-        // set self.keys to response body
         self.keys = CLIENT
-            .post(format!("{}{}", BASE_DEV_URL, APIAccount::KEY_LIST_ENDPOINT))
+            .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_LIST_ENDPOINT))
             .send()
             .await
             .unwrap()
@@ -191,6 +180,7 @@ impl APIAccount {
             .iter()
             .filter(|key| !key.cidr_ranges.iter().any(|cidr| ip.contains(cidr)))
             .collect::<Vec<_>>();
+
         // iter once to revoke all keys, then iter again to create new ones
         let len = bad_keys.len();
 
@@ -203,57 +193,33 @@ impl APIAccount {
     }
 
     pub async fn create_key(&mut self, ip: String) -> KeyResponse {
-        // description = "Created on %s by coc.rs", time.Now().Format(time.RFC3339)
-        // post to KEY_CREATE_ENDPOINT with header application/json and body {"name":"%s","description":"%s", "cidrRanges": ["%s"], "scopes": ["clash"]}, where cidrRanges is self ip
+        // sample json {"name":"coc-rs","description":"Created on 2022-08-24T06:34:28Z","cidrRanges":["1.1.1.1"],"scopes":["clash"]}
         let key = CLIENT
-            .post({
-                let url = format!("{}{}", BASE_DEV_URL, APIAccount::KEY_CREATE_ENDPOINT);
-                println!("CREATING KEY AT {}", url);
-                url
-            })
-            // .json::<Key>(&Key {
-            //     name: "coc.rs".to_string(),
-            //     description: "Created on %s by coc.rs".to_string(),
-            //     cidr_ranges: vec![ip.to_string()],
-            //     scopes: vec![Scope::Clash],
-            // })
-            // body as string
-            // sample json {"name":"coc-rs","description":"Created on 2022-08-24T06:34:28Z","cidrRanges":["1.1.1.1"],"scopes":["clash"]}
-            .body({
-                let body = format!(
-                    r#"{{"name":"hi","description":"hi","cidrRanges":["{}"]}}"#,
-                    //chrono::Utc::now().to_rfc3339(),
-                    ip
-                );
-                println!("{}", body);
-                body
-            })
+            .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_CREATE_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .body(format!(
+                r#"{{"name":"coc-rs","description":"Created on {} by coc.rs","cidrRanges":["{}"],"scopes":["clash"]}}"#,
+                chrono::Utc::now().to_rfc3339(),
+                ip
+            ))
             .send()
             .await
             .unwrap()
-            .text()
+            .json()
             .await
             .unwrap();
-        println!("KEY CREATE: {}", key);
 
         // asynchronously call self.get_keys()
         self.get_keys().await;
 
-        serde_json::from_str(&key).unwrap()
+        key
     }
 
     pub async fn revoke_key(&mut self, key_id: &str) -> KeyResponse {
         // post to KEY_REVOKE_ENDPOINT with header application/json and body {"id":"%s"}, where id is key_id
         let key = CLIENT
-            .post(format!(
-                "{}{}",
-                BASE_DEV_URL,
-                APIAccount::KEY_REVOKE_ENDPOINT
-            ))
-            // .json::<Key>(&Key {
-            //     id: key_id.to_string(),
-            // })
-            // body as string
+            .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
+            .header("Content-Type", "application/json")
             .body(format!("{{\"id\":\"{}\"}}", key_id))
             .send()
             .await
