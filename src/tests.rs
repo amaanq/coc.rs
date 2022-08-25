@@ -5,13 +5,14 @@ mod tests {
     use tokio::sync::Mutex;
 
     use crate::{
-        api::{APIError, Client, ConfigForRezponse, Time},
+        api::{APIError, Client},
         credentials::CredentialsBuilder,
         models::{
             clan::Role,
             clan_search::ClanSearchOptionsBuilder,
             leagues::{League, SeasonBuilder, WarLeague},
             locations::Local,
+            paging::{Paging, PagingBuilder},
         },
     };
     use std::{env, sync::Arc, time::Instant};
@@ -217,7 +218,8 @@ mod tests {
         let league_season_rankings = client
             .get_league_season_rankings(
                 League::LegendLeague,
-                SeasonBuilder::new().year(2015).month(Month::July).build(),
+                SeasonBuilder::new().year(2015).month(Month::August).build(),
+                PagingBuilder::new().before(2).build(),
             )
             .await
             .unwrap();
