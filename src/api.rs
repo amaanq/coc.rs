@@ -127,7 +127,8 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Clan Methods
     //_______________________________________________________________________
-    pub async fn get_clan_warlog(&self, tag: String) -> Result<APIResponse<WarLog>, APIError> {
+    pub async fn get_clan_warlog(&self, mut tag: String) -> Result<APIResponse<WarLog>, APIError> {
+        tag = self.fix_tag(tag);
         let url = format!(
             "{}/clans/{}/warlog",
             Self::BASE_URL,
@@ -146,7 +147,8 @@ impl Client {
         self.parse_json(self.get(url.to_string())).await
     }
 
-    pub async fn get_current_war(&self, clan_tag: String) -> Result<War, APIError> {
+    pub async fn get_current_war(&self, mut clan_tag: String) -> Result<War, APIError> {
+        clan_tag = self.fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/currentwar",
             Self::BASE_URL,
@@ -155,7 +157,8 @@ impl Client {
         self.parse_json(self.get(url)).await
     }
 
-    pub async fn get_clan(&self, clan_tag: String) -> Result<Clan, APIError> {
+    pub async fn get_clan(&self, mut clan_tag: String) -> Result<Clan, APIError> {
+        clan_tag = self.fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}",
             Self::BASE_URL,
@@ -164,11 +167,15 @@ impl Client {
         self.parse_json(self.get(url)).await
     }
 
-    pub async fn get_clan_members(&self, tag: String) -> Result<APIResponse<ClanMember>, APIError> {
+    pub async fn get_clan_members(
+        &self,
+        mut clan_tag: String,
+    ) -> Result<APIResponse<ClanMember>, APIError> {
+        clan_tag = self.fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/members",
             Self::BASE_URL,
-            urlencoding::encode(tag.as_str())
+            urlencoding::encode(clan_tag.as_str())
         );
         self.parse_json(self.get(url)).await
     }
@@ -176,7 +183,8 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Player Methods
     //_______________________________________________________________________
-    pub async fn get_player(&self, tag: String) -> Result<Player, APIError> {
+    pub async fn get_player(&self, mut tag: String) -> Result<Player, APIError> {
+        tag = self.fix_tag(tag);
         let url = format!(
             "{}/players/{}",
             Self::BASE_URL,
@@ -187,9 +195,10 @@ impl Client {
 
     pub async fn verify_player_token(
         &self,
-        tag: String,
+        mut tag: String,
         token: String,
     ) -> Result<PlayerToken, APIError> {
+        tag = self.fix_tag(tag);
         let url = format!(
             "{}/players/{}/verifytoken",
             Self::BASE_URL,
