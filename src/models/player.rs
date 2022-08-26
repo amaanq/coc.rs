@@ -129,15 +129,6 @@ pub struct Season {
 }
 
 impl Player {
-    // func (p *PlayerAccount) SetLinks() {
-    //     p.CoSLink = fmt.Sprintf(string(ClashofStats), string(p.Tag[1:]))
-    //     p.CCLink = fmt.Sprintf(ChocolateClash, string(p.Tag[1:]))
-    //     p.OpenInGameLink = fmt.Sprintf(InGameLink, url.PathEscape(p.Tag.String()))
-    // }
-    // ClashofStats   = "https://www.clashofstats.com/players/%s/summary"
-    // ChocolateClash = "https://cc.chocolateclash.com/cc_n/member.php?tag=%s"
-    // InGameLink     = "https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=%s"
-
     pub fn game_link(&self) -> String {
         format!(
             "https://link.clashofclans.com/en?action=OpenPlayerProfile&tag={}",
