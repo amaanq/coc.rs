@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use std::{env, sync::Arc, time::Instant};
+
     use bytestream_rs::logiclong::LogicLong;
     use time::Month;
     use tokio::sync::Mutex;
@@ -15,7 +17,7 @@ mod tests {
             paging::{Paging, PagingBuilder},
         },
     };
-    use std::{env, sync::Arc, time::Instant};
+    use crate::models::player::Player;
 
     #[test]
     fn test_credentials() {
@@ -547,5 +549,24 @@ mod tests {
         }
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Throttle counter: {:#?}", throttle_counter);
+    }
+
+
+    #[tokio::test]
+    async fn test_event() {
+        let credentials = CredentialsBuilder::new()
+            .add_credential("email".to_owned(), "password".to_owned())
+            .build();
+        let client = crate::api::Client::new(credentials).await;
+
+        let mut x = crate::events::EventsListenerBuilder::new(&client);
+        x.add_player("#2pp".to_string()).await;
+        struct s;
+        impl crate::events::EventHandler for s {
+            fn player(old_player: Option<Player>, new_player: Player) {
+                println!("LMAO");
+            }
+        }
+        x.build(s).init();
     }
 }
