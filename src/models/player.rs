@@ -1,7 +1,7 @@
 use crate::models::badge_urls::BadgeUrls;
 use serde::{Deserialize, Serialize};
 
-use super::clan::{Label, Role, League};
+use super::clan::{Label, League, Role};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -9,6 +9,7 @@ pub struct Player {
     pub tag: String,
     pub name: String,
     pub town_hall_level: i8,
+    pub town_hall_weapon_level: Option<i8>,
     pub exp_level: i32,
     pub trophies: i32,
     pub best_trophies: i32,
@@ -25,6 +26,7 @@ pub struct Player {
     pub clan_capital_contributions: i32,
     pub clan: Option<PlayerClan>,
     pub league: Option<League>,
+    pub legend_statistics: Option<LegendStatistics>,
     pub achievements: Vec<Achievement>,
     pub versus_battle_win_count: i32,
     pub labels: Vec<Label>,
@@ -105,4 +107,22 @@ pub struct PlayerToken {
     pub tag: String,
     pub token: String,
     pub status: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LegendStatistics {
+    pub legend_trophies: i32,
+    pub previous_season: Season,
+    pub best_season: Season,
+    pub current_season: Season,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Season {
+    // id rank and trophies
+    pub id: Option<String>,
+    pub rank: i32,
+    pub trophies: i32,
 }

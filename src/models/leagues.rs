@@ -54,6 +54,13 @@ pub enum WarLeague {
 #[derive(Debug)]
 pub enum SeasonError {
     InvalidSeason,
+    ParseFailed(String),
+}
+
+impl From<std::num::ParseIntError> for SeasonError {
+    fn from(err: std::num::ParseIntError) -> Self {
+        SeasonError::ParseFailed(err.to_string())
+    }
 }
 
 #[derive(Debug)]
@@ -112,6 +119,15 @@ impl Season {
         //YYYY-MM
         self.id = format!("{}-{:02}", self.year, self.month as i32);
         self.id.clone()
+    }
+
+    pub fn from_string(season: String) -> Result<Season, SeasonError> {
+        let mut season_split = season.split('-');
+        Ok(Season {
+            id: season.clone(),
+            year: season_split.next().unwrap().parse::<i32>()?,
+            month: Month::try_from(season_split.next().unwrap().parse::<i32>()? as u8).unwrap(),
+        })
     }
 
     pub fn default_month() -> Month {
