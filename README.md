@@ -34,7 +34,7 @@ async fn main() {
 }
 ```
 
-### How to Handler Errors
+### How to Handle Errors
 ```rust
 #[tokio::main]
 async fn main() {
