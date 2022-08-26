@@ -16,6 +16,7 @@ pub struct Player {
     pub war_stars: i32,
     pub attack_wins: i32,
     pub defense_wins: i32,
+    pub builder_hall_level: i8,
     pub versus_trophies: i32,
     pub best_versus_trophies: i32,
     pub versus_battle_wins: i32,
