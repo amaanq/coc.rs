@@ -16,7 +16,7 @@ pub struct Player {
     pub war_stars: i32,
     pub attack_wins: i32,
     pub defense_wins: i32,
-    pub builder_hall_level: i8,
+    pub builder_hall_level: Option<i8>,
     pub versus_trophies: i32,
     pub best_versus_trophies: i32,
     pub versus_battle_wins: i32,
@@ -147,5 +147,11 @@ impl Player {
             "https://cc.chocolateclash.com/cc_n/member.php?tag={}",
             self.tag.replace("#", "")
         )
+    }
+
+    pub fn test(&self) {
+        self.clash_of_stats_link();
+        self.chocolate_clash_link();
+        self.game_link();
     }
 }
