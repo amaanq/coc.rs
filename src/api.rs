@@ -1,9 +1,15 @@
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-
 extern crate reqwest;
 
+use std::error::Error;
+use std::sync::{Arc, Mutex};
+
+use regex::Regex;
+use reqwest::{RequestBuilder, Url};
+use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
+
 use crate::credentials::Credentials;
+use crate::dev::{self, APIAccount, CLIENT};
 use crate::models::clan::{
     Clan, ClanMember, Label, League as ClanLeague, WarLeague as ClanWarLeague,
 };
@@ -18,12 +24,6 @@ use crate::models::player::{Player, PlayerToken};
 use crate::models::player_ranking::{PlayerRanking, PlayerVersusRanking};
 use crate::models::war_log::WarLog;
 
-use reqwest::{RequestBuilder, Url};
-use serde::de::DeserializeOwned;
-
-use crate::dev::{self, APIAccount, CLIENT};
-use std::error::Error;
-use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug, Default)]
 pub struct Client {
@@ -39,25 +39,26 @@ pub struct Client {
 #[derive(Debug)]
 pub enum APIError {
     ClientNotReady,
-    BadRequest, // this is useless?
+    BadRequest,
+    // this is useless?
     RequestFailed(reqwest::Error),
     BadResponse(String, reqwest::StatusCode),
     InvalidParameters(String),
 }
 
+const IP_URL: &str = "https://api.ipify.org";
+
+const BASE_URL: &str = "https://api.clashofclans.com/v1";
+// const CLAN_ENDPOINT: &str = "/clans/{}";
+// const CLAN_WARLOG_ENDPOINT: &str = "/clans/{}/warlog";
+// const PLAYER_ENDPOINT: &str = "/players/{}";
+// const LEAGUE_ENDPOINT: &str = "/leagues";
+// const WAR_LEAGUE_ENDPOINT: &str = "/warleagues";
+// const LOCATION_ENDPOINT: &str = "/locations";
+const GOLDPASS_ENDPOINT: &str = "/goldpass/seasons/current";
+
+// const LABEL_ENDPOINT: &str = "/labels";
 impl Client {
-    const IP_URL: &str = "https://api.ipify.org";
-
-    const BASE_URL: &str = "https://api.clashofclans.com/v1";
-    // const CLAN_ENDPOINT: &str = "/clans/{}";
-    // const CLAN_WARLOG_ENDPOINT: &str = "/clans/{}/warlog";
-    // const PLAYER_ENDPOINT: &str = "/players/{}";
-    // const LEAGUE_ENDPOINT: &str = "/leagues";
-    // const WAR_LEAGUE_ENDPOINT: &str = "/warleagues";
-    // const LOCATION_ENDPOINT: &str = "/locations";
-    const GOLDPASS_ENDPOINT: &str = "/goldpass/seasons/current";
-    // const LABEL_ENDPOINT: &str = "/labels";
-
     pub async fn new(credentials: Credentials) -> Self {
         let mut client = Self {
             credentials,
@@ -80,7 +81,7 @@ impl Client {
     }
 
     async fn get_ip() -> Result<String, reqwest::Error> {
-        Ok(CLIENT.get(Self::IP_URL).send().await?.text().await?)
+        Ok(CLIENT.get(IP_URL).send().await?.text().await?)
     }
 
     async fn init(&self) {
@@ -131,7 +132,7 @@ impl Client {
         tag = self.fix_tag(tag);
         let url = format!(
             "{}/clans/{}/warlog",
-            Self::BASE_URL,
+            BASE_URL,
             urlencoding::encode(tag.as_str())
         );
         self.parse_json(self.get(url)).await
@@ -142,7 +143,7 @@ impl Client {
         options: ClanSearchOptions,
     ) -> Result<APIResponse<Clan>, APIError> {
         let url =
-            Url::parse_with_params(format!("{}/clans", Self::BASE_URL).as_str(), options.items)
+            Url::parse_with_params(format!("{}/clans", BASE_URL).as_str(), options.items)
                 .unwrap();
         self.parse_json(self.get(url.to_string())).await
     }
@@ -151,7 +152,7 @@ impl Client {
         clan_tag = self.fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/currentwar",
-            Self::BASE_URL,
+            BASE_URL,
             urlencoding::encode(clan_tag.as_str())
         );
         self.parse_json(self.get(url)).await
@@ -161,7 +162,7 @@ impl Client {
         clan_tag = self.fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}",
-            Self::BASE_URL,
+            BASE_URL,
             urlencoding::encode(clan_tag.as_str())
         );
         self.parse_json(self.get(url)).await
@@ -174,7 +175,7 @@ impl Client {
         clan_tag = self.fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/members",
-            Self::BASE_URL,
+            BASE_URL,
             urlencoding::encode(clan_tag.as_str())
         );
         self.parse_json(self.get(url)).await
@@ -187,7 +188,7 @@ impl Client {
         tag = self.fix_tag(tag);
         let url = format!(
             "{}/players/{}",
-            Self::BASE_URL,
+            BASE_URL,
             urlencoding::encode(tag.as_str())
         );
         self.parse_json(self.get(url)).await
@@ -201,7 +202,7 @@ impl Client {
         tag = self.fix_tag(tag);
         let url = format!(
             "{}/players/{}/verifytoken",
-            Self::BASE_URL,
+            BASE_URL,
             urlencoding::encode(tag.as_str())
         );
         let token = format!("{{\"token\":\"{}\"}}", token);
@@ -212,7 +213,7 @@ impl Client {
     // League Methods
     //_______________________________________________________________________
     pub async fn get_leagues(&self) -> Result<APIResponse<ClanLeague>, APIError> {
-        let url = format!("{}/leagues", Self::BASE_URL);
+        let url = format!("{}/leagues", BASE_URL);
         self.parse_json(self.get(url)).await
     }
 
@@ -231,7 +232,7 @@ impl Client {
         }
         let mut url = format!(
             "{}/leagues/{}/seasons/{}",
-            Self::BASE_URL,
+            BASE_URL,
             league_id as i32,
             season_id.to_string()
         );
@@ -244,7 +245,7 @@ impl Client {
     }
 
     pub async fn get_league(&self, league_id: League) -> Result<ClanLeague, APIError> {
-        let url = format!("{}/leagues/{}", Self::BASE_URL, league_id as i32);
+        let url = format!("{}/leagues/{}", BASE_URL, league_id as i32);
         self.parse_json(self.get(url)).await
     }
 
@@ -258,17 +259,17 @@ impl Client {
                     .to_string(),
             ));
         }
-        let url = format!("{}/leagues/{}/seasons", Self::BASE_URL, league_id as i32);
+        let url = format!("{}/leagues/{}/seasons", BASE_URL, league_id as i32);
         self.parse_json(self.get(url)).await
     }
 
     pub async fn get_war_league(&self, war_league: WarLeague) -> Result<ClanWarLeague, APIError> {
-        let url = format!("{}/warleagues/{}", Self::BASE_URL, war_league as i32);
+        let url = format!("{}/warleagues/{}", BASE_URL, war_league as i32);
         self.parse_json(self.get(url)).await
     }
 
     pub async fn get_war_leagues(&self) -> Result<APIResponse<ClanWarLeague>, APIError> {
-        let url = format!("{}/warleagues", Self::BASE_URL);
+        let url = format!("{}/warleagues", BASE_URL);
         self.parse_json(self.get(url)).await
     }
 
@@ -282,7 +283,7 @@ impl Client {
     ) -> Result<APIResponse<ClanRanking>, APIError> {
         let url = format!(
             "{}/locations/{}/rankings/clans",
-            Self::BASE_URL,
+            BASE_URL,
             location as i32,
         );
         self.parse_json(self.get(url)).await
@@ -294,7 +295,7 @@ impl Client {
     ) -> Result<APIResponse<PlayerRanking>, APIError> {
         let url = format!(
             "{}/locations/{}/rankings/players",
-            Self::BASE_URL,
+            BASE_URL,
             location as i32,
         );
         self.parse_json(self.get(url)).await
@@ -306,7 +307,7 @@ impl Client {
     ) -> Result<APIResponse<ClanRanking>, APIError> {
         let url = format!(
             "{}/locations/{}/rankings/clans-versus",
-            Self::BASE_URL,
+            BASE_URL,
             location as i32,
         );
         self.parse_json(self.get(url)).await
@@ -318,19 +319,19 @@ impl Client {
     ) -> Result<APIResponse<PlayerVersusRanking>, APIError> {
         let url = format!(
             "{}/locations/{}/rankings/players-versus",
-            Self::BASE_URL,
+            BASE_URL,
             location as i32,
         );
         self.parse_json(self.get(url)).await
     }
 
     pub async fn get_locations(&self) -> Result<APIResponse<Location>, APIError> {
-        let url = format!("{}/locations", Self::BASE_URL);
+        let url = format!("{}/locations", BASE_URL);
         self.parse_json(self.get(url)).await
     }
 
     pub async fn get_location(&self, location: Local) -> Result<Location, APIError> {
-        let url = format!("{}/locations/{}", Self::BASE_URL, location as i32);
+        let url = format!("{}/locations/{}", BASE_URL, location as i32);
         self.parse_json(self.get(url)).await
     }
 
@@ -338,7 +339,7 @@ impl Client {
     // Gold Pass Method
     //_______________________________________________________________________
     pub async fn get_goldpass(&self) -> Result<GoldPass, APIError> {
-        let url = format!("{}{}", Self::BASE_URL, Self::GOLDPASS_ENDPOINT);
+        let url = format!("{}{}", BASE_URL, GOLDPASS_ENDPOINT);
         self.parse_json(self.get(url)).await
     }
 
@@ -346,12 +347,12 @@ impl Client {
     // Label Methods
     //_______________________________________________________________________
     pub async fn get_player_labels(&self) -> Result<APIResponse<Label>, APIError> {
-        let url = format!("{}/labels/players", Self::BASE_URL);
+        let url = format!("{}/labels/players", BASE_URL);
         self.parse_json(self.get(url)).await
     }
 
     pub async fn get_clan_labels(&self) -> Result<APIResponse<Label>, APIError> {
-        let url = format!("{}/labels/clans", Self::BASE_URL);
+        let url = format!("{}/labels/clans", BASE_URL);
         self.parse_json(self.get(url)).await
     }
 
