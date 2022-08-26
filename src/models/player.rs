@@ -1,7 +1,7 @@
 use crate::models::badge_urls::BadgeUrls;
 use serde::{Deserialize, Serialize};
 
-use super::clan::{Label, Role};
+use super::clan::{Label, Role, League};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,6 +24,7 @@ pub struct Player {
     pub donations_received: i32,
     pub clan_capital_contributions: i32,
     pub clan: Option<PlayerClan>,
+    pub league: Option<League>,
     pub achievements: Vec<Achievement>,
     pub versus_battle_win_count: i32,
     pub labels: Vec<Label>,
