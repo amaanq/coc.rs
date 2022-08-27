@@ -85,4 +85,4 @@ Contributing is fantastic and much welcomed! If you have an issue, feel free to 
 # Disclaimer
 This content is not affiliated with, endorsed, sponsored, or specifically
 approved by Supercell and Supercell is not responsible for it.
-For more information see [Supercell's Fan Content Policy](https://www.supercell.com/fan-content-policy).
+For more information see [Supercell'S Fan Content Policy](https://www.supercell.com/fan-content-policy).

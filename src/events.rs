@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use tokio::sync::{Mutex, MutexGuard};
 
 use crate::api::Client;
@@ -12,7 +12,9 @@ use crate::models::player::Player;
 
 #[async_trait]
 pub trait EventHandler {
-    fn player(old_player: Option<Player>, new_player: Player);
+    async fn player(&self, old_player: Option<Player>, new_player: Player) {}
+    async fn clan(&self, old_clan: Option<Clan>, new_clan: Clan) {}
+    async fn war(&self, old_war: Option<WarClan>, new_war: WarClan) {}
 }
 
 #[derive(Debug)]
@@ -21,6 +23,7 @@ pub struct EventsListenerBuilder<'a> {
     client: &'a Client,
 }
 
+const TEMP_COUNT: i8 = 0;
 #[derive(Debug)]
 pub enum EventType {
     Player(String, chrono::DateTime<Utc>, Option<Player>),
@@ -50,7 +53,7 @@ impl<'a> EventsListenerBuilder<'a> {
     }
 
     pub fn build<T: EventHandler>(self, handler: T) -> EventsListener<'a, T>
-        where T: EventHandler
+        where T: EventHandler + Sync + Send
     {
         EventsListener {
             event_type: self.event_type,
@@ -61,8 +64,8 @@ impl<'a> EventsListenerBuilder<'a> {
     }
 }
 
-pub struct EventsListener<'a, T: EventHandler>
-    where T: EventHandler
+pub struct EventsListener<'a, T>
+    where T: EventHandler + Sync + Send
 {
     event_type: EventType,
     client: &'a Client,
@@ -70,8 +73,10 @@ pub struct EventsListener<'a, T: EventHandler>
     last_time_fired: chrono::DateTime<Utc>,
 }
 
-impl<'a, T: EventHandler> EventsListener<'a, T> {
-    pub async fn init(&self) -> ! {
+impl<'a, T> EventsListener<'a, T>
+    where T: EventHandler + Sync + Send
+{
+    pub async fn init(&mut self) -> ! {
         loop {
             match self.fire_events().await {
                 Ok(_) => {
@@ -83,10 +88,16 @@ impl<'a, T: EventHandler> EventsListener<'a, T> {
             };
         }
     }
-    async fn fire_events(&self) -> Result<(), ()> {
+    async fn fire_events(&mut self) -> Result<(), ()> {
         match &self.event_type {
             EventType::Player(tag, now, old) => {
-                println!("new event")
+                let new = self.client.get_player(tag.to_owned()).await.unwrap();
+                match old {
+                    None => { println!("NONE") } //debug info to remove
+                    Some(_) => {}
+                }
+                self.handler.player(old.clone(), new.clone()).await;
+                self.event_type = EventType::Player(tag.to_owned(), Utc::now(), Some(new))
             }
             EventType::Clan(tag, now, old) => {
                 todo!()
