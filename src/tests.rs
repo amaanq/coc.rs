@@ -555,7 +555,7 @@ mod tests {
     #[tokio::test]
     async fn test_event() {
         let credentials = CredentialsBuilder::new()
-            .add_credential("email".to_owned(), "password".to_owned())
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = crate::api::Client::new(credentials).await;
 
@@ -567,6 +567,6 @@ mod tests {
                 println!("LMAO");
             }
         }
-        x.build(s).init();
+        x.build(s).init().await;
     }
 }
