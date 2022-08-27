@@ -56,7 +56,7 @@ impl<'a> EventsListenerBuilder<'a> {
             event_type: self.event_type,
             client: self.client,
             handler,
-            last_time_fired: chrono::offset::Utc::now(),
+            last_time_fired: Utc::now(),
         }
     }
 }
@@ -71,7 +71,7 @@ pub struct EventsListener<'a, T: EventHandler>
 }
 
 impl<'a, T: EventHandler> EventsListener<'a, T> {
-    pub async fn init(&self) {
+    pub async fn init(&self) -> ! {
         loop {
             match self.fire_events().await {
                 Ok(_) => {
