@@ -2,6 +2,7 @@
 mod tests {
     use std::{env, sync::Arc, time::Instant};
 
+    use async_trait::async_trait;
     use bytestream_rs::logiclong::LogicLong;
     use time::Month;
     use tokio::sync::Mutex;
@@ -561,12 +562,15 @@ mod tests {
 
         let mut x = crate::events::EventsListenerBuilder::new(&client);
         x.add_player("#2pp".to_string()).await;
-        struct s;
-        impl crate::events::EventHandler for s {
-            fn player(old_player: Option<Player>, new_player: Player) {
-                println!("LMAO");
-            }
+        x.build(S {}).init().await;
+    }
+
+    struct S;
+
+    #[async_trait]
+    impl crate::events::EventHandler for S {
+        async fn player(&self, old_player: Option<Player>, new_player: Player) {
+            println!("new player")
         }
-        x.build(s).init().await;
     }
 }
