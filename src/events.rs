@@ -1,14 +1,16 @@
 use std::ops::Add;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use tokio::sync::{Mutex, MutexGuard};
 
-use crate::api::Client;
+use crate::api::{APIError, Client};
 use crate::models::clan::Clan;
 use crate::models::current_war::WarClan;
 use crate::models::player::Player;
+use crate::models::player::WarPreference::In;
 
 #[async_trait]
 pub trait EventHandler {
@@ -24,11 +26,12 @@ pub struct EventsListenerBuilder<'a> {
 }
 
 const TEMP_COUNT: i8 = 0;
+
 #[derive(Debug)]
 pub enum EventType {
-    Player(String, chrono::DateTime<Utc>, Option<Player>),
-    Clan(String, chrono::DateTime<Utc>, Option<Clan>),
-    War(String, chrono::DateTime<Utc>, Option<WarClan>),
+    Player(String, Instant, Option<Player>),
+    Clan(String, Instant, Option<Clan>),
+    War(String, Instant, Option<WarClan>),
     None,
 }
 
@@ -41,15 +44,15 @@ impl<'a> EventsListenerBuilder<'a> {
     }
 
     pub async fn add_clan(&mut self, tag: String) {
-        self.event_type = EventType::Clan(tag, Utc::now(), None)
+        self.event_type = EventType::Clan(tag, Instant::now(), None)
     }
 
     pub async fn add_player(&mut self, tag: String) {
-        self.event_type = EventType::Player(tag, Utc::now(), None)
+        self.event_type = EventType::Player(tag, Instant::now(), None)
     }
 
     pub async fn add_war(&mut self, tag: String) {
-        self.event_type = EventType::War(tag, Utc::now(), None)
+        self.event_type = EventType::War(tag, Instant::now(), None)
     }
 
     pub fn build<T: EventHandler>(self, handler: T) -> EventsListener<'a, T>
@@ -59,7 +62,7 @@ impl<'a> EventsListenerBuilder<'a> {
             event_type: self.event_type,
             client: self.client,
             handler,
-            last_time_fired: Utc::now(),
+            last_time_fired: Instant::now(),
         }
     }
 }
@@ -70,7 +73,7 @@ pub struct EventsListener<'a, T>
     event_type: EventType,
     client: &'a Client,
     handler: T,
-    last_time_fired: chrono::DateTime<Utc>,
+    last_time_fired: Instant,
 }
 
 impl<'a, T> EventsListener<'a, T>
@@ -79,25 +82,37 @@ impl<'a, T> EventsListener<'a, T>
     pub async fn init(&mut self) -> ! {
         loop {
             match self.fire_events().await {
-                Ok(_) => {
-                    println!("Got successfully")
+                Ok(b) => {
+                    if b == true {
+                        println!("Got successfully")
+                    }
                 }
                 Err(_) => {
-                    println!("Not success")
+                    println!("Error in Events");
+                    break;
                 }
             };
         }
     }
-    async fn fire_events(&mut self) -> Result<(), ()> {
+    async fn fire_events(&mut self) -> Result<bool, ()> {
+        fn should_fire_again(duration: Duration, minutes: u64) -> bool {
+            duration.as_secs() >= minutes
+        }
         match &self.event_type {
-            EventType::Player(tag, now, old) => {
-                let new = self.client.get_player(tag.to_owned()).await.unwrap();
-                match old {
-                    None => { println!("NONE") } //debug info to remove
-                    Some(_) => {}
-                }
-                self.handler.player(old.clone(), new.clone()).await;
-                self.event_type = EventType::Player(tag.to_owned(), Utc::now(), Some(new))
+            EventType::Player(tag, last_fired, old) => {
+                let option = Instant::now().checked_duration_since(*last_fired);
+
+                match option {
+                    None => {}
+                    Some(q) => {
+                        if should_fire_again(q, 30) {
+                            let new = self.client.get_player(tag.to_owned()).await.unwrap();
+                            self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
+                            self.event_type = EventType::Player(tag.to_owned(), Instant::now(), Some(new));
+                            return Ok(true);
+                        }
+                    }
+                };
             }
             EventType::Clan(tag, now, old) => {
                 todo!()
@@ -109,6 +124,6 @@ impl<'a, T> EventsListener<'a, T>
                 return Err(());
             }
         };
-        Ok(())
+        Ok(false)
     }
 }
