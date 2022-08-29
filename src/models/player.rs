@@ -131,9 +131,9 @@ pub struct PlayerToken {
 #[serde(rename_all = "camelCase")]
 pub struct LegendStatistics {
     pub legend_trophies: i32,
-    pub previous_season: season::SeasonData,
-    pub best_season: season::SeasonData,
-    pub current_season: season::SeasonData,
+    pub previous_season: Option<season::PreviousSeasonData>,
+    pub best_season: season::BestSeasonData,
+    pub current_season: season::CurrentSeasonData,
 }
 
 impl Player {

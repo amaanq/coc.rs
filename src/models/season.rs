@@ -28,10 +28,25 @@ pub struct Season {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SeasonData {
-    // id rank and trophies
-    pub id: Option<String>,
+pub struct PreviousSeasonData {
+    pub id: String,
     pub rank: i32,
+    pub trophies: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BestSeasonData {
+    pub id: String,
+    pub rank: i32,
+    pub trophies: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CurrentSeasonData {
+    pub id: Option<String>,
+    pub rank: Option<i32>,
     pub trophies: i32,
 }
 
