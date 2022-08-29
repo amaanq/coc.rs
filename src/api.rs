@@ -46,16 +46,16 @@ pub enum APIError {
 }
 
 impl Client {
-    const IP_URL: &str = "https://api.ipify.org";
+    const IP_URL: &'static str = "https://api.ipify.org";
 
-    const BASE_URL: &str = "https://api.clashofclans.com/v1";
+    const BASE_URL: &'static str = "https://api.clashofclans.com/v1";
     // const CLAN_ENDPOINT: &str = "/clans/{}";
     // const CLAN_WARLOG_ENDPOINT: &str = "/clans/{}/warlog";
     // const PLAYER_ENDPOINT: &str = "/players/{}";
     // const LEAGUE_ENDPOINT: &str = "/leagues";
     // const WAR_LEAGUE_ENDPOINT: &str = "/warleagues";
     // const LOCATION_ENDPOINT: &str = "/locations";
-    const GOLDPASS_ENDPOINT: &str = "/goldpass/seasons/current";
+    const GOLDPASS_ENDPOINT: &'static str = "/goldpass/seasons/current";
     // const LABEL_ENDPOINT: &str = "/labels";
 
     pub async fn new(credentials: Credentials) -> Self {
