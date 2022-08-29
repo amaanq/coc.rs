@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+use super::*;
+
 #[derive(Debug, Serialize, Deserialize)]
-pub enum PlayerLabel {
+pub enum PlayerLabelKind {
     ClanWars = 57000000,
     ClanWarLeague = 57000001,
     TrophyPushing = 57000002,
@@ -24,7 +26,7 @@ pub enum PlayerLabel {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ClanLabels {
+pub enum ClanLabelKind {
     ClanWars = 56000000,
     ClanWarLeague = 56000001,
     TrophyPushing = 56000002,
@@ -42,4 +44,20 @@ pub enum ClanLabels {
     Competitive = 56000014,
     NewbieFriendly = 56000015,
     ClanCapital = 56000016,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayerLabel {
+    pub id: PlayerLabelKind,
+    pub name: String,
+    pub icon_urls: icon_urls::LabelIconUrls,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClanLabel {
+    pub id: ClanLabelKind,
+    pub name: String,
+    pub icon_urls: icon_urls::LabelIconUrls,
 }

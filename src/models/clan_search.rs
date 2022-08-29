@@ -1,4 +1,4 @@
-use super::locations::Local;
+use super::location::Local;
 
 #[derive(Debug, Default)]
 pub struct ClanSearchOptionsBuilder {
