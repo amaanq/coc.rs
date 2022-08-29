@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Player {
     pub tag: String,
@@ -35,7 +35,7 @@ pub struct Player {
     pub spells: Vec<Spell>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum WarPreference {
     #[serde(rename = "in")]
@@ -53,7 +53,7 @@ impl WarPreference {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Hero {
     pub name: String,
@@ -61,7 +61,8 @@ pub struct Hero {
     pub max_level: i32,
     pub village: Village,
 }
-#[derive(Debug, Serialize, Deserialize)]
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Achievement {
     pub name: String,
@@ -73,7 +74,7 @@ pub struct Achievement {
     pub village: Village,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerClan {
     pub tag: String,
@@ -82,7 +83,7 @@ pub struct PlayerClan {
     pub badge_urls: badge_urls::BadgeUrls,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Spell {
     pub name: String,
@@ -91,7 +92,7 @@ pub struct Spell {
     pub village: Village,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Troop {
     pub name: String,
@@ -100,7 +101,7 @@ pub struct Troop {
     pub village: Village,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum Village {
     #[serde(rename = "builderBase")]
@@ -127,7 +128,7 @@ pub struct PlayerToken {
     pub status: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LegendStatistics {
     pub legend_trophies: i32,

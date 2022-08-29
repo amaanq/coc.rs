@@ -8,15 +8,15 @@ use tokio::sync::{Mutex, MutexGuard};
 
 use crate::api::{APIError, Client};
 use crate::models::clan::Clan;
-use crate::models::current_war::WarClan;
 use crate::models::player::Player;
 use crate::models::player::WarPreference::In;
+use crate::war::War;
 
 #[async_trait]
 pub trait EventHandler {
     async fn player(&self, old_player: Option<Player>, new_player: Player) {}
     async fn clan(&self, old_clan: Option<Clan>, new_clan: Clan) {}
-    async fn war(&self, old_war: Option<WarClan>, new_war: WarClan) {}
+    async fn war(&self, old_war: Option<War>, new_war: War) {}
 }
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ const TEMP_COUNT: i8 = 0;
 pub enum EventType {
     Player(String, Instant, Option<Player>),
     Clan(String, Instant, Option<Clan>),
-    War(String, Instant, Option<WarClan>),
+    War(String, Instant, Option<War>),
     None,
 }
 
@@ -79,7 +79,7 @@ pub struct EventsListener<'a, T>
 impl<'a, T> EventsListener<'a, T>
     where T: EventHandler + Sync + Send
 {
-    pub async fn init(&mut self) -> ! {
+    pub async fn init(&mut self) {
         loop {
             match self.fire_events().await {
                 Ok(b) => {
@@ -94,9 +94,9 @@ impl<'a, T> EventsListener<'a, T>
             };
         }
     }
-    async fn fire_events(&mut self) -> Result<bool, ()> {
-        fn should_fire_again(duration: Duration, minutes: u64) -> bool {
-            duration.as_secs() >= minutes
+    async fn fire_events(&mut self) -> Result<bool, APIError> {
+        fn should_fire_again(duration: Duration, seconds: u64) -> bool {
+            duration.as_secs() >= seconds
         }
         match &self.event_type {
             EventType::Player(tag, last_fired, old) => {
@@ -105,8 +105,8 @@ impl<'a, T> EventsListener<'a, T>
                 match option {
                     None => {}
                     Some(q) => {
-                        if should_fire_again(q, 30) {
-                            let new = self.client.get_player(tag.to_owned()).await.unwrap();
+                        if should_fire_again(q, 60) {
+                            let new = self.client.get_player(tag.to_owned()).await?;
                             self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
                             self.event_type = EventType::Player(tag.to_owned(), Instant::now(), Some(new));
                             return Ok(true);
@@ -114,14 +114,38 @@ impl<'a, T> EventsListener<'a, T>
                     }
                 };
             }
-            EventType::Clan(tag, now, old) => {
-                todo!()
+            EventType::Clan(tag, last_fired, old) => {
+                let option = Instant::now().checked_duration_since(*last_fired);
+
+                match option {
+                    None => {}
+                    Some(q) => {
+                        if should_fire_again(q, 60) {
+                            let new = self.client.get_clan(tag.to_owned()).await?;
+                            self.handler.clan(old.clone(), new.clone()).await; // invoking the handler function the user defined
+                            self.event_type = EventType::Clan(tag.to_owned(), Instant::now(), Some(new));
+                            return Ok(true);
+                        }
+                    }
+                };
             }
-            EventType::War(tag, now, old) => {
-                todo!()
+            EventType::War(tag, last_fired, old) => {
+                let option = Instant::now().checked_duration_since(*last_fired);
+
+                match option {
+                    None => {}
+                    Some(q) => {
+                        if should_fire_again(q, 60 * 10) {
+                            let new = self.client.get_current_war(tag.to_owned()).await?;
+                            self.handler.war(old.clone(), new.clone()).await; // invoking the handler function the user defined
+                            self.event_type = EventType::War(tag.to_owned(), Instant::now(), Some(new));
+                            return Ok(true);
+                        }
+                    }
+                };
             }
             EventType::None => {
-                return Err(());
+                return Err(APIError::EventFailure("[UNREADABLE] Event type was not specified".to_owned()))
             }
         };
         Ok(false)

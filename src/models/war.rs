@@ -1,7 +1,8 @@
-use crate::models::badge_urls::BadgeUrls;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+use crate::models::badge_urls::BadgeUrls;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct War {
     pub state: String,
@@ -14,7 +15,7 @@ pub struct War {
     pub opponent: Option<WarClan>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WarClan {
     pub tag: Option<String>,
@@ -27,7 +28,7 @@ pub struct WarClan {
     pub members: Option<Vec<Member>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Member {
     pub tag: String,
@@ -39,7 +40,7 @@ pub struct Member {
     pub best_opponent_attack: Option<Attack>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Attack {
     pub attacker_tag: String,

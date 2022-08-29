@@ -1,7 +1,11 @@
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-
 extern crate reqwest;
+
+use std::sync::{Arc, Mutex};
+
+use regex::Regex;
+use reqwest::{RequestBuilder, Url};
+use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
 
 use crate::{
     credentials::Credentials,
@@ -9,10 +13,6 @@ use crate::{
     models::*,
 };
 
-use reqwest::{RequestBuilder, Url};
-use serde::de::DeserializeOwned;
-
-use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug, Default)]
 pub struct Client {
@@ -50,6 +50,8 @@ pub enum APIError {
     BadResponse(String, reqwest::StatusCode),
     /// From malformed cursors or using invalid leagues
     InvalidParameters(String),
+
+    EventFailure(String),
 }
 
 impl Client {
