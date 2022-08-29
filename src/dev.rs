@@ -122,8 +122,6 @@ lazy_static! {
         .unwrap();
 }
 
-
-
 const BASE_DEV_URL: &str = "https://developer.clashofclans.com";
 const LOGIN_ENDPOINT: &str = "/api/login";
 const KEY_LIST_ENDPOINT: &str = "/api/apikey/list";
@@ -131,18 +129,21 @@ const KEY_CREATE_ENDPOINT: &str = "/api/apikey/create";
 const KEY_REVOKE_ENDPOINT: &str = "/api/apikey/revoke";
 
 impl APIAccount {
-
     pub async fn login(credential: &Credential, ip: String) -> Self {
-        let login_response = CLIENT
+        let _login_response = CLIENT
             .post(format!("{}{}", BASE_DEV_URL, LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
             .json::<Credential>(credential)
             .send()
             .await
             .unwrap()
-            .json()
+            .text()
             .await
             .unwrap();
+
+        println!("LOGIN RESPONSE: {}", _login_response);
+
+        let login_response: LoginResponse = serde_json::from_str(&_login_response).unwrap();
 
         let mut account = Self {
             credential: credential.clone(),
