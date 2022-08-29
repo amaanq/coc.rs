@@ -1,7 +1,6 @@
-use crate::models::badge_urls::BadgeUrls;
 use serde::{Deserialize, Serialize};
 
-use super::clan::{Label, League, Role};
+use super::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,17 +19,17 @@ pub struct Player {
     pub versus_trophies: i32,
     pub best_versus_trophies: i32,
     pub versus_battle_wins: i32,
-    pub role: Option<Role>,
+    pub role: Option<clan::Role>,
     pub war_preference: Option<WarPreference>,
     pub donations: i32,
     pub donations_received: i32,
     pub clan_capital_contributions: i32,
     pub clan: Option<PlayerClan>,
-    pub league: Option<League>,
+    pub league: Option<leagues::League>,
     pub legend_statistics: Option<LegendStatistics>,
     pub achievements: Vec<Achievement>,
     pub versus_battle_win_count: i32,
-    pub labels: Vec<Label>,
+    pub labels: Vec<labels::PlayerLabel>,
     pub troops: Vec<Troop>,
     pub heroes: Vec<Hero>,
     pub spells: Vec<Spell>,
@@ -71,7 +70,7 @@ pub struct PlayerClan {
     pub tag: String,
     pub name: String,
     pub clan_level: i8,
-    pub badge_urls: BadgeUrls,
+    pub badge_urls: badge_urls::BadgeUrls,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -114,18 +113,9 @@ pub struct PlayerToken {
 #[serde(rename_all = "camelCase")]
 pub struct LegendStatistics {
     pub legend_trophies: i32,
-    pub previous_season: Season,
-    pub best_season: Season,
-    pub current_season: Season,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Season {
-    // id rank and trophies
-    pub id: Option<String>,
-    pub rank: i32,
-    pub trophies: i32,
+    pub previous_season: season::SeasonData,
+    pub best_season: season::SeasonData,
+    pub current_season: season::SeasonData,
 }
 
 impl Player {
@@ -147,11 +137,5 @@ impl Player {
             "https://cc.chocolateclash.com/cc_n/member.php?tag={}",
             self.tag.replace("#", "")
         )
-    }
-
-    pub fn test(&self) {
-        self.clash_of_stats_link();
-        self.chocolate_clash_link();
-        self.game_link();
     }
 }
