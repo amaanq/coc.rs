@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use super::*;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
 pub enum PlayerLabelKind {
     ClanWars = 57000000,
     ClanWarLeague = 57000001,
@@ -25,7 +27,8 @@ pub enum PlayerLabelKind {
     ClanCapital = 57000018,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
 pub enum ClanLabelKind {
     ClanWars = 56000000,
     ClanWarLeague = 56000001,

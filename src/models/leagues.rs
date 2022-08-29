@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use super::*;
 use crate::icon_urls::LeagueIconUrls;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
 pub enum LeagueKind {
     Unranked = 29000000,
     BronzeLeagueIII = 29000001,
@@ -30,7 +32,8 @@ pub enum LeagueKind {
     LegendLeague = 29000022,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
 pub enum WarLeagueKind {
     Unranked = 48000000,
     BronzeLeagueIII = 48000001,
