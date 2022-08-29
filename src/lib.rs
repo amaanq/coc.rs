@@ -1,5 +1,5 @@
 mod models;
-pub use models::clan::League;
+pub use models::*;
 pub mod api;
 mod tests;
 mod dev;
