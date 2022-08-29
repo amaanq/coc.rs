@@ -92,7 +92,7 @@ impl std::fmt::Display for Key {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Scope {
     #[serde(rename = "clash")]
     #[default]
