@@ -129,7 +129,7 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let clan = client.get_clan("#2PP".to_string()).await.unwrap();
+        let clan = client.get_clan("#90PU0RRG".to_string()).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Clan: {:?}", clan);
@@ -170,7 +170,7 @@ mod tests {
             .build();
 
         let mut client = Client::default();
-        client.load(credentials).await;
+        client.load(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
         let player = client.get_player("#LQL".to_string()).await.unwrap();
