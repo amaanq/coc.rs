@@ -137,12 +137,6 @@ impl Client {
         Ok(CLIENT.post(url).bearer_auth(&self.cycle()).body(body))
     }
 
-    //                                                            //
-    //                                                            //
-    // --------------------------ENDPOINTS----------------------- //
-    //                                                            //
-    //                                                            //
-
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Clan Methods
     //_______________________________________________________________________
@@ -386,12 +380,6 @@ impl Client {
         self.parse_json(self.get(url)).await
     }
 
-    //                                                            //
-    //                                                            //
-    // --------------------------END POINTS-----------------------//
-    //                                                            //
-    //                                                            //
-
     #[allow(dead_code)]
     fn is_valid_tag(&self, tag: String) -> bool {
         Regex::new("^#[PYLQGRJCUV0289]+$")
@@ -399,8 +387,7 @@ impl Client {
             .is_match(tag.to_uppercase().replace("O", "0").as_str())
     }
 
-    #[allow(dead_code)]
-    fn fix_tag(&self, tag: String) -> String {
+    pub fn fix_tag(&self, tag: String) -> String {
         let re = Regex::new("[^A-Z0-9]+").unwrap();
         "#".to_owned()
             + &re
