@@ -10,13 +10,7 @@ mod tests {
     use crate::{
         api::{APIError, Client},
         credentials::CredentialsBuilder,
-        models::{
-            clan::Role,
-            clan_search::ClanSearchOptionsBuilder,
-            leagues::{League, SeasonBuilder, WarLeague},
-            locations::Local,
-            paging::{Paging, PagingBuilder},
-        },
+        models::*,
     };
     use crate::models::player::Player;
 
@@ -87,9 +81,9 @@ mod tests {
 
         let clans = client
             .get_clans(
-                ClanSearchOptionsBuilder::new()
+                clan_search::ClanSearchOptionsBuilder::new()
                     //.name("hello".to_string())
-                    .location_id(Local::UnitedStates)
+                    .location_id(location::Local::UnitedStates)
                     .max_members(5)
                     .min_clan_level(20)
                     .build(),
@@ -152,7 +146,7 @@ mod tests {
         let co_leaders = clan_members
             .items
             .iter()
-            .filter(|member| member.role == Role::CoLeader)
+            .filter(|member| member.role == clan::Role::CoLeader)
             .collect::<Vec<_>>();
         co_leaders.iter().for_each(|member| {
             println!("{} - {}", member.tag, member.name);
@@ -220,9 +214,12 @@ mod tests {
 
         let league_season_rankings = client
             .get_league_season_rankings(
-                League::LegendLeague,
-                SeasonBuilder::new().year(2015).month(Month::August).build(),
-                PagingBuilder::new().before(2).build(),
+                leagues::LeagueKind::LegendLeague,
+                season::SeasonBuilder::new()
+                    .year(2015)
+                    .month(Month::August)
+                    .build(),
+                paging::PagingBuilder::new().before(2).build(),
             )
             .await
             .unwrap();
@@ -250,7 +247,10 @@ mod tests {
         let client = Client::new(credentials).await;
         println!("Logged in! {:?}", now.elapsed());
 
-        let league = client.get_league(League::LegendLeague).await.unwrap();
+        let league = client
+            .get_league(leagues::LeagueKind::LegendLeague)
+            .await
+            .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("League: {:#?}", league);
@@ -266,7 +266,7 @@ mod tests {
         println!("Logged in! {:?}", now.elapsed());
 
         let war_league = client
-            .get_war_league(WarLeague::ChampionLeagueI)
+            .get_war_league(leagues::WarLeagueKind::ChampionLeagueI)
             .await
             .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
@@ -298,7 +298,10 @@ mod tests {
         let client = Client::new(credentials).await;
         println!("Logged in! {:?}", now.elapsed());
 
-        let mut clan_rankings = client.get_clan_rankings(Local::UnitedStates).await.unwrap();
+        let mut clan_rankings = client
+            .get_clan_rankings(location::Local::UnitedStates)
+            .await
+            .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         clan_rankings
@@ -322,7 +325,7 @@ mod tests {
         println!("Logged in! {:?}", now.elapsed());
 
         let player_rankings = client
-            .get_player_rankings(Local::UnitedStates)
+            .get_player_rankings(location::Local::UnitedStates)
             .await
             .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
@@ -354,7 +357,7 @@ mod tests {
         println!("Logged in! {:?}", now.elapsed());
 
         let mut versus_clan_rankings = client
-            .get_versus_clan_rankings(Local::UnitedStates)
+            .get_versus_clan_rankings(location::Local::UnitedStates)
             .await
             .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
@@ -380,7 +383,7 @@ mod tests {
         println!("Logged in! {:?}", now.elapsed());
 
         let mut versus_player_rankings = client
-            .get_versus_player_rankings(Local::UnitedStates)
+            .get_versus_player_rankings(location::Local::UnitedStates)
             .await
             .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
@@ -420,7 +423,10 @@ mod tests {
         let client = Client::new(credentials).await;
         println!("Logged in! {:?}", now.elapsed());
 
-        let location = client.get_location(Local::UnitedStates).await.unwrap();
+        let location = client
+            .get_location(location::Local::UnitedStates)
+            .await
+            .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Location: {:#?}", location);
