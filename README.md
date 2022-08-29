@@ -11,8 +11,8 @@ Getting Started
 ================
 
 ## Installing
-add this in your `Cargo.toml` 
-> `coc-rs = "0.2.4"`
+add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
+coc-rs = "x.x.x"
 
 Alternatively with `cargo add`
 
