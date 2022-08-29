@@ -33,6 +33,29 @@ pub struct Clan {
     pub chat_language: Option<ChatLanguage>,
 }
 
+impl Clan {
+    pub fn game_link(&self) -> String {
+        format!(
+            "https://link.clashofclans.com/en?action=OpenClanProfile&tag={}",
+            self.tag.replace("#", ""),
+        )
+    }
+
+    pub fn clash_of_stats_link(&self) -> String {
+        format!(
+            "https://www.clashofstats.com/clans/{}/summary",
+            self.tag.replace("#", "")
+        )
+    }
+
+    pub fn chocolate_clash_link(&self) -> String {
+        format!(
+            "https://cc.chocolateclash.com/cc_n/clan.php?tag={}",
+            self.tag.replace("#", "")
+        )
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Privacy {
     #[serde(rename = "open")]
@@ -52,6 +75,16 @@ impl Privacy {
     }
     pub fn is_closed(&self) -> bool {
         self == &Privacy::Closed
+    }
+}
+
+impl ToString for Privacy {
+    fn to_string(&self) -> String {
+        match self {
+            Privacy::Open => "Anyone Can Join".to_string(),
+            Privacy::InviteOnly => "Invite Only".to_string(),
+            Privacy::Closed => "Closed".to_string(),
+        }
     }
 }
 
