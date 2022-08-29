@@ -24,7 +24,7 @@ impl Location {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Local {
     Europe = 32000000,
     NorthAmerica = 32000001,

@@ -33,7 +33,7 @@ pub struct Clan {
     pub chat_language: Option<ChatLanguage>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Privacy {
     #[serde(rename = "open")]
     Open,
@@ -43,7 +43,19 @@ pub enum Privacy {
     Closed,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+impl Privacy {
+    pub fn is_open(&self) -> bool {
+        self == &Privacy::Open
+    }
+    pub fn is_invite_only(&self) -> bool {
+        self == &Privacy::InviteOnly
+    }
+    pub fn is_closed(&self) -> bool {
+        self == &Privacy::Closed
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum WarFrequency {
     #[serde(rename = "unknown")]
     Unknown,
@@ -59,6 +71,30 @@ pub enum WarFrequency {
     Never,
     #[serde(rename = "any")]
     Any,
+}
+
+impl WarFrequency {
+    pub fn is_unknown(&self) -> bool {
+        self == &WarFrequency::Unknown
+    }
+    pub fn is_always(&self) -> bool {
+        self == &WarFrequency::Always
+    }
+    pub fn is_more_than_once_per_week(&self) -> bool {
+        self == &WarFrequency::MoreThanOncePerWeek
+    }
+    pub fn is_once_per_week(&self) -> bool {
+        self == &WarFrequency::OncePerWeek
+    }
+    pub fn is_less_than_once_per_week(&self) -> bool {
+        self == &WarFrequency::LessThanOncePerWeek
+    }
+    pub fn is_never(&self) -> bool {
+        self == &WarFrequency::Never
+    }
+    pub fn is_any(&self) -> bool {
+        self == &WarFrequency::Any
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -97,6 +133,24 @@ pub enum Role {
     CoLeader,
     #[serde(rename = "leader")]
     Leader,
+}
+
+impl Role {
+    pub fn is_not_member(&self) -> bool {
+        self == &Role::NotMember
+    }
+    pub fn is_member(&self) -> bool {
+        self == &Role::Member
+    }
+    pub fn is_elder(&self) -> bool {
+        self == &Role::Elder
+    }
+    pub fn is_co_leader(&self) -> bool {
+        self == &Role::CoLeader
+    }
+    pub fn is_leader(&self) -> bool {
+        self == &Role::Leader
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
