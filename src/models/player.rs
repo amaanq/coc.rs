@@ -35,13 +35,22 @@ pub struct Player {
     pub spells: Vec<Spell>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "camelCase")]
 pub enum WarPreference {
     #[serde(rename = "in")]
     In,
     #[serde(rename = "out")]
     Out,
+}
+
+impl WarPreference {
+    pub fn is_opted_in(&self) -> bool {
+        self == &WarPreference::In
+    }
+    pub fn is_opted_out(&self) -> bool {
+        self == &WarPreference::Out
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -91,7 +100,7 @@ pub struct Troop {
     pub village: Village,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "camelCase")]
 pub enum Village {
     #[serde(rename = "builderBase")]
@@ -99,6 +108,15 @@ pub enum Village {
 
     #[serde(rename = "home")]
     HomeVillage,
+}
+
+impl Village {
+    pub fn is_home(&self) -> bool {
+        self == &Village::HomeVillage
+    }
+    pub fn is_builder_base(&self) -> bool {
+        self == &Village::BuilderBase
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
