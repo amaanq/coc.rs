@@ -1,5 +1,5 @@
 # coc.rs
-A Clash of clans API wrapper written in rust!
+A Clash of Clans API wrapper written in rust!
 
 # Key feature
 - Asynchronous code
@@ -12,7 +12,7 @@ Getting Started
 
 ## Installing
 add this in your `Cargo.toml` 
-> `coc-rs = "0.1.1"`
+> `coc-rs = "0.2.4"`
 
 Alternatively with `cargo add`
 
