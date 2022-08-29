@@ -21,7 +21,7 @@ pub trait EventHandler {
 
 #[derive(Debug)]
 pub struct EventsListenerBuilder<'a> {
-    event_type: EventType,
+    event_type: Vec<EventType>,
     client: &'a Client,
 }
 
@@ -38,21 +38,24 @@ pub enum EventType {
 impl<'a> EventsListenerBuilder<'a> {
     pub fn new(client: &'a Client) -> Self {
         return EventsListenerBuilder {
-            event_type: EventType::None,
+            event_type: vec![],
             client,
         };
     }
 
-    pub async fn add_clan(&mut self, tag: String) {
-        self.event_type = EventType::Clan(tag, Instant::now(), None)
+    pub async fn add_clan(mut self, tag: String) -> EventsListenerBuilder<'a> {
+        self.event_type.push(EventType::Clan(tag, Instant::now(), None));
+        self
     }
 
-    pub async fn add_player(&mut self, tag: String) {
-        self.event_type = EventType::Player(tag, Instant::now(), None)
+    pub async fn add_player(mut self, tag: String) -> EventsListenerBuilder<'a> {
+        self.event_type.push(EventType::Player(tag, Instant::now(), None));
+        self
     }
 
-    pub async fn add_war(&mut self, tag: String) {
-        self.event_type = EventType::War(tag, Instant::now(), None)
+    pub async fn add_war(mut self, tag: String) -> EventsListenerBuilder<'a> {
+        self.event_type.push(EventType::War(tag, Instant::now(), None));
+        self
     }
 
     pub fn build<T: EventHandler>(self, handler: T) -> EventsListener<'a, T>
@@ -70,7 +73,7 @@ impl<'a> EventsListenerBuilder<'a> {
 pub struct EventsListener<'a, T>
     where T: EventHandler + Sync + Send
 {
-    event_type: EventType,
+    event_type: Vec<EventType>,
     client: &'a Client,
     handler: T,
     last_time_fired: Instant,
@@ -82,11 +85,7 @@ impl<'a, T> EventsListener<'a, T>
     pub async fn init(&mut self) {
         loop {
             match self.fire_events().await {
-                Ok(b) => {
-                    if b == true {
-                        println!("Got successfully")
-                    }
-                }
+                Ok(_) => {}
                 Err(_) => {
                     println!("Error in Events");
                     break;
@@ -98,54 +97,56 @@ impl<'a, T> EventsListener<'a, T>
         fn should_fire_again(duration: Duration, seconds: u64) -> bool {
             duration.as_secs() >= seconds
         }
-        match &self.event_type {
-            EventType::Player(tag, last_fired, old) => {
-                let option = Instant::now().checked_duration_since(*last_fired);
+        for (i, e) in self.event_type.iter().enumerate() {
+            match e {
+                EventType::Player(tag, last_fired, old) => {
+                    let option = Instant::now().checked_duration_since(*last_fired);
 
-                match option {
-                    None => {}
-                    Some(q) => {
-                        if should_fire_again(q, 60) {
-                            let new = self.client.get_player(tag.to_owned()).await?;
-                            self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
-                            self.event_type = EventType::Player(tag.to_owned(), Instant::now(), Some(new));
-                            return Ok(true);
+                    match option {
+                        None => {}
+                        Some(q) => {
+                            if should_fire_again(q, 60) {
+                                let new = self.client.get_player(tag.to_owned()).await?;
+                                self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
+                                self.event_type[i] = EventType::Player(tag.to_owned(), Instant::now(), Some(new));
+                                return Ok(true);
+                            }
                         }
-                    }
-                };
-            }
-            EventType::Clan(tag, last_fired, old) => {
-                let option = Instant::now().checked_duration_since(*last_fired);
+                    };
+                }
+                EventType::Clan(tag, last_fired, old) => {
+                    let option = Instant::now().checked_duration_since(*last_fired);
 
-                match option {
-                    None => {}
-                    Some(q) => {
-                        if should_fire_again(q, 60) {
-                            let new = self.client.get_clan(tag.to_owned()).await?;
-                            self.handler.clan(old.clone(), new.clone()).await; // invoking the handler function the user defined
-                            self.event_type = EventType::Clan(tag.to_owned(), Instant::now(), Some(new));
-                            return Ok(true);
+                    match option {
+                        None => {}
+                        Some(q) => {
+                            if should_fire_again(q, 60) {
+                                let new = self.client.get_clan(tag.to_owned()).await?;
+                                self.handler.clan(old.clone(), new.clone()).await; // invoking the handler function the user defined
+                                self.event_type[i] = EventType::Clan(tag.to_owned(), Instant::now(), Some(new));
+                                return Ok(true);
+                            }
                         }
-                    }
-                };
-            }
-            EventType::War(tag, last_fired, old) => {
-                let option = Instant::now().checked_duration_since(*last_fired);
+                    };
+                }
+                EventType::War(tag, last_fired, old) => {
+                    let option = Instant::now().checked_duration_since(*last_fired);
 
-                match option {
-                    None => {}
-                    Some(q) => {
-                        if should_fire_again(q, 60 * 10) {
-                            let new = self.client.get_current_war(tag.to_owned()).await?;
-                            self.handler.war(old.clone(), new.clone()).await; // invoking the handler function the user defined
-                            self.event_type = EventType::War(tag.to_owned(), Instant::now(), Some(new));
-                            return Ok(true);
+                    match option {
+                        None => {}
+                        Some(q) => {
+                            if should_fire_again(q, 60 * 10) {
+                                let new = self.client.get_current_war(tag.to_owned()).await?;
+                                self.handler.war(old.clone(), new.clone()).await; // invoking the handler function the user defined
+                                self.event_type[i] = EventType::War(tag.to_owned(), Instant::now(), Some(new));
+                                return Ok(true);
+                            }
                         }
-                    }
-                };
-            }
-            EventType::None => {
-                return Err(APIError::EventFailure("[UNREADABLE] Event type was not specified".to_owned()))
+                    };
+                }
+                EventType::None => {
+                    return Err(APIError::EventFailure("[UNREACHABLE], NO EVENT TYPE WAS SPECIFIED".to_owned()))
+                }
             }
         };
         Ok(false)
