@@ -1,4 +1,4 @@
-use crate::credentials::Credential;
+use crate::{api::APIError, credentials::Credential};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
@@ -129,8 +129,8 @@ const KEY_CREATE_ENDPOINT: &str = "/api/apikey/create";
 const KEY_REVOKE_ENDPOINT: &str = "/api/apikey/revoke";
 
 impl APIAccount {
-    pub async fn login(credential: &Credential, ip: String) -> Self {
-        let _login_response = CLIENT
+    pub async fn login(credential: &Credential, ip: String) -> Result<Self, APIError> {
+        let login_response = CLIENT
             .post(format!("{}{}", BASE_DEV_URL, LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
             .json::<Credential>(credential)
@@ -141,9 +141,15 @@ impl APIAccount {
             .await
             .unwrap();
 
-        println!("LOGIN RESPONSE: {}", _login_response);
-
-        let login_response: LoginResponse = serde_json::from_str(&_login_response).unwrap();
+        let login_response = match serde_json::from_str::<LoginResponse>(&login_response) {
+            Ok(login_response) => login_response,
+            Err(err) => {
+                return Err(APIError::LoginFailed(format!(
+                    "Error parsing login response: `{}`\nResponse: `{}`",
+                    err, login_response
+                )))
+            }
+        };
 
         let mut account = Self {
             credential: credential.clone(),
@@ -161,7 +167,7 @@ impl APIAccount {
 
         account.update_all_keys(ip).await;
 
-        account
+        Ok(account)
     }
 
     pub async fn get_keys(&mut self) {

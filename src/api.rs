@@ -29,8 +29,10 @@ pub struct Client {
 pub enum APIError {
     /// API hasn't been initialized yet (logging in + making keys).
     ClientNotReady,
-    /// This is useless?
-    BadRequest(String),
+    /// Failed to query the current ip address.
+    FailedGetIP(String),
+    /// Failed to login to an account, either due to invalid credentials or a server error.
+    LoginFailed(String),
     /// Reqwest error
     RequestFailed(reqwest::Error),
     /// Status code of 400
@@ -64,7 +66,7 @@ impl Client {
     const GOLDPASS_ENDPOINT: &'static str = "/goldpass/seasons/current";
     // const LABEL_ENDPOINT: &str = "/labels";
 
-    pub async fn new(credentials: Credentials) -> Self {
+    pub async fn new(credentials: Credentials) -> Result<Self, APIError> {
         let mut client = Self {
             credentials,
             ready: false,
@@ -73,30 +75,42 @@ impl Client {
             ip_address: Arc::new(Mutex::new(String::new())),
         };
 
-        client.init().await;
+        client.init().await?;
         client.ready = true;
-        client
+        Ok(client)
     }
 
-    pub async fn load(&mut self, credentials: Credentials) {
+    pub async fn load(&mut self, credentials: Credentials) -> Result<(), APIError> {
         self.credentials = credentials;
         self.ready = false;
-        self.init().await;
+        self.init().await?;
         self.ready = true;
+        Ok(())
     }
 
-    async fn get_ip() -> Result<String, reqwest::Error> {
-        Ok(CLIENT.get(Self::IP_URL).send().await?.text().await?)
+    async fn get_ip() -> Result<String, APIError> {
+        let res = CLIENT.get(Self::IP_URL).send().await;
+        let ip = match res {
+            Ok(res) => res.text().await.unwrap(),
+            Err(err) => {
+                return Err(APIError::FailedGetIP(format!(
+                    "client.get_ip(): `{}`",
+                    err.to_string(),
+                )))
+            }
+        };
+        Ok(ip)
     }
 
-    async fn init(&self) {
-        let ip = Client::get_ip().await.unwrap();
+    async fn init(&self) -> Result<(), APIError> {
+        let ip = Client::get_ip().await?;
         self.ip_address.lock().unwrap().push_str(&ip);
 
         for credential in self.credentials.0.iter() {
             let account = dev::APIAccount::login(credential, ip.clone()).await;
-            self.accounts.lock().unwrap().push(account);
+            self.accounts.lock().unwrap().push(account?);
         }
+        Ok(())
     }
 
     pub async fn print_keys(&self) {
