@@ -29,7 +29,7 @@ pub struct Clan {
     pub labels: Vec<labels::ClanLabel>,
     pub required_versus_trophies: i32,
     pub required_townhall_level: i8,
-    pub clan_capital: Option<ClanCapital>,
+    pub clan_capital: ClanCapital,
     pub chat_language: Option<ChatLanguage>,
 }
 
@@ -189,11 +189,20 @@ impl Role {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClanCapital {
-    pub capital_hall_level: i8,
-    pub districts: Vec<District>,
+    capital_hall_level: Option<i8>,
+    districts: Option<Vec<District>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+impl ClanCapital {
+    pub fn capital_hall_level(&self) -> i8 {
+        self.capital_hall_level.unwrap_or_default()
+    }
+    pub fn districts(&self) -> Vec<District> {
+        self.districts.clone().unwrap_or_default()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct District {
     pub id: i32,
