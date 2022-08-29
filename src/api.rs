@@ -16,9 +16,8 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug, Default)]
 pub struct Client {
-    credentials: Credentials,
-    ready: bool,
-
+    credentials: Arc<Mutex<Credentials>>,
+    ready: Arc<Mutex<bool>>,
     accounts: Arc<Mutex<Vec<dev::APIAccount>>>,
     index: Arc<Mutex<dev::Index>>,
 
@@ -67,24 +66,24 @@ impl Client {
     // const LABEL_ENDPOINT: &str = "/labels";
 
     pub async fn new(credentials: Credentials) -> Result<Self, APIError> {
-        let mut client = Self {
-            credentials,
-            ready: false,
+        let client = Self {
+            credentials: Arc::new(Mutex::new(credentials)),
+            ready: Arc::new(Mutex::new(false)),
             accounts: Arc::new(Mutex::new(vec![])),
             index: Arc::new(Mutex::new(dev::Index::default())),
             ip_address: Arc::new(Mutex::new(String::new())),
         };
 
         client.init().await?;
-        client.ready = true;
+        *client.ready.lock().unwrap() = true;
         Ok(client)
     }
 
-    pub async fn load(&mut self, credentials: Credentials) -> Result<(), APIError> {
-        self.credentials = credentials;
-        self.ready = false;
+    pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
+        *self.credentials.lock().unwrap() = credentials;
+        *self.ready.lock().unwrap() = false;
         self.init().await?;
-        self.ready = true;
+        *self.ready.lock().unwrap() = true;
         Ok(())
     }
 
@@ -106,7 +105,7 @@ impl Client {
         let ip = Client::get_ip().await?;
         self.ip_address.lock().unwrap().push_str(&ip);
 
-        for credential in self.credentials.0.iter() {
+        for credential in self.credentials.lock().unwrap().0.iter() {
             let account = dev::APIAccount::login(credential, ip.clone()).await;
             self.accounts.lock().unwrap().push(account?);
         }
@@ -125,14 +124,14 @@ impl Client {
     // HTTP Methods
     //_______________________________________________________________________
     fn get(&self, url: String) -> Result<reqwest::RequestBuilder, APIError> {
-        if !self.ready {
+        if !*self.ready.lock().unwrap() {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.get(url).bearer_auth(&self.cycle()))
     }
 
     fn post(&self, url: String, body: String) -> Result<reqwest::RequestBuilder, APIError> {
-        if !self.ready {
+        if !*self.ready.lock().unwrap() {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.post(url).bearer_auth(&self.cycle()).body(body))
