@@ -12,7 +12,11 @@ Getting Started
 
 ## Installing
 add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
+<br/>
+```toml
+[dependencies]
 coc-rs = "x.x.x"
+```
 
 Alternatively with `cargo add`
 
