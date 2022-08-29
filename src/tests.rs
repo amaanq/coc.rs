@@ -607,7 +607,7 @@ mod tests {
         let credentials = CredentialsBuilder::new()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
-        let client = crate::api::Client::new(credentials).await;
+        let client = crate::api::Client::new(credentials).await.unwrap();
 
         let mut x = crate::events::EventsListenerBuilder::new(&client);
         x.add_player("#2pp".to_string()).await;
