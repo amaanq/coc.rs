@@ -30,7 +30,7 @@ pub enum APIError {
     /// API hasn't been initialized yet (logging in + making keys).
     ClientNotReady,
     /// This is useless?
-    BadRequest(String),
+    // BadRequest(String),
     /// Reqwest error
     RequestFailed(reqwest::Error),
     /// Status code of 400
