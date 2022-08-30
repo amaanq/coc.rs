@@ -12,6 +12,7 @@ mod tests {
         credentials::CredentialsBuilder,
         models::*,
     };
+    use crate::events::EventType;
     use crate::models::player::Player;
 
     #[test]
@@ -611,15 +612,15 @@ mod tests {
 
         async fn e(client: &Client) {
             let mut x = crate::events::EventsListenerBuilder::new(client)
-                .add_player("#2pp".to_string()).await
-                .add_clan("#2pp".to_string()).await
-                .build(S {})
-                .init()
-                .await;
+                .add_player("#2pp".to_string()).await;
+            for _ in 1..10 {
+                x.add_clan("#pp".to_string()).await
+                    .build(S)
+                    .init()
+                    .await;
+            }
         }
-        let q = std::thread::spawn(move || {
-            tokio::runtime::Builder::new_multi_thread().build().unwrap().block_on(e(&client));
-        }).join();
+        e(&client).await
     }
 
     struct S;
@@ -628,6 +629,10 @@ mod tests {
     impl crate::events::EventHandler for S {
         async fn player(&self, old_player: Option<Player>, new_player: Player) {
             println!("new player")
+        }
+
+        async fn handle_error(&self, error: APIError, tag: Option<String>, event_type: EventType) {
+            println!("Houston we have a problem!")
         }
     }
 }
