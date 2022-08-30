@@ -6,13 +6,17 @@ A Clash of Clans API wrapper written in rust!
 - Entire coverage of [Clash of clans API](https://developer.clashofclans.com)
 - Email and Password Login
 - Multiple Accounts Login to handle concurrent requests
+- API Events!
+- [Clash of Stats](https://www.clashofstats.com/) support
 
 Getting Started
 ================
 
 ## Installing
+
 Add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
 <br/>
+
 ```toml
 [dependencies]
 coc-rs = "x.x.x"
@@ -20,7 +24,9 @@ coc-rs = "x.x.x"
 
 Alternatively with `cargo add`
 
-`$ cargo add coc-rs`
+```shell
+$ cargo add coc-rs
+```
 
 ## Quick Example
 
@@ -72,6 +78,71 @@ async fn main() {
 }
 ```
 
+### Basic Events
+
+First we need to make a Event handler struct, that will implement the trait `EventHandler`
+
+```rust
+struct Handler;
+
+#[async_trait]
+impl crate::events::EventHandler for S {
+    /// Next we bring the player method in scope, and define the behaviour
+    async fn player(&self, _old_player: Option<player::Player>, _new_player: player::Player) {
+        println!("new player")
+    }
+
+    ///  to handle errors in the events task we need a separate error handler
+    async fn handle_error(
+        &self,
+        _error: APIError,
+        _tag: Option<String>,
+        _event_type: EventType,
+    ) {
+        println!("Houston we have a problem!")
+    }
+}
+```
+
+Next in the main function, we will cre
+
+```rust
+#[tokio::test]
+async fn main() {
+    /// see above example on how to create a client
+
+    let task = tokio::spawn(async move {
+        /// staring the API events in a separate thread
+        let mut x = crate::events::EventsListenerBuilder::new(client);
+        x.add_player("#2PP".to_string()).await;
+        x.add_clans(vec!["#2PP".to_string()])
+            .await
+            .build(Handler) /// Building the eventListener struct 
+            .init() /// starting the continuous polling of the clan/player/current_war endpoints
+            .await;
+    });
+    task.await.unwrap();
+}
+```
+
+### Features
+
+To Enable `cos` feature, add this to your `Cargo.toml`
+
+```toml
+[dependencies]
+coc-rs = { version = "x.x.x", features = ["cos"] }
+```
+
+- Alternately with `cargo add`
+
+```shell
+$ cargo add coc-rs --features cos
+```
+
+*Note: Each endpoint has a different cache refresh time. Each event will be fired at the exact time of new cache data in
+the API.*
+
 #### Possible Error Code
 
 400 -> BadRequestException <br/>
@@ -81,7 +152,8 @@ async fn main() {
 503 -> MaintenanceException<br/>
 
 #### Note
-`src/test.rs` contains examples for every endpoint in more detail. 
+
+`src/test.rs` & `src/test_cos.rs` contains examples for every endpoint in more detail.
 
 # Contributing
 Contributing is fantastic and much welcomed! If you have an issue, feel free to open an issue and start working on it.
