@@ -13,5 +13,8 @@ pub mod credentials;
 /// Developer Site API wrapper
 mod dev;
 
+/// Events to track changes
+pub mod events;
+
 mod tests;
 mod tests_cos;

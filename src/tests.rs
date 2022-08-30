@@ -7,13 +7,13 @@ mod tests {
     use time::Month;
     use tokio::sync::Mutex;
 
+    use crate::events::EventType;
+    use crate::models::player::Player;
     use crate::{
         api::{APIError, Client},
         credentials::Credentials,
         models::*,
     };
-    use crate::events::EventType;
-    use crate::models::player::Player;
 
     #[test]
     fn test_credentials() {
@@ -602,10 +602,9 @@ mod tests {
         Ok(())
     }
 
-
     #[tokio::test]
     async fn test_event() {
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = crate::api::Client::new(credentials).await.unwrap();
@@ -614,7 +613,8 @@ mod tests {
             let mut x = crate::events::EventsListenerBuilder::new(client);
             x.add_player("#2pp".to_string()).await;
 
-            x.add_clans(vec!["#pp".to_string()]).await
+            x.add_clans(vec!["#pp".to_string()])
+                .await
                 .build(S)
                 .init()
                 .await;
