@@ -26,6 +26,7 @@ impl Location {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Local {
+    None = 0,
     Europe = 32000000,
     NorthAmerica = 32000001,
     SouthAmerica = 32000002,
@@ -287,4 +288,10 @@ pub enum Local {
     Yemen = 32000258,
     Zambia = 32000259,
     Zimbabwe = 32000260,
+}
+
+impl Default for Local {
+    fn default() -> Self {
+        Local::None
+    }
 }

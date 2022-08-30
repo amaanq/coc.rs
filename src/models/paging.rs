@@ -18,7 +18,7 @@ pub struct PagingBuilder {
 }
 
 impl PagingBuilder {
-    pub fn new() -> PagingBuilder {
+    fn new() -> PagingBuilder {
         PagingBuilder {
             paging: Paging {
                 cursor: Cursor {
@@ -58,6 +58,10 @@ impl Paging {
 
     pub fn to_vec(&self) -> Vec<(&str, String)> {
         self.cursor.to_vec()
+    }
+
+    pub fn builder() -> PagingBuilder {
+        PagingBuilder::new()
     }
 }
 
