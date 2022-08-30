@@ -60,7 +60,10 @@ mod tests {
         let now = Instant::now();
         let client = Client::default();
 
-        let cos_clan = client.cos_get_clan("#2PP".to_string()).await.unwrap();
+        let cos_clan = client
+            .cos_get_clan("#2PP".to_string())
+            .await
+            .unwrap();
         println!("{:?}", cos_clan);
         println!("Time elapsed! {:?}", now.elapsed());
 
