@@ -21,9 +21,9 @@ pub trait EventHandler {
 }
 
 #[derive(Debug)]
-pub struct EventsListenerBuilder<'a> {
+pub struct EventsListenerBuilder {
     event_type: Vec<EventType>,
-    client: &'a Client,
+    client: Client,
 }
 
 #[derive(Debug, Clone)]
@@ -34,8 +34,8 @@ pub enum EventType {
     None,
 }
 
-impl<'a> EventsListenerBuilder<'a> {
-    pub fn new(client: &'a Client) -> Self {
+impl EventsListenerBuilder {
+    pub fn new(client: Client) -> Self {
         return EventsListenerBuilder {
             event_type: vec![],
             client,
@@ -43,10 +43,11 @@ impl<'a> EventsListenerBuilder<'a> {
     }
 
     pub async fn add_clan(&mut self, tag: String) {
-        self.event_type.push(EventType::Clan(tag, Instant::now(), None))
+        self.event_type
+            .push(EventType::Clan(tag, Instant::now(), None))
     }
 
-    pub async fn add_clans(mut self, tags: Vec<String>) -> EventsListenerBuilder<'a> {
+    pub async fn add_clans(mut self, tags: Vec<String>) -> EventsListenerBuilder {
         for x in tags {
             self.add_clan(x).await;
         }
@@ -54,31 +55,32 @@ impl<'a> EventsListenerBuilder<'a> {
     }
 
     pub async fn add_player(&mut self, tag: String) {
-        self.event_type.push(EventType::Player(tag, Instant::now(), None));
+        self.event_type
+            .push(EventType::Player(tag, Instant::now(), None));
     }
 
-    pub async fn add_players(mut self, tags: Vec<String>) -> EventsListenerBuilder<'a> {
+    pub async fn add_players(mut self, tags: Vec<String>) -> EventsListenerBuilder {
         for x in tags {
             self.add_player(x).await;
         }
         self
     }
 
-
     pub async fn add_war(&mut self, tag: String) {
-        self.event_type.push(EventType::War(tag, Instant::now(), None));
+        self.event_type
+            .push(EventType::War(tag, Instant::now(), None));
     }
 
-    pub async fn add_wars(mut self, tags: Vec<String>) -> EventsListenerBuilder<'a> {
+    pub async fn add_wars(mut self, tags: Vec<String>) -> EventsListenerBuilder {
         for x in tags {
             self.add_war(x).await;
         }
         self
     }
 
-
-    pub fn build<T: EventHandler>(self, handler: T) -> EventsListener<'a, T>
-        where T: EventHandler + Sync + Send
+    pub fn build<T: EventHandler>(self, handler: T) -> EventsListener<T>
+    where
+        T: EventHandler + Sync + Send,
     {
         EventsListener {
             event_type: self.event_type,
@@ -89,11 +91,12 @@ impl<'a> EventsListenerBuilder<'a> {
     }
 }
 
-pub struct EventsListener<'a, T>
-    where T: EventHandler + Sync + Send
+pub struct EventsListener<T>
+where
+    T: EventHandler + Sync + Send,
 {
     event_type: Vec<EventType>,
-    client: &'a Client,
+    client: Client,
     handler: T,
     last_time_fired: Instant,
 }
@@ -104,8 +107,9 @@ struct EventsError {
     event_type: EventType,
     index: usize,
 }
-impl<'a, T> EventsListener<'a, T>
-    where T: EventHandler + Sync + Send
+impl<T> EventsListener<T>
+where
+    T: EventHandler + Sync + Send,
 {
     pub async fn init(mut self) {
         loop {
@@ -114,7 +118,9 @@ impl<'a, T> EventsListener<'a, T>
                 Err(err) => {
                     println!("Error in Events");
                     self.event_type.remove(err.index);
-                    self.handler.handle_error(err.api_error, err.tag, err.event_type).await;
+                    self.handler
+                        .handle_error(err.api_error, err.tag, err.event_type)
+                        .await;
                 }
             };
         }
@@ -135,19 +141,19 @@ impl<'a, T> EventsListener<'a, T>
                                 return match self.client.get_player(tag.to_owned()).await {
                                     Ok(new) => {
                                         self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
-                                        self.event_type[i] = EventType::Player(tag.to_owned(), Instant::now(), Some(new));
+                                        self.event_type[i] = EventType::Player(
+                                            tag.to_owned(),
+                                            Instant::now(),
+                                            Some(new),
+                                        );
                                         Ok(true)
                                     }
-                                    Err(err) => {
-                                        Err(
-                                            EventsError {
-                                                api_error: err,
-                                                tag: Some(tag.to_owned()),
-                                                event_type: e.clone(),
-                                                index: i,
-                                            }
-                                        )
-                                    }
+                                    Err(err) => Err(EventsError {
+                                        api_error: err,
+                                        tag: Some(tag.to_owned()),
+                                        event_type: e.clone(),
+                                        index: i,
+                                    }),
                                 };
                             }
                         }
@@ -163,19 +169,19 @@ impl<'a, T> EventsListener<'a, T>
                                 return match self.client.get_clan(tag.to_owned()).await {
                                     Ok(new) => {
                                         self.handler.clan(old.clone(), new.clone()).await; // invoking the handler function the user defined
-                                        self.event_type[i] = EventType::Clan(tag.to_owned(), Instant::now(), Some(new));
+                                        self.event_type[i] = EventType::Clan(
+                                            tag.to_owned(),
+                                            Instant::now(),
+                                            Some(new),
+                                        );
                                         Ok(true)
                                     }
-                                    Err(err) => {
-                                        Err(
-                                            EventsError {
-                                                api_error: err,
-                                                tag: Some(tag.to_owned()),
-                                                event_type: e.clone(),
-                                                index: i,
-                                            }
-                                        )
-                                    }
+                                    Err(err) => Err(EventsError {
+                                        api_error: err,
+                                        tag: Some(tag.to_owned()),
+                                        event_type: e.clone(),
+                                        index: i,
+                                    }),
                                 };
                             }
                         }
@@ -191,19 +197,19 @@ impl<'a, T> EventsListener<'a, T>
                                 return match self.client.get_current_war(tag.to_owned()).await {
                                     Ok(new) => {
                                         self.handler.war(old.clone(), new.clone()).await; // invoking the handler function the user defined
-                                        self.event_type[i] = EventType::War(tag.to_owned(), Instant::now(), Some(new));
+                                        self.event_type[i] = EventType::War(
+                                            tag.to_owned(),
+                                            Instant::now(),
+                                            Some(new),
+                                        );
                                         Ok(true)
                                     }
-                                    Err(err) => {
-                                        Err(
-                                            EventsError {
-                                                api_error: err,
-                                                tag: Some(tag.to_owned()),
-                                                event_type: e.clone(),
-                                                index: i,
-                                            }
-                                        )
-                                    }
+                                    Err(err) => Err(EventsError {
+                                        api_error: err,
+                                        tag: Some(tag.to_owned()),
+                                        event_type: e.clone(),
+                                        index: i,
+                                    }),
                                 };
                             }
                         }
@@ -211,14 +217,16 @@ impl<'a, T> EventsListener<'a, T>
                 }
                 EventType::None => {
                     return Err(EventsError {
-                        api_error: APIError::EventFailure("[UNREACHABLE] NO EVENT TYPE WAS SPECIFIED".to_owned()),
+                        api_error: APIError::EventFailure(
+                            "[UNREACHABLE] NO EVENT TYPE WAS SPECIFIED".to_owned(),
+                        ),
                         tag: None,
                         event_type: EventType::None,
                         index: i,
                     })
                 }
             }
-        };
+        }
         Ok(false)
     }
 }

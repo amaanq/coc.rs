@@ -7,11 +7,10 @@ mod tests {
     use time::Month;
     use tokio::sync::Mutex;
 
-    use crate::events::EventType;
-    use crate::models::player::Player;
     use crate::{
         api::{APIError, Client},
         credentials::Credentials,
+        events::{EventType, EventsListenerBuilder},
         models::*,
     };
 
@@ -609,28 +608,33 @@ mod tests {
             .build();
         let client = crate::api::Client::new(credentials).await.unwrap();
 
-        async fn e(client: &Client) {
+        let task = tokio::spawn(async move {
             let mut x = crate::events::EventsListenerBuilder::new(client);
-            x.add_player("#2pp".to_string()).await;
+            x.add_player("#2PP".to_string()).await;
 
-            x.add_clans(vec!["#pp".to_string()])
+            x.add_clans(vec!["#2PP".to_string()])
                 .await
                 .build(S)
                 .init()
                 .await;
-        }
-        e(&client).await
+        });
+        task.await.unwrap();
     }
 
     struct S;
 
     #[async_trait]
     impl crate::events::EventHandler for S {
-        async fn player(&self, old_player: Option<Player>, new_player: Player) {
+        async fn player(&self, _old_player: Option<player::Player>, _new_player: player::Player) {
             println!("new player")
         }
 
-        async fn handle_error(&self, error: APIError, tag: Option<String>, event_type: EventType) {
+        async fn handle_error(
+            &self,
+            _error: APIError,
+            _tag: Option<String>,
+            _event_type: EventType,
+        ) {
             println!("Houston we have a problem!")
         }
     }

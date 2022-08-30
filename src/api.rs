@@ -17,6 +17,7 @@ use serde::de::DeserializeOwned;
 
 use std::sync::{Arc, Mutex};
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
 pub struct Client {
     credentials: Arc<Mutex<Credentials>>,
