@@ -86,7 +86,7 @@ First we need to make a Event handler struct, that will implement the trait `Eve
 struct Handler;
 
 #[async_trait]
-impl crate::events::EventHandler for S {
+impl events::EventHandler for S {
     /// Next we bring the player method in scope, and define the behaviour
     async fn player(&self, _old_player: Option<player::Player>, _new_player: player::Player) {
         println!("new player")
@@ -115,7 +115,7 @@ async fn main() {
 
     let task = tokio::spawn(async move {
         /// staring the API events in a separate thread
-        let mut x = crate::events::EventsListenerBuilder::new(client);
+        let mut x = events::EventsListenerBuilder::new(client);
         x.add_player("#2PP".to_string()).await;
         x.add_players(vec!["#CVJLQOLR".to_string()])
             .await
