@@ -609,12 +609,17 @@ mod tests {
             .build();
         let client = crate::api::Client::new(credentials).await.unwrap();
 
-        let mut x = crate::events::EventsListenerBuilder::new(&client)
-            .add_player("#2pp".to_string()).await
-            .add_clan("#2pp".to_string()).await
-            .build(S {})
-            .init()
-            .await;
+        async fn e(client: &Client) {
+            let mut x = crate::events::EventsListenerBuilder::new(client)
+                .add_player("#2pp".to_string()).await
+                .add_clan("#2pp".to_string()).await
+                .build(S {})
+                .init()
+                .await;
+        }
+        let q = std::thread::spawn(move || {
+            tokio::runtime::Builder::new_multi_thread().build().unwrap().block_on(e(&client));
+        }).join();
     }
 
     struct S;
