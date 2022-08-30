@@ -272,7 +272,7 @@ mod tests {
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("League: {:#?}", league);
-        
+
         Ok(())
     }
 
@@ -611,14 +611,13 @@ mod tests {
         let client = crate::api::Client::new(credentials).await.unwrap();
 
         async fn e(client: &Client) {
-            let mut x = crate::events::EventsListenerBuilder::new(client)
-                .add_player("#2pp".to_string()).await;
-            for _ in 1..10 {
-                x.add_clan("#pp".to_string()).await
-                    .build(S)
-                    .init()
-                    .await;
-            }
+            let mut x = crate::events::EventsListenerBuilder::new(client);
+            x.add_player("#2pp".to_string()).await;
+
+            x.add_clans(vec!["#pp".to_string()]).await
+                .build(S)
+                .init()
+                .await;
         }
         e(&client).await
     }

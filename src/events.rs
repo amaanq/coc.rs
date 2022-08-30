@@ -42,39 +42,36 @@ impl<'a> EventsListenerBuilder<'a> {
         };
     }
 
-    pub async fn add_clan(mut self, tag: String) -> EventsListenerBuilder<'a> {
-        self.event_type.push(EventType::Clan(tag, Instant::now(), None));
-        self
+    pub async fn add_clan(&mut self, tag: String) {
+        self.event_type.push(EventType::Clan(tag, Instant::now(), None))
     }
 
     pub async fn add_clans(mut self, tags: Vec<String>) -> EventsListenerBuilder<'a> {
         for x in tags {
-            self.add_clan(x).await
+            self.add_clan(x).await;
         }
         self
     }
 
-    pub async fn add_player(mut self, tag: String) -> EventsListenerBuilder<'a> {
+    pub async fn add_player(&mut self, tag: String) {
         self.event_type.push(EventType::Player(tag, Instant::now(), None));
-        self
     }
 
     pub async fn add_players(mut self, tags: Vec<String>) -> EventsListenerBuilder<'a> {
         for x in tags {
-            self.add_player(x).await
+            self.add_player(x).await;
         }
         self
     }
 
 
-    pub async fn add_war(mut self, tag: String) -> EventsListenerBuilder<'a> {
+    pub async fn add_war(&mut self, tag: String) {
         self.event_type.push(EventType::War(tag, Instant::now(), None));
-        self
     }
 
     pub async fn add_wars(mut self, tags: Vec<String>) -> EventsListenerBuilder<'a> {
         for x in tags {
-            self.add_war(x).await
+            self.add_war(x).await;
         }
         self
     }
