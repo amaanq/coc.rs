@@ -1,5 +1,8 @@
 #[cfg(test)]
 mod tests {
+    use std::{env, sync::Arc, time::Instant};
+
+    use async_trait::async_trait;
     use bytestream_rs::logiclong::LogicLong;
     use time::Month;
     use tokio::sync::Mutex;
@@ -9,7 +12,8 @@ mod tests {
         credentials::Credentials,
         models::*,
     };
-    use std::{env, sync::Arc, time::Instant};
+    use crate::events::EventType;
+    use crate::models::player::Player;
 
     #[test]
     fn test_credentials() {
@@ -596,5 +600,38 @@ mod tests {
         println!("Throttle counter: {:#?}", throttle_counter);
 
         Ok(())
+    }
+
+
+    #[tokio::test]
+    async fn test_event() {
+        let credentials = CredentialsBuilder::new()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = crate::api::Client::new(credentials).await.unwrap();
+
+        async fn e(client: &Client) {
+            let mut x = crate::events::EventsListenerBuilder::new(client);
+            x.add_player("#2pp".to_string()).await;
+
+            x.add_clans(vec!["#pp".to_string()]).await
+                .build(S)
+                .init()
+                .await;
+        }
+        e(&client).await
+    }
+
+    struct S;
+
+    #[async_trait]
+    impl crate::events::EventHandler for S {
+        async fn player(&self, old_player: Option<Player>, new_player: Player) {
+            println!("new player")
+        }
+
+        async fn handle_error(&self, error: APIError, tag: Option<String>, event_type: EventType) {
+            println!("Houston we have a problem!")
+        }
     }
 }

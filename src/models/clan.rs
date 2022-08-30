@@ -1,9 +1,10 @@
-use crate::models::badge_urls::BadgeUrls;
 use serde::{Deserialize, Serialize};
+
+use crate::models::badge_urls::BadgeUrls;
 
 use super::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Clan {
     pub tag: String,
@@ -56,7 +57,7 @@ impl Clan {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Ord)]
 pub enum Privacy {
     #[serde(rename = "open")]
     Open,
@@ -88,7 +89,7 @@ impl ToString for Privacy {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Ord)]
 pub enum WarFrequency {
     #[serde(rename = "unknown")]
     Unknown,
@@ -130,7 +131,7 @@ impl WarFrequency {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ChatLanguage {
     pub id: i32,
@@ -138,7 +139,7 @@ pub struct ChatLanguage {
     pub language_code: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ClanMember {
     pub tag: String,
@@ -154,7 +155,7 @@ pub struct ClanMember {
     pub donations_received: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum Role {
     #[serde(rename = "notMember")]
     NotMember,
@@ -186,7 +187,7 @@ impl Role {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ClanCapital {
     capital_hall_level: Option<i8>,
@@ -202,7 +203,7 @@ impl ClanCapital {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct District {
     pub id: i32,

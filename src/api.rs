@@ -55,6 +55,8 @@ pub enum APIError {
     BadResponse(String, reqwest::StatusCode),
     /// From malformed cursors or using invalid leagues
     InvalidParameters(String),
+
+    EventFailure(String),
 }
 
 impl Client {

@@ -3,7 +3,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use super::*;
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[repr(i32)]
 pub enum PlayerLabelKind {
     ClanWars = 57000000,
@@ -27,7 +27,7 @@ pub enum PlayerLabelKind {
     ClanCapital = 57000018,
 }
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[repr(i32)]
 pub enum ClanLabelKind {
     ClanWars = 56000000,
@@ -49,7 +49,7 @@ pub enum ClanLabelKind {
     ClanCapital = 56000016,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerLabel {
     pub id: PlayerLabelKind,
@@ -57,7 +57,7 @@ pub struct PlayerLabel {
     pub icon_urls: icon_urls::LabelIconUrls,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ClanLabel {
     pub id: ClanLabelKind,
