@@ -23,3 +23,8 @@ urlencoding = "2.1.0"
 bytestream-rs = "0.4.1"
 time = "0.3.14"
 base64 = "0.13.0"
+
+[features]
+default = []
+cos = []
+all = ["cos"]

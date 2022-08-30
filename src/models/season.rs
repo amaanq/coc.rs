@@ -57,7 +57,7 @@ impl From<std::num::ParseIntError> for SeasonError {
 }
 
 impl SeasonBuilder {
-    pub fn new() -> SeasonBuilder {
+    fn new() -> SeasonBuilder {
         SeasonBuilder {
             season: Season {
                 id: String::new(),
@@ -100,5 +100,9 @@ impl Season {
 
     pub fn default_month() -> Month {
         Month::July
+    }
+
+    pub fn builder() -> SeasonBuilder {
+        SeasonBuilder::new()
     }
 }

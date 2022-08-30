@@ -6,14 +6,14 @@ mod tests {
 
     use crate::{
         api::{APIError, Client},
-        credentials::CredentialsBuilder,
+        credentials::Credentials,
         models::*,
     };
     use std::{env, sync::Arc, time::Instant};
 
     #[test]
     fn test_credentials() {
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential("user1".to_owned(), "pass1".to_owned())
             .add_credential("user2".to_owned(), "pass2".to_owned())
             .build();
@@ -27,7 +27,7 @@ mod tests {
     #[tokio::test]
     async fn test_login() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
 
@@ -42,7 +42,7 @@ mod tests {
     #[tokio::test]
     async fn benchmark_login() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         Client::new(credentials).await?;
@@ -54,7 +54,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_clan_warlog() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -73,7 +73,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_clans() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -101,7 +101,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_current_war() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -120,7 +120,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_clan() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -137,7 +137,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_clan_members() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -162,11 +162,11 @@ mod tests {
     #[tokio::test]
     async fn test_get_player() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
 
-        let mut client = Client::default();
+        let client = Client::default();
         client.load(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
@@ -180,7 +180,7 @@ mod tests {
     #[tokio::test]
     async fn test_player_token() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
 
@@ -201,7 +201,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_leagues() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -218,7 +218,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_league_season_rankings() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -227,11 +227,11 @@ mod tests {
         let league_season_rankings = client
             .get_league_season_rankings(
                 leagues::LeagueKind::LegendLeague,
-                season::SeasonBuilder::new()
+                season::Season::builder()
                     .year(2015)
                     .month(Month::August)
                     .build(),
-                paging::PagingBuilder::new().before(2).build(),
+                paging::Paging::builder().before(2).build(),
             )
             .await
             .unwrap();
@@ -255,7 +255,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_league() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -268,14 +268,14 @@ mod tests {
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("League: {:#?}", league);
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_get_war_league() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -295,7 +295,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_war_leagues() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -312,7 +312,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_clan_rankings() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -340,7 +340,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_player_rankings() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -374,7 +374,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_versus_clan_rankings() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -402,7 +402,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_versus_player_rankings() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -430,7 +430,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_locations() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -447,7 +447,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_location() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -467,7 +467,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_goldpass() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -485,7 +485,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_player_labels() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -502,7 +502,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_clan_labels() -> Result<(), APIError> {
         let now = Instant::now();
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
         let client = Client::new(credentials).await?;
@@ -552,7 +552,7 @@ mod tests {
             .collect::<Vec<_>>();
         println!("done creating logic longs");
 
-        let credentials = CredentialsBuilder::new()
+        let credentials = Credentials::builder()
             .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
             .build();
 

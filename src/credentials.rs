@@ -15,7 +15,7 @@ pub struct Credential {
 }
 
 impl CredentialsBuilder {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             credentials: Credentials(Vec::new()),
         }
@@ -38,5 +38,11 @@ impl Credential {
 
     pub fn password(&self) -> &str {
         &self.password
+    }
+}
+
+impl Credentials {
+    pub fn builder() -> CredentialsBuilder {
+        CredentialsBuilder::new()
     }
 }

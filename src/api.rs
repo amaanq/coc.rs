@@ -1,7 +1,7 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-extern crate reqwest;
+// extern crate reqwest;
 
 use crate::{
     credentials::Credentials,
@@ -9,7 +9,10 @@ use crate::{
     models::*,
 };
 
-use reqwest::{RequestBuilder, Url};
+use reqwest::{
+    header::{HeaderMap, HeaderValue},
+    RequestBuilder, Url,
+};
 use serde::de::DeserializeOwned;
 
 use std::sync::{Arc, Mutex};
@@ -22,6 +25,8 @@ pub struct Client {
     index: Arc<Mutex<dev::Index>>,
 
     ip_address: Arc<Mutex<String>>,
+
+    pub(crate) is_cos_logged_in: Arc<Mutex<bool>>,
 }
 
 #[derive(Debug)]
@@ -72,6 +77,8 @@ impl Client {
             accounts: Arc::new(Mutex::new(vec![])),
             index: Arc::new(Mutex::new(dev::Index::default())),
             ip_address: Arc::new(Mutex::new(String::new())),
+
+            is_cos_logged_in: Arc::new(Mutex::new(false)),
         };
 
         client.init().await?;
@@ -123,18 +130,120 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // HTTP Methods
     //_______________________________________________________________________
-    fn get(&self, url: String) -> Result<reqwest::RequestBuilder, APIError> {
+    pub(crate) fn get<U: reqwest::IntoUrl>(
+        &self,
+        url: U,
+    ) -> Result<reqwest::RequestBuilder, APIError> {
         if !*self.ready.lock().unwrap() {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.get(url).bearer_auth(&self.cycle()))
     }
 
-    fn post(&self, url: String, body: String) -> Result<reqwest::RequestBuilder, APIError> {
+    pub(crate) fn post<U: reqwest::IntoUrl, T: Into<reqwest::Body>>(
+        &self,
+        url: U,
+        body: T,
+    ) -> Result<reqwest::RequestBuilder, APIError> {
         if !*self.ready.lock().unwrap() {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.post(url).bearer_auth(&self.cycle()).body(body))
+    }
+
+    /// To allow usage without a client being ready
+    pub(crate) fn cos_get<U: reqwest::IntoUrl>(
+        &self,
+        url: U,
+    ) -> Result<reqwest::RequestBuilder, APIError> {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "authority",
+            HeaderValue::from_str("api.clashofstats.com").unwrap(),
+        );
+        headers.insert("method", HeaderValue::from_str("GET").unwrap());
+        headers.insert("scheme", HeaderValue::from_str("https").unwrap());
+        headers.insert(
+            "accept",
+            HeaderValue::from_str("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").unwrap(),
+        );
+        headers.insert(
+            "accept-language",
+            HeaderValue::from_str("en-US,en;q=0.9,zh-CN;q=0.8,z;q=0.7").unwrap(),
+        );
+        headers.insert(
+            "sec-ch-ua",
+            HeaderValue::from_str(
+                "\"Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"103\", \"Chromium\";v=\"103\"",
+            )
+            .unwrap(),
+        );
+        headers.insert(
+            "sec-ch-ua-platform",
+            HeaderValue::from_str("\"Windows\"").unwrap(),
+        );
+        headers.insert(
+            "upgrade-insecure-requests",
+            HeaderValue::from_str("1").unwrap(),
+        );
+        headers.insert(
+            "user-agent",
+            HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36").unwrap(),
+        );
+
+        Ok(CLIENT.get(url).headers(headers))
+    }
+
+    /// To allow usage without a client being ready
+    pub(crate) fn cos_post<U: reqwest::IntoUrl, T: Into<reqwest::Body>>(
+        &self,
+        url: U,
+        body: T,
+    ) -> Result<reqwest::RequestBuilder, APIError> {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "authority",
+            HeaderValue::from_str("api.clashofstats.com").unwrap(),
+        );
+        headers.insert("method", HeaderValue::from_str("POST").unwrap());
+        headers.insert("scheme", HeaderValue::from_str("https").unwrap());
+        headers.insert(
+            "accept",
+            HeaderValue::from_str("application/json, text/plain, */*").unwrap(),
+        );
+        headers.insert(
+            "accept-encoding",
+            HeaderValue::from_str("gzip, deflate, br").unwrap(),
+        );
+        headers.insert(
+            "accept-language",
+            HeaderValue::from_str("en-US,en;q=0.9,zh-CN;q=0.8,z;q=0.7").unwrap(),
+        );
+        headers.insert(
+            "content-type",
+            HeaderValue::from_str("application/json;charset=UTF-8").unwrap(),
+        );
+        headers.insert(
+            "sec-ch-ua",
+            HeaderValue::from_str(
+                "\"Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"103\", \"Chromium\";v=\"103\"",
+            )
+            .unwrap(),
+        );
+        headers.insert(
+            "sec-ch-ua-platform",
+            HeaderValue::from_str("\"Windows\"").unwrap(),
+        );
+        headers.insert(
+            "upgrade-insecure-requests",
+            HeaderValue::from_str("1").unwrap(),
+        );
+        headers.insert(
+            "user-agent",
+            HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36").unwrap(),
+        );
+
+        Ok(CLIENT.post(url).body(body).headers(headers))
     }
 
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -142,13 +251,13 @@ impl Client {
     //_______________________________________________________________________
     pub async fn get_clan_warlog(
         &self,
-        mut tag: String,
+        mut clan_tag: String,
     ) -> Result<APIResponse<war_log::WarLog>, APIError> {
-        tag = self.fix_tag(tag);
+        clan_tag = self.fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/warlog",
             Self::BASE_URL,
-            urlencoding::encode(tag.as_str())
+            urlencoding::encode(&clan_tag)
         );
         self.parse_json(self.get(url)).await
     }
@@ -158,8 +267,7 @@ impl Client {
         options: clan_search::ClanSearchOptions,
     ) -> Result<APIResponse<clan::Clan>, APIError> {
         let url =
-            Url::parse_with_params(format!("{}/clans", Self::BASE_URL).as_str(), options.items)
-                .unwrap();
+            Url::parse_with_params(&format!("{}/clans", Self::BASE_URL), options.items).unwrap();
         self.parse_json(self.get(url.to_string())).await
     }
 
@@ -168,7 +276,7 @@ impl Client {
         let url = format!(
             "{}/clans/{}/currentwar",
             Self::BASE_URL,
-            urlencoding::encode(clan_tag.as_str())
+            urlencoding::encode(&clan_tag)
         );
         self.parse_json(self.get(url)).await
     }
@@ -178,7 +286,7 @@ impl Client {
         let url = format!(
             "{}/clans/{}",
             Self::BASE_URL,
-            urlencoding::encode(clan_tag.as_str())
+            urlencoding::encode(&clan_tag)
         );
         self.parse_json(self.get(url)).await
     }
@@ -191,7 +299,7 @@ impl Client {
         let url = format!(
             "{}/clans/{}/members",
             Self::BASE_URL,
-            urlencoding::encode(clan_tag.as_str())
+            urlencoding::encode(&clan_tag)
         );
         self.parse_json(self.get(url)).await
     }
@@ -199,26 +307,26 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Player Methods
     //_______________________________________________________________________
-    pub async fn get_player(&self, mut tag: String) -> Result<player::Player, APIError> {
-        tag = self.fix_tag(tag);
+    pub async fn get_player(&self, mut player_tag: String) -> Result<player::Player, APIError> {
+        player_tag = self.fix_tag(player_tag);
         let url = format!(
             "{}/players/{}",
             Self::BASE_URL,
-            urlencoding::encode(tag.as_str())
+            urlencoding::encode(&player_tag)
         );
         self.parse_json(self.get(url)).await
     }
 
     pub async fn verify_player_token(
         &self,
-        mut tag: String,
+        mut player_tag: String,
         token: String,
     ) -> Result<player::PlayerToken, APIError> {
-        tag = self.fix_tag(tag);
+        player_tag = self.fix_tag(player_tag);
         let url = format!(
             "{}/players/{}/verifytoken",
             Self::BASE_URL,
-            urlencoding::encode(tag.as_str())
+            urlencoding::encode(&player_tag)
         );
         let token = format!("{{\"token\":\"{}\"}}", token);
         self.parse_json(self.post(url, token)).await
@@ -384,19 +492,16 @@ impl Client {
     fn is_valid_tag(&self, tag: String) -> bool {
         Regex::new("^#[PYLQGRJCUV0289]+$")
             .unwrap()
-            .is_match(tag.to_uppercase().replace("O", "0").as_str())
+            .is_match(&tag.to_uppercase().replace("O", "0"))
     }
 
     pub fn fix_tag(&self, tag: String) -> String {
         let re = Regex::new("[^A-Z0-9]+").unwrap();
-        "#".to_owned()
-            + &re
-                .replace_all(tag.to_uppercase().as_str(), "")
-                .replace("O", "0")
+        "#".to_owned() + &re.replace_all(&tag.to_uppercase(), "").replace("O", "0")
     }
 
     /// Runs the future that implements `Send` and parses the reqwest response into a `APIResponse`.
-    async fn parse_json<T: DeserializeOwned>(
+    pub(crate) async fn parse_json<T: DeserializeOwned>(
         &self,
         rb: Result<RequestBuilder, APIError>,
     ) -> Result<T, APIError> {
@@ -407,8 +512,10 @@ impl Client {
                         match resp.status() {
                             reqwest::StatusCode::OK => {
                                 let text = resp.text().await.unwrap();
-                                Ok(serde_json::from_str(&text)
-                            .expect(format!("Failure parsing json (please file a bug on the GitHub): {}", text).as_str()))
+                                Ok(serde_json::from_str(&text).expect(&format!(
+                                    "Failure parsing json (please file a bug on the GitHub): {}",
+                                    text
+                                )))
                             }
                             // 400
                             reqwest::StatusCode::BAD_REQUEST => Err(APIError::BadParameters),
