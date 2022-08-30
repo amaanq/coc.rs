@@ -104,18 +104,20 @@ impl crate::events::EventHandler for S {
 }
 ```
 
-Next in the main function, we will cre
+Next in the main function, we will create the main function, login and add the Player and clan tags we want to keep
+pulling the data from API.
 
 ```rust
 #[tokio::test]
 async fn main() {
+    //...
     /// see above example on how to create a client
 
     let task = tokio::spawn(async move {
         /// staring the API events in a separate thread
         let mut x = crate::events::EventsListenerBuilder::new(client);
         x.add_player("#2PP".to_string()).await;
-        x.add_clans(vec!["#2PP".to_string()])
+        x.add_players(vec!["#CVJLQOLR".to_string()])
             .await
             .build(Handler) /// Building the eventListener struct 
             .init() /// starting the continuous polling of the clan/player/current_war endpoints
