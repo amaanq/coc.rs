@@ -33,7 +33,7 @@ pub struct Opponent {
     pub tag: Option<String>,
     pub name: Option<String>,
     pub badge_urls: BadgeUrls,
-    pub clan_level: i64,
-    pub stars: i64,
+    pub clan_level: i32,
+    pub stars: i32,
     pub destruction_percentage: f32,
 }

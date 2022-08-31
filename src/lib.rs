@@ -18,3 +18,5 @@ pub mod events;
 
 mod tests;
 mod tests_cos;
+
+pub mod prelude;
