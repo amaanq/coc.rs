@@ -10,7 +10,7 @@ mod tests {
     use crate::{
         api::{APIError, Client},
         credentials::Credentials,
-        events::{EventType, EventsListenerBuilder},
+        events::{EventHandler, EventType, EventsListenerBuilder},
         models::*,
     };
 
@@ -561,7 +561,6 @@ mod tests {
 
         let client = Client::new(credentials).await?;
 
-        //let mut vec_players = Vec::new();
         let mut tasks = Vec::new();
         let throttle_counter = Arc::new(Mutex::new(0));
 
@@ -577,7 +576,6 @@ mod tests {
                             APIError::BadResponse(_, code) => {
                                 if code == reqwest::StatusCode::TOO_MANY_REQUESTS {
                                     *cloned_throttle_counter.lock().await += 1;
-                                    //panic!("{}", reason);
                                 } else {
                                     break;
                                 }
@@ -608,8 +606,30 @@ mod tests {
             .build();
         let client = crate::api::Client::new(credentials).await.unwrap();
 
+        struct S;
+
+        #[async_trait]
+        impl EventHandler for S {
+            async fn player(
+                &self,
+                _old_player: Option<player::Player>,
+                _new_player: player::Player,
+            ) {
+                println!("new player")
+            }
+
+            async fn handle_error(
+                &self,
+                _error: APIError,
+                _tag: Option<String>,
+                _event_type: EventType,
+            ) {
+                println!("Houston we have a problem!")
+            }
+        }
+
         let task = tokio::spawn(async move {
-            let mut x = crate::events::EventsListenerBuilder::new(client);
+            let mut x = EventsListenerBuilder::new(client);
             x.add_player("#2PP".to_string()).await;
 
             x.add_clans(vec!["#2PP".to_string()])
@@ -619,23 +639,5 @@ mod tests {
                 .await;
         });
         task.await.unwrap();
-    }
-
-    struct S;
-
-    #[async_trait]
-    impl crate::events::EventHandler for S {
-        async fn player(&self, _old_player: Option<player::Player>, _new_player: player::Player) {
-            println!("new player")
-        }
-
-        async fn handle_error(
-            &self,
-            _error: APIError,
-            _tag: Option<String>,
-            _event_type: EventType,
-        ) {
-            println!("Houston we have a problem!")
-        }
     }
 }
