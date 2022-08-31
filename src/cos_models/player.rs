@@ -87,8 +87,8 @@ pub mod cos_player {
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct Skill {
-        pub id: i64,
-        pub count: i64,
+        pub id: i32,
+        pub count: i32,
     }
 
     #[derive(Debug, Serialize, Deserialize)]

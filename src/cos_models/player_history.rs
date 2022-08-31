@@ -10,7 +10,7 @@ pub mod cos_player_history {
     pub struct PlayerHistory {
         pub log: Vec<Log>,
         pub summary: Vec<Summary>,
-        pub roles_in_clans: Vec<i64>,
+        pub roles_in_clans: Vec<i32>,
         pub clans_map: HashMap<String, ClansMap>,
     }
 
@@ -37,8 +37,8 @@ pub mod cos_player_history {
     pub struct Summary {
         pub tag: String,
         pub duration: i64,
-        pub count: i64,
-        pub roles: Vec<i64>,
+        pub count: i32,
+        pub roles: Vec<i32>,
     }
 
     #[derive(Debug, Serialize, Deserialize)]
