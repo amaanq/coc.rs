@@ -41,14 +41,14 @@ impl Clan {
             self.tag.replace("#", ""),
         )
     }
-
+    #[cfg(feature = "extra")]
     pub fn clash_of_stats_link(&self) -> String {
         format!(
             "https://www.clashofstats.com/clans/{}/summary",
             self.tag.replace("#", "")
         )
     }
-
+    #[cfg(feature = "extra")]
     pub fn chocolate_clash_link(&self) -> String {
         format!(
             "https://cc.chocolateclash.com/cc_n/clan.php?tag={}",

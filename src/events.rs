@@ -1,21 +1,18 @@
-use std::ops::Add;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
-use tokio::sync::{Mutex, MutexGuard};
 
-use crate::api::{APIError, Client};
-use crate::models::clan::Clan;
-use crate::models::player::Player;
-use crate::models::player::WarPreference::In;
-use crate::war::War;
+use crate::{
+    api::{APIError, Client},
+    models::*,
+    war::War,
+};
 
 #[async_trait]
+#[allow(unused_variables)]
 pub trait EventHandler {
-    async fn player(&self, old_player: Option<Player>, new_player: Player) {}
-    async fn clan(&self, old_clan: Option<Clan>, new_clan: Clan) {}
+    async fn player(&self, old_player: Option<player::Player>, new_player: player::Player) {}
+    async fn clan(&self, old_clan: Option<clan::Clan>, new_clan: clan::Clan) {}
     async fn war(&self, old_war: Option<War>, new_war: War) {}
     async fn handle_error(&self, error: APIError, tag: Option<String>, event_type: EventType);
 }
@@ -28,8 +25,8 @@ pub struct EventsListenerBuilder {
 
 #[derive(Debug, Clone)]
 pub enum EventType {
-    Player(String, Instant, Option<Player>),
-    Clan(String, Instant, Option<Clan>),
+    Player(String, Instant, Option<player::Player>),
+    Clan(String, Instant, Option<clan::Clan>),
     War(String, Instant, Option<War>),
     None,
 }
@@ -98,6 +95,7 @@ where
     event_type: Vec<EventType>,
     client: Client,
     handler: T,
+    #[allow(dead_code)]
     last_time_fired: Instant,
 }
 

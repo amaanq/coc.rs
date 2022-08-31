@@ -1,6 +1,6 @@
 #[cfg(feature = "cos")]
 pub mod cos {
-    use reqwest::{StatusCode, Url};
+    use reqwest::Url;
 
     use crate::cos_models::*;
     use crate::{
@@ -61,7 +61,8 @@ pub mod cos {
         const COS_RANKINGS_PLAYER_TROOPS_DONATED: &'static str = "/rankings/players/donations";
         const COS_RANKINGS_PLAYER_TROOPS_RECEIVED: &'static str =
             "/rankings/players/donations-received";
-        const COS_RANKINGS_PLAYER_FRIEND_IN_NEED: &'static str = "/rankings/players/friends-in-need";
+        const COS_RANKINGS_PLAYER_FRIEND_IN_NEED: &'static str =
+            "/rankings/players/friends-in-need";
 
         // Player Single Player Rankings
         const COS_RANKINGS_PLAYER_EXP_LEVEL: &'static str = "/rankings/players/exp-level";
