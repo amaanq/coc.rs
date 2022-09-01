@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Location {
     #[serde(rename = "id")]
-    id: i32,
+    id: Local,
 
     #[serde(rename = "name")]
     name: String,
@@ -13,7 +14,7 @@ pub struct Location {
 }
 
 impl Location {
-    pub fn id(&self) -> i32 {
+    pub fn id(&self) -> Local {
         self.id
     }
     pub fn name(&self) -> &str {
@@ -24,7 +25,8 @@ impl Location {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
 pub enum Local {
     None = 0,
     Europe = 32000000,
@@ -288,6 +290,11 @@ pub enum Local {
     Yemen = 32000258,
     Zambia = 32000259,
     Zimbabwe = 32000260,
+    DoNotUse1 = 32000261,
+    DoNotUse2 = 32000262,
+    DoNotUse3 = 32000263,
+    DoNotUse4 = 32000264,
+    DoNotUse5 = 32000265,
 }
 
 impl Default for Local {
