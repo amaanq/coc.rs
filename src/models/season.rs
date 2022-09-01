@@ -44,6 +44,22 @@ pub struct BestSeasonData {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct PreviousVersusSeasonData {
+    pub id: String,
+    pub rank: i32,
+    pub trophies: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BestVersusSeasonData {
+    pub id: String,
+    pub rank: i32,
+    pub trophies: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct CurrentSeasonData {
     pub id: Option<String>,
     pub rank: Option<i32>,
