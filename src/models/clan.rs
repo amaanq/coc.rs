@@ -131,6 +131,20 @@ impl WarFrequency {
     }
 }
 
+impl ToString for WarFrequency {
+    fn to_string(&self) -> String {
+        match self {
+            WarFrequency::Unknown => "Not set".to_string(),
+            WarFrequency::Always => "Always".to_string(),
+            WarFrequency::MoreThanOncePerWeek => "Twice a week".to_string(),
+            WarFrequency::OncePerWeek => "Once a week".to_string(),
+            WarFrequency::LessThanOncePerWeek => "Rarely".to_string(),
+            WarFrequency::Never => "Never".to_string(),
+            WarFrequency::Any => "Any".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ChatLanguage {
@@ -184,6 +198,18 @@ impl Role {
     }
     pub fn is_leader(&self) -> bool {
         self == &Role::Leader
+    }
+}
+
+impl ToString for Role {
+    fn to_string(&self) -> String {
+        match self {
+            Role::NotMember => "Not Member".to_string(),
+            Role::Member => "Member".to_string(),
+            Role::Elder => "Elder".to_string(),
+            Role::CoLeader => "Co-Leader".to_string(),
+            Role::Leader => "Leader".to_string(),
+        }
     }
 }
 
