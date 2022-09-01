@@ -53,6 +53,15 @@ impl WarPreference {
     }
 }
 
+impl ToString for WarPreference {
+    fn to_string(&self) -> String {
+        match self {
+            WarPreference::In => "in".to_string(),
+            WarPreference::Out => "out".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Hero {
@@ -117,6 +126,15 @@ impl Village {
     }
     pub fn is_builder_base(&self) -> bool {
         self == &Village::BuilderBase
+    }
+}
+
+impl ToString for Village {
+    fn to_string(&self) -> String {
+        match self {
+            Village::HomeVillage => "Home Village".to_string(),
+            Village::BuilderBase => "Builder Base".to_string(),
+        }
     }
 }
 
