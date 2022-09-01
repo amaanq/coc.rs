@@ -173,10 +173,11 @@ mod tests {
         client.load(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let player = client.get_player("#CGY2G90V".to_string()).await.unwrap();
+        let player = client.get_player("#Y9PPQ8GJ".to_string()).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Player: {:#?}", player);
+        println!("Heroes: {:#?}", player.hero_pets());
         Ok(())
     }
 
@@ -548,6 +549,7 @@ mod tests {
         let end = 2001;
         let vec_ll = (start..end)
             .map(|n| LogicLong {
+                // putting this here as a reminder to add a pure LogicLong::random() method
                 low: 0,
                 high: n,
                 tag: to_tag(0, n),
@@ -584,14 +586,12 @@ mod tests {
                         },
                     }
                 }
-                //println!("{:?}", player);
             });
             tasks.push(task);
         }
 
         for task in tasks {
             task.await.unwrap_or_default();
-            //std::thread::sleep(Duration::from_micros(1000)); // 2.5ms so 400 requests per second
         }
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Throttle counter: {:#?}", throttle_counter);
