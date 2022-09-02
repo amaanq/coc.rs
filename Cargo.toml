@@ -11,6 +11,7 @@ license = "MIT"
 license-file = "LICENSE"
 keywords = ["Clash of Clans", "coc", "api", "Supercell", "Clash Royale"]
 categories = ["api-bindings", "asynchronous", "concurrency", "config", "web-programming::http-client"]
+exclude = [".idea/", ".vscode/", "*.txt"]
 
 [dependencies]
 async-trait = "0.1.57"
