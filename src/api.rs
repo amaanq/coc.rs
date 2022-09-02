@@ -1,22 +1,19 @@
-use regex::Regex;
-use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
+use tokio::sync::Mutex as TokioMutex;
 
-// extern crate reqwest;
+use lazy_static::lazy_static;
+use regex::Regex;
+use reqwest::{RequestBuilder, Url};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
+#[cfg(feature = "cos")]
+use reqwest::header::{HeaderMap, HeaderValue};
 
 use crate::{
     credentials::Credentials,
     dev::{self, CLIENT},
     models::*,
 };
-
-use reqwest::{RequestBuilder, Url};
-use serde::de::DeserializeOwned;
-
-use std::sync::{Arc, Mutex};
-use tokio::sync::Mutex as TokioMutex;
-
-#[cfg(feature = "cos")]
-use reqwest::header::{HeaderMap, HeaderValue};
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
@@ -60,6 +57,11 @@ pub enum APIError {
     InvalidParameters(String),
 
     EventFailure(String),
+}
+
+lazy_static! {
+    pub static ref VALID_REGEX: Regex = Regex::new("^#[oO0289PYLQGRJCUVpylqgrjcuv]+$").unwrap();
+    pub static ref FIX_REGEX: Regex = Regex::new("[^A-Z0-9]+").unwrap();
 }
 
 impl Client {
@@ -496,14 +498,14 @@ impl Client {
     }
 
     pub fn is_valid_tag(&self, tag: String) -> bool {
-        Regex::new("^#[oO0289PYLQGRJCUVpylqgrjcuv]+$")
-            .unwrap()
-            .is_match(&tag.to_uppercase().replace('O', "0"))
+        VALID_REGEX.is_match(&tag.to_uppercase().replace('O', "0"))
     }
 
     pub fn fix_tag(&self, tag: String) -> String {
-        let re = Regex::new("[^A-Z0-9]+").unwrap();
-        "#".to_owned() + &re.replace_all(&tag.to_uppercase(), "").replace('O', "0")
+        "#".to_owned()
+            + &FIX_REGEX
+                .replace_all(&tag.to_uppercase(), "")
+                .replace('O', "0")
     }
 
     /// Runs the future that implements `Send` and parses the reqwest response into a `APIResponse`.
