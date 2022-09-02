@@ -8,7 +8,6 @@ readme = "README.md"
 homepage = "https://github.com/amaanq/coc.rs"
 repository = "https://github.com/amaanq/coc.rs"
 license = "MIT"
-license-file = "LICENSE"
 keywords = ["Clash_of_Clans", "Clash", "coc", "api", "Supercell"]
 categories = ["api-bindings", "asynchronous", "concurrency", "config", "web-programming::http-client"]
 exclude = [".idea/", ".vscode/", "*.txt"]
