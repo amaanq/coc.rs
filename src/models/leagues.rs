@@ -72,6 +72,8 @@ pub struct WarLeague {
     pub name: String,
 }
 
+#[allow(non_snake_case)]
+/// I need to think of a better way to do this, enum variants with struct types seem stupid as they're all the same type.
 impl League {
     pub fn Unranked() -> Self {
         League {

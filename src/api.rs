@@ -9,24 +9,26 @@ use crate::{
     models::*,
 };
 
-use reqwest::{
-    header::{HeaderMap, HeaderValue},
-    RequestBuilder, Url,
-};
+use reqwest::{RequestBuilder, Url};
 use serde::de::DeserializeOwned;
 
 use std::sync::{Arc, Mutex};
+use tokio::sync::Mutex as TokioMutex;
+
+#[cfg(feature = "cos")]
+use reqwest::header::{HeaderMap, HeaderValue};
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
 pub struct Client {
-    credentials: Arc<Mutex<Credentials>>,
+    credentials: Arc<TokioMutex<Credentials>>,
     ready: Arc<Mutex<bool>>,
     accounts: Arc<Mutex<Vec<dev::APIAccount>>>,
     index: Arc<Mutex<dev::Index>>,
 
     ip_address: Arc<Mutex<String>>,
 
+    #[cfg(feature = "cos")]
     pub(crate) is_cos_logged_in: Arc<Mutex<bool>>,
 }
 
@@ -75,12 +77,13 @@ impl Client {
 
     pub async fn new(credentials: Credentials) -> Result<Self, APIError> {
         let client = Self {
-            credentials: Arc::new(Mutex::new(credentials)),
+            credentials: Arc::new(TokioMutex::new(credentials)),
             ready: Arc::new(Mutex::new(false)),
             accounts: Arc::new(Mutex::new(vec![])),
             index: Arc::new(Mutex::new(dev::Index::default())),
             ip_address: Arc::new(Mutex::new(String::new())),
 
+            #[cfg(feature = "cos")]
             is_cos_logged_in: Arc::new(Mutex::new(false)),
         };
 
@@ -90,7 +93,7 @@ impl Client {
     }
 
     pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
-        *self.credentials.lock().unwrap() = credentials;
+        *self.credentials.lock().await = credentials;
         *self.ready.lock().unwrap() = false;
         self.init().await?;
         *self.ready.lock().unwrap() = true;
@@ -102,10 +105,9 @@ impl Client {
         let ip = match res {
             Ok(res) => res.text().await.unwrap(),
             Err(err) => {
-                return Err(APIError::FailedGetIP(format!(
-                    "client.get_ip(): `{}`",
-                    err.to_string(),
-                )))
+                return Err(APIError::FailedGetIP(
+                    format!("client.get_ip(): `{}`", err,),
+                ))
             }
         };
         Ok(ip)
@@ -115,7 +117,7 @@ impl Client {
         let ip = Client::get_ip().await?;
         self.ip_address.lock().unwrap().push_str(&ip);
 
-        for credential in self.credentials.lock().unwrap().0.iter() {
+        for credential in self.credentials.lock().await.0.iter() {
             let account = dev::APIAccount::login(credential, ip.clone()).await;
             self.accounts.lock().unwrap().push(account?);
         }
@@ -155,6 +157,7 @@ impl Client {
     }
 
     /// To allow usage without a client being ready
+    #[cfg(feature = "cos")]
     pub(crate) fn cos_get<U: reqwest::IntoUrl>(
         &self,
         url: U,
@@ -198,6 +201,7 @@ impl Client {
     }
 
     /// To allow usage without a client being ready
+    #[cfg(feature = "cos")]
     pub(crate) fn cos_post<U: reqwest::IntoUrl, T: Into<reqwest::Body>>(
         &self,
         url: U,
@@ -347,7 +351,7 @@ impl Client {
     pub async fn get_league_season_rankings(
         &self,
         league_id: leagues::LeagueKind,
-        mut season_id: season::Season,
+        season_id: season::Season,
         paging: paging::Paging,
     ) -> Result<APIResponse<rankings::PlayerRanking>, APIError> {
         if league_id != leagues::LeagueKind::LegendLeague {
@@ -360,7 +364,7 @@ impl Client {
             "{}/leagues/{}/seasons/{}",
             Self::BASE_URL,
             league_id as i32,
-            season_id.to_string()
+            season_id
         );
         if paging.is_some() {
             url = Url::parse_with_params(&url, paging.to_vec())
@@ -495,12 +499,12 @@ impl Client {
     fn is_valid_tag(&self, tag: String) -> bool {
         Regex::new("^#[PYLQGRJCUV0289]+$")
             .unwrap()
-            .is_match(&tag.to_uppercase().replace("O", "0"))
+            .is_match(&tag.to_uppercase().replace('O', "0"))
     }
 
     pub fn fix_tag(&self, tag: String) -> String {
         let re = Regex::new("[^A-Z0-9]+").unwrap();
-        "#".to_owned() + &re.replace_all(&tag.to_uppercase(), "").replace("O", "0")
+        "#".to_owned() + &re.replace_all(&tag.to_uppercase(), "").replace('O', "0")
     }
 
     /// Runs the future that implements `Send` and parses the reqwest response into a `APIResponse`.
@@ -515,10 +519,8 @@ impl Client {
                         match resp.status() {
                             reqwest::StatusCode::OK => {
                                 let text = resp.text().await.unwrap();
-                                Ok(serde_json::from_str(&text).expect(&format!(
-                                    "Failure parsing json (please file a bug on the GitHub): {}",
-                                    text
-                                )))
+                                Ok(serde_json::from_str(&text).unwrap_or_else(|_| panic!("Failure parsing json (please file a bug on the GitHub): {}",
+                                    text)))
                             }
                             // 400
                             reqwest::StatusCode::BAD_REQUEST => Err(APIError::BadParameters),

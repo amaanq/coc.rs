@@ -99,12 +99,6 @@ impl SeasonBuilder {
 }
 
 impl Season {
-    pub fn to_string(&mut self) -> String {
-        //YYYY-MM
-        self.id = format!("{}-{:02}", self.year, self.month as i32);
-        self.id.clone()
-    }
-
     pub fn from_string(season: String) -> Result<Season, SeasonError> {
         let mut season_split = season.split('-');
         Ok(Season {
@@ -120,5 +114,11 @@ impl Season {
 
     pub fn builder() -> SeasonBuilder {
         SeasonBuilder::new()
+    }
+}
+
+impl std::fmt::Display for Season {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}-{:02}", self.year, self.month as i32)
     }
 }

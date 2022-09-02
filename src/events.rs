@@ -33,10 +33,10 @@ pub enum EventType {
 
 impl EventsListenerBuilder {
     pub fn new(client: Client) -> Self {
-        return EventsListenerBuilder {
+        EventsListenerBuilder {
             event_type: vec![],
             client,
-        };
+        }
     }
 
     pub async fn add_clan(&mut self, tag: String) {
