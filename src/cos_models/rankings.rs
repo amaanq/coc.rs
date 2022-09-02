@@ -1,3 +1,4 @@
+#[cfg(feature = "cos")]
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "cos")]

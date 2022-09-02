@@ -106,3 +106,9 @@ impl Cursor {
         vec
     }
 }
+
+impl Default for Cursor {
+    fn default() -> Self {
+        Self::new()
+    }
+}

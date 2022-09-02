@@ -4,8 +4,8 @@ mod models;
 pub use models::*;
 
 /// Clash of Stats API wrapper
-mod cos;
-pub use cos::*;
+mod clash_of_stats;
+pub use clash_of_stats::*;
 mod cos_models;
 pub use cos_models::*;
 
