@@ -495,9 +495,8 @@ impl Client {
         self.parse_json(self.get(url)).await
     }
 
-    #[allow(dead_code)]
-    fn is_valid_tag(&self, tag: String) -> bool {
-        Regex::new("^#[PYLQGRJCUV0289]+$")
+    pub fn is_valid_tag(&self, tag: String) -> bool {
+        Regex::new("^#[oO0289PYLQGRJCUVpylqgrjcuv]+$")
             .unwrap()
             .is_match(&tag.to_uppercase().replace('O', "0"))
     }
