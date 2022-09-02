@@ -3,7 +3,7 @@ mod tests {
     use std::{env, sync::Arc, time::Instant};
 
     use async_trait::async_trait;
-    use bytestream_rs::logiclong::LogicLong;
+    use logic_long::LogicLong;
     use time::Month;
     use tokio::sync::Mutex;
 
