@@ -1,6 +1,6 @@
 [package]
 name = "coc-rs"
-version = "0.4.5"
+version = "0.4.6"
 authors = ["amaanq <amaanq12@gmail.com>", "SaHiL"]
 edition = "2021"
 description = "A Rust crate wrapper around the Clash of Clans public API"
@@ -17,7 +17,7 @@ async-trait = "0.1.57"
 base64 = "0.13.0"
 chrono = "0.4.22"
 lazy_static = "1.4.0"
-logic-long = "0.1.1"
+logic-long = "0.1.2"
 regex = "1"
 time = "0.3.14"
 urlencoding = "2.1.0"

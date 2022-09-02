@@ -1,8 +1,7 @@
 use std::sync::{Arc, Mutex};
+use logic_long::LogicLong;
 use tokio::sync::Mutex as TokioMutex;
 
-use lazy_static::lazy_static;
-use regex::Regex;
 use reqwest::{RequestBuilder, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -59,10 +58,10 @@ pub enum APIError {
     EventFailure(String),
 }
 
-lazy_static! {
-    pub static ref VALID_REGEX: Regex = Regex::new("^#[oO0289PYLQGRJCUVpylqgrjcuv]+$").unwrap();
-    pub static ref FIX_REGEX: Regex = Regex::new("[^A-Z0-9]+").unwrap();
-}
+// lazy_static! {
+//     pub static ref VALID_REGEX: Regex = Regex::new("^#[oO0289PYLQGRJCUVpylqgrjcuv]+$").unwrap();
+//     pub static ref FIX_REGEX: Regex = Regex::new("[^A-Z0-9]+").unwrap();
+// }
 
 impl Client {
     const IP_URL: &'static str = "https://api.ipify.org";
@@ -262,7 +261,7 @@ impl Client {
         &self,
         mut clan_tag: String,
     ) -> Result<APIResponse<war_log::WarLog>, APIError> {
-        clan_tag = self.fix_tag(clan_tag);
+        clan_tag = LogicLong::fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/warlog",
             Self::BASE_URL,
@@ -281,7 +280,7 @@ impl Client {
     }
 
     pub async fn get_current_war(&self, mut clan_tag: String) -> Result<war::War, APIError> {
-        clan_tag = self.fix_tag(clan_tag);
+        clan_tag = LogicLong::fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/currentwar",
             Self::BASE_URL,
@@ -291,7 +290,7 @@ impl Client {
     }
 
     pub async fn get_clan(&self, mut clan_tag: String) -> Result<clan::Clan, APIError> {
-        clan_tag = self.fix_tag(clan_tag);
+        clan_tag = LogicLong::fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}",
             Self::BASE_URL,
@@ -304,7 +303,7 @@ impl Client {
         &self,
         mut clan_tag: String,
     ) -> Result<APIResponse<clan::ClanMember>, APIError> {
-        clan_tag = self.fix_tag(clan_tag);
+        clan_tag = LogicLong::fix_tag(clan_tag);
         let url = format!(
             "{}/clans/{}/members",
             Self::BASE_URL,
@@ -317,7 +316,7 @@ impl Client {
     // Player Methods
     //_______________________________________________________________________
     pub async fn get_player(&self, mut player_tag: String) -> Result<player::Player, APIError> {
-        player_tag = self.fix_tag(player_tag);
+        player_tag = LogicLong::fix_tag(player_tag);
         let url = format!(
             "{}/players/{}",
             Self::BASE_URL,
@@ -331,7 +330,7 @@ impl Client {
         mut player_tag: String,
         token: String,
     ) -> Result<player::PlayerToken, APIError> {
-        player_tag = self.fix_tag(player_tag);
+        player_tag = LogicLong::fix_tag(player_tag);
         let url = format!(
             "{}/players/{}/verifytoken",
             Self::BASE_URL,
@@ -497,16 +496,16 @@ impl Client {
         self.parse_json(self.get(url)).await
     }
 
-    pub fn is_valid_tag(&self, tag: String) -> bool {
-        VALID_REGEX.is_match(&tag.to_uppercase().replace('O', "0"))
-    }
+    // pub fn is_valid_tag(&self, tag: String) -> bool {
+    //     VALID_REGEX.is_match(&tag.to_uppercase().replace('O', "0"))
+    // }
 
-    pub fn fix_tag(&self, tag: String) -> String {
-        "#".to_owned()
-            + &FIX_REGEX
-                .replace_all(&tag.to_uppercase(), "")
-                .replace('O', "0")
-    }
+    // pub fn fix_tag(&self, tag: String) -> String {
+    //     "#".to_owned()
+    //         + &FIX_REGEX
+    //             .replace_all(&tag.to_uppercase(), "")
+    //             .replace('O', "0")
+    // }
 
     /// Runs the future that implements `Send` and parses the reqwest response into a `APIResponse`.
     pub(crate) async fn parse_json<T: DeserializeOwned>(
