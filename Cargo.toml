@@ -9,7 +9,7 @@ homepage = "https://github.com/amaanq/coc.rs"
 repository = "https://github.com/amaanq/coc.rs"
 license = "MIT"
 license-file = "LICENSE"
-keywords = ["Clash of Clans", "coc", "api", "Supercell", "Clash Royale"]
+keywords = ["Clash of Clans", "Clash", "coc", "api", "Supercell"]
 categories = ["api-bindings", "asynchronous", "concurrency", "config", "web-programming::http-client"]
 exclude = [".idea/", ".vscode/", "*.txt"]
 
