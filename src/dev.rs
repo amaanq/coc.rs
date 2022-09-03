@@ -8,7 +8,7 @@ pub struct Index {
     pub key_token_index: i8,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct APIAccount {
     pub credential: Credential,
     pub response: LoginResponse,
@@ -23,7 +23,7 @@ pub struct Keys {
     pub keys: Vec<Key>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct LoginResponse {
     pub status: Status,
     #[serde(rename = "sessionExpiresInSeconds")]
@@ -36,7 +36,7 @@ pub struct LoginResponse {
     pub swagger_url: String,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Auth {
     pub uid: String,
     pub token: String,
@@ -44,7 +44,7 @@ pub struct Auth {
     pub ip: Option<String>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Developer {
     pub id: String,
     pub name: String,
@@ -241,22 +241,12 @@ impl APIAccount {
             .unwrap();
 
         // asynchronously call self.get_keys()
-        self.get_keys().await;
+
+        let mut c_self = self.clone();
+        tokio::spawn(async move {
+            c_self.get_keys().await;
+        });
 
         key
-    }
-}
-
-impl Keys {
-    #[allow(dead_code)]
-    pub fn get_key(&self, index: usize) -> Key {
-        self.keys[index].clone()
-    }
-
-    #[allow(dead_code)]
-    pub fn remove_invalid_keys(&mut self, ip: &str) {
-        // get ip
-        self.keys
-            .retain(|key| key.cidr_ranges.iter().any(|cidr| cidr.contains(&ip)));
     }
 }

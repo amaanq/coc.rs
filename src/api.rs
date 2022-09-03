@@ -1,5 +1,5 @@
-use std::sync::{Arc, Mutex};
 use logic_long::LogicLong;
+use std::sync::{Arc, Mutex};
 use tokio::sync::Mutex as TokioMutex;
 
 use reqwest::{RequestBuilder, Url};
@@ -58,10 +58,27 @@ pub enum APIError {
     EventFailure(String),
 }
 
-// lazy_static! {
-//     pub static ref VALID_REGEX: Regex = Regex::new("^#[oO0289PYLQGRJCUVpylqgrjcuv]+$").unwrap();
-//     pub static ref FIX_REGEX: Regex = Regex::new("[^A-Z0-9]+").unwrap();
-// }
+impl std::error::Error for APIError {}
+
+impl std::fmt::Display for APIError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            APIError::ClientNotReady => write!(f, "Client not ready"),
+            APIError::FailedGetIP(e) => write!(f, "Failed to get IP address: {}", e),
+            APIError::LoginFailed(e) => write!(f, "Failed to login: {}", e),
+            APIError::RequestFailed(e) => write!(f, "Request failed: {}", e),
+            APIError::BadParameters => write!(f, "Bad parameters"),
+            APIError::AccessDenied => write!(f, "Access denied"),
+            APIError::NotFound => write!(f, "Not found"),
+            APIError::RequestThrottled => write!(f, "Request throttled"),
+            APIError::UnknownError => write!(f, "Unknown error"),
+            APIError::InMaintenance => write!(f, "In maintenance"),
+            APIError::BadResponse(e, s) => write!(f, "Bad response: {} ({})", e, s),
+            APIError::InvalidParameters(e) => write!(f, "Invalid parameters: {}", e),
+            APIError::EventFailure(e) => write!(f, "Event failure: {}", e),
+        }
+    }
+}
 
 impl Client {
     const IP_URL: &'static str = "https://api.ipify.org";
