@@ -4,25 +4,13 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Location {
     #[serde(rename = "id")]
-    id: Local,
+    pub id: Local,
 
     #[serde(rename = "name")]
-    name: String,
+    pub name: String,
 
     #[serde(rename = "isCountry")]
-    is_country: bool,
-}
-
-impl Location {
-    pub fn id(&self) -> Local {
-        self.id
-    }
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-    pub fn is_country(&self) -> bool {
-        self.is_country
-    }
+    pub is_country: bool,
 }
 
 #[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
