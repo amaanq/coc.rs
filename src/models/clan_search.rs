@@ -19,7 +19,7 @@ pub struct ClanSearchOptions {
     before: Option<String>,
     label_ids: Option<Vec<String>>,
 
-    pub items: Vec<(String, String)>,
+    pub(crate) items: Vec<(String, String)>,
 }
 
 // implement iter for ClanSearchOptions by iterating over every field

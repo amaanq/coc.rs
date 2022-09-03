@@ -6,25 +6,25 @@ use crate::models::badge_urls::BadgeUrls;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WarLog {
-    result: Option<String>,
-    end_time: String,
-    team_size: i32,
-    attacks_per_member: i8,
-    clan: Clan,
-    opponent: Opponent,
+    pub result: Option<String>,
+    pub end_time: String,
+    pub team_size: i32,
+    pub attacks_per_member: i8,
+    pub clan: Clan,
+    pub opponent: Opponent,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Clan {
-    tag: String,
-    name: String,
-    badge_urls: BadgeUrls,
-    clan_level: i8,
-    attacks: i32,
-    stars: i32,
-    destruction_percentage: f32,
-    exp_earned: i32,
+    pub tag: String,
+    pub name: String,
+    pub badge_urls: BadgeUrls,
+    pub clan_level: i8,
+    pub attacks: i32,
+    pub stars: i32,
+    pub destruction_percentage: f32,
+    pub exp_earned: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
