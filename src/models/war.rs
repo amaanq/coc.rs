@@ -1,3 +1,4 @@
+use chrono::TimeZone;
 use serde::{Deserialize, Serialize};
 
 use crate::models::badge_urls::BadgeUrls;
@@ -8,9 +9,9 @@ pub struct War {
     pub state: String,
     pub team_size: Option<i32>,
     pub attacks_per_member: Option<i8>,
-    pub preparation_start_time: Option<String>,
-    pub start_time: Option<String>,
-    pub end_time: Option<String>,
+    preparation_start_time: Option<String>,
+    start_time: Option<String>,
+    end_time: Option<String>,
     pub clan: Option<WarClan>,
     pub opponent: Option<WarClan>,
 }
@@ -49,4 +50,42 @@ pub struct Attack {
     pub destruction_percentage: f32,
     pub order: i32,
     pub duration: i32,
+}
+
+impl War {
+    pub fn start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+        if let Some(ref start_time) = self.start_time {
+            Some(chrono::Utc.from_utc_datetime(
+                &chrono::NaiveDateTime::parse_from_str(start_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
+            ))
+        } else {
+            None
+        }
+    }
+
+    pub fn end_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+        if let Some(ref end_time) = self.end_time {
+            Some(chrono::Utc.from_utc_datetime(
+                &chrono::NaiveDateTime::parse_from_str(end_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
+            ))
+        } else {
+            None
+        }
+    }
+
+    pub fn preparation_start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+        if let Some(ref preparation_start_time) = self.preparation_start_time {
+            Some(
+                chrono::Utc.from_utc_datetime(
+                    &chrono::NaiveDateTime::parse_from_str(
+                        preparation_start_time,
+                        "%Y%m%dT%H%M%S.%fZ",
+                    )
+                    .unwrap(),
+                ),
+            )
+        } else {
+            None
+        }
+    }
 }
