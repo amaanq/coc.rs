@@ -18,11 +18,7 @@ pub struct Season {
     id: String,
     #[serde(skip_serializing)]
     year: i32,
-    #[serde(
-        skip_deserializing,
-        skip_serializing,
-        default = "Season::default_month"
-    )]
+    #[serde(skip_deserializing, skip_serializing, default = "Season::default_month")]
     month: Month,
 }
 
@@ -74,13 +70,7 @@ impl From<std::num::ParseIntError> for SeasonError {
 
 impl SeasonBuilder {
     fn new() -> SeasonBuilder {
-        SeasonBuilder {
-            season: Season {
-                id: String::new(),
-                year: 2015,
-                month: Month::July,
-            },
-        }
+        SeasonBuilder { season: Season { id: String::new(), year: 2015, month: Month::July } }
     }
 
     pub fn year(mut self, year: i32) -> SeasonBuilder {

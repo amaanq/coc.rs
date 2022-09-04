@@ -16,9 +16,7 @@ pub struct Credential {
 
 impl CredentialsBuilder {
     fn new() -> Self {
-        Self {
-            credentials: Credentials(Vec::new()),
-        }
+        Self { credentials: Credentials(Vec::new()) }
     }
 
     pub fn add_credential(mut self, email: String, password: String) -> Self {

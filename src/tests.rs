@@ -2,6 +2,7 @@
 mod tests {
     use std::{env, sync::Arc, time::Instant};
 
+    use anyhow::{Context, Result};
     use async_trait::async_trait;
     use logic_long::LogicLong;
     use time::Month;
@@ -35,10 +36,42 @@ mod tests {
             .build();
 
         let client = Client::new(credentials).await?;
-        // println!("{:#?}", client);
         println!("Time elapsed! {:?}", now.elapsed());
 
         client.print_keys().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_multi_login() -> Result<()> {
+        /// Get an environment variable, returning an Err with a
+        /// nice error message mentioning the missing variable in case the value is not found.
+        fn required_env_var(key: &str) -> Result<String> {
+            env::var(key).with_context(|| format!("Missing environment variable {}", key))
+        }
+
+        // split by , and collect as vec
+        let emails =
+            required_env_var("emails")?.split(',').map(|s| s.to_string()).collect::<Vec<_>>();
+        let passwords =
+            required_env_var("passwords")?.split(',').map(|s| s.to_string()).collect::<Vec<_>>();
+
+        // zip emails and passwords together, then add_credential for each
+        let credentials = Credentials::builder();
+        let credentials = emails
+            .into_iter()
+            .zip(passwords.into_iter())
+            .fold(credentials, |credentials, (email, password)| {
+                credentials.add_credential(email, password)
+            })
+            .build();
+
+        println!("credentials: {:#?}", credentials);
+
+        let client = Client::new(credentials).await?;
+
+        client.print_keys().await;
+
         Ok(())
     }
 
@@ -63,10 +96,7 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let clan_warlog = client
-            .get_clan_warlog("#2PJP2Q0PY".to_string())
-            .await
-            .unwrap();
+        let clan_warlog = client.get_clan_warlog("#2PJP2Q0PY").await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Clan warlog: {:#?}", clan_warlog);
@@ -110,10 +140,7 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let current_war = client
-            .get_current_war("#2L29GJ0G0".to_string())
-            .await
-            .unwrap();
+        let current_war = client.get_current_war("#2L29GJ0G0").await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Current war: {:#?}", current_war);
@@ -129,7 +156,7 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let clan = client.get_clan("#90PU0RRG".to_string()).await.unwrap();
+        let clan = client.get_clan("#90PU0RRG").await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Clan: {:?}", clan);
@@ -146,7 +173,7 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let clan_members = client.get_clan_members("#2PP".to_string()).await.unwrap();
+        let clan_members = client.get_clan_members("#2PP").await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         // retain clan members where role is Role::CoLeader and print each one when iterating, then collect
@@ -173,7 +200,7 @@ mod tests {
         client.load(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let player = client.get_player("#Y9PPQ8GJ".to_string()).await.unwrap();
+        let player = client.get_player("#Y9PPQ8GJ").await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Player: {:#?}", player);
@@ -189,12 +216,8 @@ mod tests {
             .build();
 
         let client = Client::new(credentials).await?;
-        let token = "".to_string();
 
-        let verified = client
-            .verify_player_token("#CVJLQOLR".to_string(), token)
-            .await
-            .unwrap();
+        let verified = client.verify_player_token("#CVJLQOLR", "").await.unwrap();
 
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Verified: {:?}", verified);
@@ -231,27 +254,22 @@ mod tests {
         let league_season_rankings = client
             .get_league_season_rankings(
                 leagues::LeagueKind::LegendLeague,
-                season::Season::builder()
-                    .year(2015)
-                    .month(Month::August)
-                    .build(),
+                season::Season::builder().year(2015).month(Month::August).build(),
                 paging::Paging::builder().before(2).build(),
             )
             .await
             .unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
-        league_season_rankings
-            .items
-            .iter()
-            .filter(|ranking| ranking.clan.is_some())
-            .for_each(|ranking| {
+        league_season_rankings.items.iter().filter(|ranking| ranking.clan.is_some()).for_each(
+            |ranking| {
                 let clan = ranking.clan.as_ref().unwrap();
                 println!(
                     "We had a clan! {} - {} (Clan: {} - {})",
                     ranking.tag, ranking.name, clan.tag, clan.name
                 );
-            });
+            },
+        );
 
         Ok(())
     }
@@ -265,10 +283,7 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let league = client
-            .get_league(leagues::LeagueKind::LegendLeague)
-            .await
-            .unwrap();
+        let league = client.get_league(leagues::LeagueKind::LegendLeague).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("League: {:#?}", league);
@@ -285,10 +300,8 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let war_league = client
-            .get_war_league(leagues::WarLeagueKind::ChampionLeagueI)
-            .await
-            .unwrap();
+        let war_league =
+            client.get_war_league(leagues::WarLeagueKind::ChampionLeagueI).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("War league: {:#?}", war_league);
@@ -322,20 +335,13 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let mut clan_rankings = client
-            .get_clan_rankings(location::Local::UnitedStates)
-            .await
-            .unwrap();
+        let mut clan_rankings =
+            client.get_clan_rankings(location::Local::UnitedStates).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
-        clan_rankings
-            .items
-            .sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
+        clan_rankings.items.sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
         for c in clan_rankings.items.iter().rev().take(100) {
-            println!(
-                "{:>3}. {:>9} - {:>15} ({})",
-                c.rank, c.tag, c.name, c.clan_level
-            );
+            println!("{:>3}. {:>9} - {:>15} ({})", c.rank, c.tag, c.name, c.clan_level);
         }
 
         Ok(())
@@ -350,10 +356,8 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let player_rankings = client
-            .get_player_rankings(location::Local::UnitedStates)
-            .await
-            .unwrap();
+        let player_rankings =
+            client.get_player_rankings(location::Local::UnitedStates).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         for p in player_rankings
@@ -384,20 +388,13 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let mut versus_clan_rankings = client
-            .get_versus_clan_rankings(location::Local::UnitedStates)
-            .await
-            .unwrap();
+        let mut versus_clan_rankings =
+            client.get_versus_clan_rankings(location::Local::UnitedStates).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
-        versus_clan_rankings
-            .items
-            .sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
+        versus_clan_rankings.items.sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
         for c in versus_clan_rankings.items.iter().rev().take(100) {
-            println!(
-                "{:>3}. {:>9} - {:>15} ({})",
-                c.rank, c.tag, c.name, c.clan_level
-            );
+            println!("{:>3}. {:>9} - {:>15} ({})", c.rank, c.tag, c.name, c.clan_level);
         }
 
         Ok(())
@@ -412,20 +409,13 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let mut versus_player_rankings = client
-            .get_versus_player_rankings(location::Local::UnitedStates)
-            .await
-            .unwrap();
+        let mut versus_player_rankings =
+            client.get_versus_player_rankings(location::Local::UnitedStates).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
-        versus_player_rankings
-            .items
-            .sort_by(|a, b| a.exp_level.cmp(&b.exp_level));
+        versus_player_rankings.items.sort_by(|a, b| a.exp_level.cmp(&b.exp_level));
         for c in versus_player_rankings.items.iter().rev().take(100) {
-            println!(
-                "{:>3}. {:>9} - {:>15} ({})",
-                c.rank, c.tag, c.name, c.exp_level
-            );
+            println!("{:>3}. {:>9} - {:>15} ({})", c.rank, c.tag, c.name, c.exp_level);
         }
 
         Ok(())
@@ -457,10 +447,7 @@ mod tests {
         let client = Client::new(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let location = client
-            .get_location(location::Local::UnitedStates)
-            .await
-            .unwrap();
+        let location = client.get_location(location::Local::UnitedStates).await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Location: {:#?}", location);
@@ -530,9 +517,8 @@ mod tests {
     #[tokio::test]
     async fn test_10000_tags() -> Result<(), APIError> {
         fn to_tag(low: u32, high: u32) -> String {
-            let arr: Vec<char> = vec![
-                '0', '2', '8', '9', 'P', 'Y', 'L', 'Q', 'G', 'R', 'J', 'C', 'U', 'V',
-            ];
+            let arr: Vec<char> =
+                vec!['0', '2', '8', '9', 'P', 'Y', 'L', 'Q', 'G', 'R', 'J', 'C', 'U', 'V'];
             let mut tag = String::new();
             let mut total = low as i64 + high as i64 * 0x100;
             let mut b14;
@@ -572,7 +558,7 @@ mod tests {
             let cloned_throttle_counter = throttle_counter.clone();
             let task = tokio::spawn(async move {
                 loop {
-                    match cloned_client.get_player(logic_long.tag.clone()).await {
+                    match cloned_client.get_player(&logic_long.tag).await {
                         Ok(_) => break,
                         Err(e) => match e {
                             APIError::BadResponse(_, code) => {
@@ -632,11 +618,7 @@ mod tests {
             let mut x = EventsListenerBuilder::new(client);
             x.add_player("#2PP".to_string()).await;
 
-            x.add_clans(vec!["#2PP".to_string()])
-                .await
-                .build(S)
-                .init()
-                .await;
+            x.add_clans(vec!["#2PP".to_string()]).await.build(S).init().await;
         });
         task.await.unwrap();
     }

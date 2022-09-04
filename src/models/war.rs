@@ -54,38 +54,27 @@ pub struct Attack {
 
 impl War {
     pub fn start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
-        if let Some(ref start_time) = self.start_time {
-            Some(chrono::Utc.from_utc_datetime(
+        self.start_time.as_ref().map(|start_time| {
+            chrono::Utc.from_utc_datetime(
                 &chrono::NaiveDateTime::parse_from_str(start_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
-            ))
-        } else {
-            None
-        }
+            )
+        })
     }
 
     pub fn end_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
-        if let Some(ref end_time) = self.end_time {
-            Some(chrono::Utc.from_utc_datetime(
+        self.end_time.as_ref().map(|end_time| {
+            chrono::Utc.from_utc_datetime(
                 &chrono::NaiveDateTime::parse_from_str(end_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
-            ))
-        } else {
-            None
-        }
+            )
+        })
     }
 
     pub fn preparation_start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
-        if let Some(ref preparation_start_time) = self.preparation_start_time {
-            Some(
-                chrono::Utc.from_utc_datetime(
-                    &chrono::NaiveDateTime::parse_from_str(
-                        preparation_start_time,
-                        "%Y%m%dT%H%M%S.%fZ",
-                    )
+        self.preparation_start_time.as_ref().map(|preparation_start_time| {
+            chrono::Utc.from_utc_datetime(
+                &chrono::NaiveDateTime::parse_from_str(preparation_start_time, "%Y%m%dT%H%M%S.%fZ")
                     .unwrap(),
-                ),
             )
-        } else {
-            None
-        }
+        })
     }
 }

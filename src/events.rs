@@ -33,15 +33,11 @@ pub enum EventType {
 
 impl EventsListenerBuilder {
     pub fn new(client: Client) -> Self {
-        EventsListenerBuilder {
-            event_type: vec![],
-            client,
-        }
+        EventsListenerBuilder { event_type: vec![], client }
     }
 
     pub async fn add_clan(&mut self, tag: String) {
-        self.event_type
-            .push(EventType::Clan(tag, Instant::now(), None))
+        self.event_type.push(EventType::Clan(tag, Instant::now(), None))
     }
 
     pub async fn add_clans(mut self, tags: Vec<String>) -> EventsListenerBuilder {
@@ -52,8 +48,7 @@ impl EventsListenerBuilder {
     }
 
     pub async fn add_player(&mut self, tag: String) {
-        self.event_type
-            .push(EventType::Player(tag, Instant::now(), None));
+        self.event_type.push(EventType::Player(tag, Instant::now(), None));
     }
 
     pub async fn add_players(mut self, tags: Vec<String>) -> EventsListenerBuilder {
@@ -64,8 +59,7 @@ impl EventsListenerBuilder {
     }
 
     pub async fn add_war(&mut self, tag: String) {
-        self.event_type
-            .push(EventType::War(tag, Instant::now(), None));
+        self.event_type.push(EventType::War(tag, Instant::now(), None));
     }
 
     pub async fn add_wars(mut self, tags: Vec<String>) -> EventsListenerBuilder {
@@ -116,9 +110,7 @@ where
                 Err(err) => {
                     println!("Error in Events");
                     self.event_type.remove(err.index);
-                    self.handler
-                        .handle_error(err.api_error, err.tag, err.event_type)
-                        .await;
+                    self.handler.handle_error(err.api_error, err.tag, err.event_type).await;
                 }
             };
         }
@@ -136,7 +128,7 @@ where
                         None => {}
                         Some(q) => {
                             if should_fire_again(q, 10) {
-                                return match self.client.get_player(tag.to_owned()).await {
+                                return match self.client.get_player(tag).await {
                                     Ok(new) => {
                                         self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
                                         self.event_type[i] = EventType::Player(
@@ -164,7 +156,7 @@ where
                         None => {}
                         Some(q) => {
                             if should_fire_again(q, 10) {
-                                return match self.client.get_clan(tag.to_owned()).await {
+                                return match self.client.get_clan(tag).await {
                                     Ok(new) => {
                                         self.handler.clan(old.clone(), new.clone()).await; // invoking the handler function the user defined
                                         self.event_type[i] = EventType::Clan(
@@ -192,7 +184,7 @@ where
                         None => {}
                         Some(q) => {
                             if should_fire_again(q, 60 * 10) {
-                                return match self.client.get_current_war(tag.to_owned()).await {
+                                return match self.client.get_current_war(tag).await {
                                     Ok(new) => {
                                         self.handler.war(old.clone(), new.clone()).await; // invoking the handler function the user defined
                                         self.event_type[i] = EventType::War(

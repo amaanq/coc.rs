@@ -241,20 +241,11 @@ impl Player {
         "Bat Spell",
     ];
 
-    const HOME_HERO_ORDER: [&'static str; 4] = [
-        "Barbarian King",
-        "Archer Queen",
-        "Grand Warden",
-        "Royal Champion",
-    ];
+    const HOME_HERO_ORDER: [&'static str; 4] =
+        ["Barbarian King", "Archer Queen", "Grand Warden", "Royal Champion"];
 
-    const HERO_ORDER: [&'static str; 5] = [
-        "Barbarian King",
-        "Archer Queen",
-        "Grand Warden",
-        "Royal Champion",
-        "Battle Machine",
-    ];
+    const HERO_ORDER: [&'static str; 5] =
+        ["Barbarian King", "Archer Queen", "Grand Warden", "Royal Champion", "Battle Machine"];
 
     const HERO_PETS_ORDER: [&'static str; 4] =
         ["L.A.S.S.I", "Electro Owl", "Mighty Yak", "Unicorn"];
@@ -316,35 +307,25 @@ impl Player {
     }
 
     pub fn clash_of_stats_link(&self) -> String {
-        format!(
-            "https://www.clashofstats.com/players/{}/summary",
-            self.tag.replace('#', "")
-        )
+        format!("https://www.clashofstats.com/players/{}/summary", self.tag.replace('#', ""))
     }
 
     pub fn chocolate_clash_link(&self) -> String {
-        format!(
-            "https://cc.chocolateclash.com/cc_n/member.php?tag={}",
-            self.tag.replace('#', "")
-        )
+        format!("https://cc.chocolateclash.com/cc_n/member.php?tag={}", self.tag.replace('#', ""))
     }
 
     pub fn achievements(&self) -> Vec<Achievement> {
         Self::ACHIEVEMENT_ORDER
             .iter()
             .filter_map(|achievement_name| {
-                self.achievements
-                    .iter()
-                    .find(|achievement| &achievement.name == achievement_name)
+                self.achievements.iter().find(|achievement| &achievement.name == achievement_name)
             })
             .cloned()
             .collect()
     }
 
     pub fn get_achievement(&self, name: &str) -> Option<&Achievement> {
-        self.achievements
-            .iter()
-            .find(|achievement| achievement.name == name)
+        self.achievements.iter().find(|achievement| achievement.name == name)
     }
 
     pub fn home_troops(&self) -> Vec<Troop> {
@@ -418,12 +399,7 @@ impl Player {
     pub fn spells(&self) -> Vec<Spell> {
         Self::SPELL_ORDER
             .iter()
-            .filter_map(|name| {
-                self.spells
-                    .iter()
-                    .find(|spell| &spell.name == name)
-                    .cloned()
-            })
+            .filter_map(|name| self.spells.iter().find(|spell| &spell.name == name).cloned())
             .collect()
     }
 
