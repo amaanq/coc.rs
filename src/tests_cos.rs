@@ -29,7 +29,7 @@ mod tests {
         let now = Instant::now();
         let client = Client::default();
 
-        let cos_player = client.cos_get_player("#2PP".to_string()).await.unwrap();
+        let cos_player = client.cos_get_player("#2PP").await.unwrap();
 
         println!("{:?}", cos_player);
         println!("Time elapsed! {:?}", now.elapsed());
@@ -42,7 +42,7 @@ mod tests {
         let now = Instant::now();
         let client = Client::default();
 
-        let cos_player_history = client.cos_get_player_history("#2PP".to_string()).await.unwrap();
+        let cos_player_history = client.cos_get_player_history("#2PP").await.unwrap();
         println!("{:?}", cos_player_history);
         println!("Time elapsed! {:?}", now.elapsed());
 
@@ -54,7 +54,7 @@ mod tests {
         let now = Instant::now();
         let client = Client::default();
 
-        let cos_clan = client.cos_get_clan("#2PP".to_string()).await.unwrap();
+        let cos_clan = client.cos_get_clan("#2PP").await.unwrap();
         println!("{:?}", cos_clan);
         println!("Time elapsed! {:?}", now.elapsed());
 
@@ -66,7 +66,7 @@ mod tests {
         let now = Instant::now();
         let client = Client::default();
 
-        let cos_clan_history = client.cos_get_clan_past_members("#2PP".to_string()).await.unwrap();
+        let cos_clan_history = client.cos_get_clan_past_members("#2PP").await.unwrap();
         println!("{:?}", cos_clan_history);
         println!("Time elapsed! {:?}", now.elapsed());
 

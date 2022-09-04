@@ -1,5 +1,6 @@
 #[cfg(feature = "cos")]
 pub mod cos {
+    use logic_long::LogicLong;
     use reqwest::Url;
 
     use crate::cos_models::*;
@@ -91,13 +92,14 @@ pub mod cos {
 
         pub async fn cos_get_player(
             &self,
-            player_tag: String,
+            player_tag: &str,
         ) -> Result<cos_player::Player, APIError> {
+            player_tag.parse::<LogicLong>()?;
             let url = format!(
                 "{}{}/{}",
                 Self::BASE_COS_URL,
                 Self::COS_PLAYERS_ENDPOINT,
-                urlencoding::encode(player_tag.as_str())
+                urlencoding::encode(player_tag)
             );
             println!("url: {}", url);
             self.parse_json(self.cos_get(url), true).await
@@ -105,37 +107,40 @@ pub mod cos {
 
         pub async fn cos_get_player_history(
             &self,
-            player_tag: String,
+            player_tag: &str,
         ) -> Result<cos_player_history::PlayerHistory, APIError> {
+            player_tag.parse::<LogicLong>()?;
             let url = format!(
                 "{}{}/{}{}",
                 Self::BASE_COS_URL,
                 Self::COS_PLAYERS_ENDPOINT,
-                urlencoding::encode(player_tag.as_str()),
+                urlencoding::encode(player_tag),
                 Self::COS_PLAYERS_HISTORY_ENDPOINT
             );
             self.parse_json(self.cos_get(url), true).await
         }
 
-        pub async fn cos_get_clan(&self, clan_tag: String) -> Result<cos_clan::Clan, APIError> {
+        pub async fn cos_get_clan(&self, clan_tag: &str) -> Result<cos_clan::Clan, APIError> {
+            clan_tag.parse::<LogicLong>()?;
             let url = format!(
                 "{}{}/{}",
                 Self::BASE_COS_URL,
                 Self::COS_CLANS_ENDPOINT,
-                urlencoding::encode(clan_tag.as_str())
+                urlencoding::encode(clan_tag)
             );
             self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_clan_past_members(
             &self,
-            clan_tag: String,
+            clan_tag: &str,
         ) -> Result<cos_clan_history::ClanPastMembers, APIError> {
+            clan_tag.parse::<LogicLong>()?;
             let url = format!(
                 "{}{}/{}{}",
                 Self::BASE_COS_URL,
                 Self::COS_CLANS_ENDPOINT,
-                urlencoding::encode(clan_tag.as_str()),
+                urlencoding::encode(clan_tag),
                 Self::COS_CLANS_PAST_MEMBERS_ENDPOINT
             );
             self.parse_json(self.cos_get(url), true).await
