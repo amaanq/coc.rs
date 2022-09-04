@@ -26,9 +26,7 @@ pub struct ClanSearchOptions {
 
 impl ClanSearchOptionsBuilder {
     pub fn new() -> Self {
-        let mut s = Self {
-            options: ClanSearchOptions::default(),
-        };
+        let mut s = Self { options: ClanSearchOptions::default() };
         // empty vec of (String, String) with size of 11
         s.options.items = vec![(String::new(), String::new()); 11];
         s

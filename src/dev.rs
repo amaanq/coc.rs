@@ -68,7 +68,7 @@ pub struct Key {
     pub developer_id: String,
     pub tier: String,
     pub name: String,
-    pub description: String,
+    pub description: Option<String>,
     pub origins: Option<String>,
     pub scopes: Vec<Scope>,
     #[serde(rename = "cidrRanges")]
@@ -80,12 +80,16 @@ pub struct Key {
 
 impl std::fmt::Display for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let desc = match &self.description {
+            Some(d) => d,
+            None => "None",
+        };
         writeln!(
             f,
             "Key {{ id: {}, name: {}, description: {}, key: {}, cidr_ranges: {} }}",
             self.id,
             self.name,
-            self.description,
+            desc,
             self.key,
             self.cidr_ranges.join(", ")
         )
@@ -116,10 +120,8 @@ pub struct KeyResponse {
 
 // manage a session
 lazy_static! {
-    pub static ref CLIENT: reqwest::Client = reqwest::Client::builder()
-        .cookie_store(true)
-        .build()
-        .unwrap();
+    pub static ref CLIENT: reqwest::Client =
+        reqwest::Client::builder().cookie_store(true).build().unwrap();
 }
 
 impl APIAccount {
@@ -157,14 +159,18 @@ impl APIAccount {
             keys: Keys::default(),
         };
 
+        println!("getting keys");
+
         account.get_keys().await;
 
         if account.keys.keys.len() != 10 {
+            println!("creating keys...");
             for _ in 0..(10 - account.keys.keys.len()) {
                 account.create_key(ip.clone()).await;
             }
         }
 
+        println!("updating keys");
         account.update_all_keys(ip).await;
 
         Ok(account)
@@ -226,11 +232,7 @@ impl APIAccount {
     pub async fn revoke_key(&mut self, key_id: &str) -> KeyResponse {
         // post to KEY_REVOKE_ENDPOINT with header application/json and body {"id":"%s"}, where id is key_id
         let key = CLIENT
-            .post(format!(
-                "{}{}",
-                Self::BASE_DEV_URL,
-                Self::KEY_REVOKE_ENDPOINT
-            ))
+            .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
             .header("Content-Type", "application/json")
             .body(format!("{{\"id\":\"{}\"}}", key_id))
             .send()

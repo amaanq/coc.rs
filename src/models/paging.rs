@@ -19,14 +19,7 @@ pub struct PagingBuilder {
 
 impl PagingBuilder {
     fn new() -> PagingBuilder {
-        PagingBuilder {
-            paging: Paging {
-                cursor: Cursor {
-                    before: None,
-                    after: None,
-                },
-            },
-        }
+        PagingBuilder { paging: Paging { cursor: Cursor { before: None, after: None } } }
     }
     pub fn before(mut self, before: i32) -> PagingBuilder {
         self.paging.cursor.set_before(before);
@@ -43,9 +36,7 @@ impl PagingBuilder {
 
 impl Paging {
     pub fn new() -> Self {
-        Self {
-            cursor: Cursor::new(),
-        }
+        Self { cursor: Cursor::new() }
     }
 
     pub fn is_some(&self) -> bool {
@@ -73,10 +64,7 @@ impl Default for Paging {
 
 impl Cursor {
     pub fn new() -> Self {
-        Self {
-            before: None,
-            after: None,
-        }
+        Self { before: None, after: None }
     }
     fn set_before(&mut self, before: i32) {
         // {"pos": before} base64 encoded and cant be less than 0

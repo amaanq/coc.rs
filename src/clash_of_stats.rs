@@ -84,7 +84,7 @@ pub mod cos {
                 serde_json::to_string(credentials.0.get(0).expect("Your credentials are empty"))
                     .unwrap();
 
-            let _login: LoginResponse = self.parse_json(self.cos_post(url, body)).await?;
+            let _login: LoginResponse = self.parse_json(self.cos_post(url, body), true).await?;
 
             Ok(())
         }
@@ -100,7 +100,7 @@ pub mod cos {
                 urlencoding::encode(player_tag.as_str())
             );
             println!("url: {}", url);
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_history(
@@ -114,7 +114,7 @@ pub mod cos {
                 urlencoding::encode(player_tag.as_str()),
                 Self::COS_PLAYERS_HISTORY_ENDPOINT
             );
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_clan(&self, clan_tag: String) -> Result<cos_clan::Clan, APIError> {
@@ -124,7 +124,7 @@ pub mod cos {
                 Self::COS_CLANS_ENDPOINT,
                 urlencoding::encode(clan_tag.as_str())
             );
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_clan_past_members(
@@ -138,7 +138,7 @@ pub mod cos {
                 urlencoding::encode(clan_tag.as_str()),
                 Self::COS_CLANS_PAST_MEMBERS_ENDPOINT
             );
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_war_wins_leaderboard(
@@ -146,15 +146,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::ClanLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_CLAN_WAR_WINS_ENDPOINT,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_CLAN_WAR_WINS_ENDPOINT,),
                 options.build_for_clan(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_war_win_streak_leaderboard(
@@ -170,7 +166,7 @@ pub mod cos {
                 options.build_for_clan(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_best_war_win_streak_leaderboard(
@@ -186,7 +182,7 @@ pub mod cos {
                 options.build_for_clan(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_clan_trophies_leaderboard(
@@ -194,15 +190,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::ClanLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_CLAN_TROPHIES_ENDPOINT,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_CLAN_TROPHIES_ENDPOINT,),
                 options.build_for_clan(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_clan_versus_trophies_leaderboard(
@@ -218,7 +210,7 @@ pub mod cos {
                 options.build_for_clan(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_trophies_leaderboard(
@@ -226,15 +218,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_TROPHIES_ENDPOINT,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROPHIES_ENDPOINT,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_versus_trophies_leaderboard(
@@ -250,7 +238,7 @@ pub mod cos {
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_best_trophies_leaderboard(
@@ -266,7 +254,7 @@ pub mod cos {
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_best_versus_trophies_leaderboard(
@@ -282,7 +270,7 @@ pub mod cos {
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_legend_trophies_leaderboard(
@@ -290,15 +278,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::LegendsLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_LEGEND_TROPHIES,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_LEGEND_TROPHIES,),
                 options.build_for_legends(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_war_stars_leaderboard(
@@ -306,15 +290,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_WAR_STARS,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_WAR_STARS,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_cwl_war_stars_leaderboard(
@@ -322,15 +302,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_CWL_WAR_STARS,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_CWL_WAR_STARS,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_attack_wins_leaderboard(
@@ -338,15 +314,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_ATTACK_WINS,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_ATTACK_WINS,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_defense_wins_leaderboard(
@@ -354,15 +326,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_DEFENSE_WINS,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_DEFENSE_WINS,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_versus_battle_wins_leaderboard(
@@ -370,15 +338,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_VERSUS_BATTLE_WINS,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_VERSUS_BATTLE_WINS,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_heroic_heist_leaderboard(
@@ -386,15 +350,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_HEROIC_HEIST,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_HEROIC_HEIST,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_conqueror_leaderboard(
@@ -402,15 +362,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_CONQUEROR,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_CONQUEROR,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_unbreakable_leaderboard(
@@ -418,15 +374,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_UNBREAKABLE,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_UNBREAKABLE,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_humiliator_leaderboard(
@@ -434,15 +386,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_HUMILIATOR,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_HUMILIATOR,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_un_build_it_leaderboard(
@@ -450,16 +398,12 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_UN_BUILD_IT,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_UN_BUILD_IT,),
                 options.build_for_builder(),
             )
             .unwrap();
             println!("{}", url);
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_games_champion_leaderboard(
@@ -467,15 +411,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_GAMES_CHAMPION,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_GAMES_CHAMPION,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_troops_donated_leaderboard(
@@ -483,15 +423,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_TROOPS_DONATED,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROOPS_DONATED,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_troops_received_leaderboard(
@@ -499,15 +435,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_TROOPS_RECEIVED,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROOPS_RECEIVED,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_friend_in_need_leaderboard(
@@ -515,15 +447,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_FRIEND_IN_NEED,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_FRIEND_IN_NEED,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_exp_level_leaderboard(
@@ -531,15 +459,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_EXP_LEVEL,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_EXP_LEVEL,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_well_seasoned_leaderboard(
@@ -547,15 +471,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_WELL_SEASONED,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_WELL_SEASONED,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_get_those_goblins_leaderboard(
@@ -563,15 +483,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_GET_THOSE_GOBLINS,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_GET_THOSE_GOBLINS,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
 
         pub async fn cos_get_player_nice_and_tidy_leaderboard(
@@ -579,15 +495,11 @@ pub mod cos {
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
             let url = Url::parse_with_params(
-                &format!(
-                    "{}{}",
-                    Self::BASE_COS_URL,
-                    Self::COS_RANKINGS_PLAYER_NICE_AND_TIDY,
-                ),
+                &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_NICE_AND_TIDY,),
                 options.build_for_player(),
             )
             .unwrap();
-            self.parse_json(self.cos_get(url)).await
+            self.parse_json(self.cos_get(url), true).await
         }
     }
 }

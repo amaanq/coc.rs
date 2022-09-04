@@ -1,9 +1,10 @@
-use logic_long::LogicLong;
 use std::sync::{Arc, Mutex};
-use tokio::sync::Mutex as TokioMutex;
 
+use async_recursion::async_recursion;
+use logic_long::LogicLong;
 use reqwest::{RequestBuilder, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use tokio::sync::Mutex as TokioMutex;
 
 #[cfg(feature = "cos")]
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -14,7 +15,6 @@ use crate::{
     models::*,
 };
 
-#[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
 pub struct Client {
     credentials: Arc<TokioMutex<Credentials>>,
@@ -25,6 +25,7 @@ pub struct Client {
     ip_address: Arc<Mutex<String>>,
 
     #[cfg(feature = "cos")]
+    #[allow(dead_code)]
     pub(crate) is_cos_logged_in: Arc<Mutex<bool>>,
 }
 
@@ -54,11 +55,18 @@ pub enum APIError {
     BadResponse(String, reqwest::StatusCode),
     /// From malformed cursors or using invalid leagues
     InvalidParameters(String),
+    InvalidTag(String),
 
     EventFailure(String),
 }
 
 impl std::error::Error for APIError {}
+
+impl From<logic_long::LogicLongError> for APIError {
+    fn from(e: logic_long::LogicLongError) -> Self {
+        APIError::InvalidTag(e.to_string())
+    }
+}
 
 impl std::fmt::Display for APIError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -75,6 +83,7 @@ impl std::fmt::Display for APIError {
             APIError::InMaintenance => write!(f, "In maintenance"),
             APIError::BadResponse(e, s) => write!(f, "Bad response: {} ({})", e, s),
             APIError::InvalidParameters(e) => write!(f, "Invalid parameters: {}", e),
+            APIError::InvalidTag(e) => write!(f, "Invalid tag: {}", e),
             APIError::EventFailure(e) => write!(f, "Event failure: {}", e),
         }
     }
@@ -110,6 +119,50 @@ impl Client {
         Ok(client)
     }
 
+    /// Called when the client is created to initialize every credential.
+    async fn init(&self) -> Result<(), APIError> {
+        let ip = Client::get_ip().await?;
+        *self.ip_address.lock().unwrap() = ip.clone();
+
+        for credential in self.credentials.lock().await.0.iter() {
+            let account = dev::APIAccount::login(credential, ip.clone()).await;
+            self.accounts.lock().unwrap().push(account?);
+        }
+
+        Ok(())
+    }
+
+    /// Called when an IP address change is detected
+    async fn reinit(&self) -> Result<(), APIError> {
+        let ip = Client::get_ip().await?;
+        if ip != *self.ip_address.lock().unwrap() {
+            *self.ip_address.lock().unwrap() = ip.clone();
+
+            for credential in self.credentials.lock().await.0.iter() {
+                let account = dev::APIAccount::login(credential, ip.clone()).await;
+                // find the account in the list where the email matches and replace it
+                let mut accounts = self.accounts.lock().unwrap();
+                let index = accounts
+                    .iter()
+                    .position(|a| a.response.developer.email == credential.email())
+                    .unwrap();
+                accounts[index] = account?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Here you can create a client yourself and load them here later (for example .env parsing)
+    ///
+    /// Example:
+    /// ```
+    /// use coc_rs::{Client, Credentials};
+    ///
+    /// let client = Client::default();
+    /// let credentials = Credentials::builder().add_credential("email", "password").add_credential("email2", "password2").build();
+    /// client.load(credentials).await?;
+    /// ```
     pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
         *self.credentials.lock().await = credentials;
         *self.ready.lock().unwrap() = false;
@@ -122,26 +175,19 @@ impl Client {
         let res = CLIENT.get(Self::IP_URL).send().await;
         let ip = match res {
             Ok(res) => res.text().await.unwrap(),
-            Err(err) => {
-                return Err(APIError::FailedGetIP(
-                    format!("client.get_ip(): `{}`", err,),
-                ))
-            }
+            Err(err) => return Err(APIError::FailedGetIP(format!("client.get_ip(): `{}`", err))),
         };
         Ok(ip)
     }
 
-    async fn init(&self) -> Result<(), APIError> {
-        let ip = Client::get_ip().await?;
-        self.ip_address.lock().unwrap().push_str(&ip);
-
-        for credential in self.credentials.lock().await.0.iter() {
-            let account = dev::APIAccount::login(credential, ip.clone()).await;
-            self.accounts.lock().unwrap().push(account?);
-        }
-        Ok(())
-    }
-
+    /// This is purely for diagnostics, it's not used anywhere else.
+    /// ```
+    /// use coc_rs::Client;
+    ///
+    /// let credentials = Credentials::builder().add_credential("email", "password").add_credential("email2", "password2").build();
+    /// let client = Client::new(credentials);
+    /// client.print_keys().await;
+    /// ```
     pub async fn print_keys(&self) {
         for account in self.accounts.lock().unwrap().iter() {
             for key in account.keys.keys.iter() {
@@ -181,10 +227,7 @@ impl Client {
         url: U,
     ) -> Result<reqwest::RequestBuilder, APIError> {
         let mut headers = HeaderMap::new();
-        headers.insert(
-            "authority",
-            HeaderValue::from_str("api.clashofstats.com").unwrap(),
-        );
+        headers.insert("authority", HeaderValue::from_str("api.clashofstats.com").unwrap());
         headers.insert("method", HeaderValue::from_str("GET").unwrap());
         headers.insert("scheme", HeaderValue::from_str("https").unwrap());
         headers.insert(
@@ -202,14 +245,8 @@ impl Client {
             )
             .unwrap(),
         );
-        headers.insert(
-            "sec-ch-ua-platform",
-            HeaderValue::from_str("\"Windows\"").unwrap(),
-        );
-        headers.insert(
-            "upgrade-insecure-requests",
-            HeaderValue::from_str("1").unwrap(),
-        );
+        headers.insert("sec-ch-ua-platform", HeaderValue::from_str("\"Windows\"").unwrap());
+        headers.insert("upgrade-insecure-requests", HeaderValue::from_str("1").unwrap());
         headers.insert(
             "user-agent",
             HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36").unwrap(),
@@ -226,20 +263,12 @@ impl Client {
         body: T,
     ) -> Result<reqwest::RequestBuilder, APIError> {
         let mut headers = HeaderMap::new();
-        headers.insert(
-            "authority",
-            HeaderValue::from_str("api.clashofstats.com").unwrap(),
-        );
+        headers.insert("authority", HeaderValue::from_str("api.clashofstats.com").unwrap());
         headers.insert("method", HeaderValue::from_str("POST").unwrap());
         headers.insert("scheme", HeaderValue::from_str("https").unwrap());
-        headers.insert(
-            "accept",
-            HeaderValue::from_str("application/json, text/plain, */*").unwrap(),
-        );
-        headers.insert(
-            "accept-encoding",
-            HeaderValue::from_str("gzip, deflate, br").unwrap(),
-        );
+        headers
+            .insert("accept", HeaderValue::from_str("application/json, text/plain, */*").unwrap());
+        headers.insert("accept-encoding", HeaderValue::from_str("gzip, deflate, br").unwrap());
         headers.insert(
             "accept-language",
             HeaderValue::from_str("en-US,en;q=0.9,zh-CN;q=0.8,z;q=0.7").unwrap(),
@@ -255,14 +284,8 @@ impl Client {
             )
             .unwrap(),
         );
-        headers.insert(
-            "sec-ch-ua-platform",
-            HeaderValue::from_str("\"Windows\"").unwrap(),
-        );
-        headers.insert(
-            "upgrade-insecure-requests",
-            HeaderValue::from_str("1").unwrap(),
-        );
+        headers.insert("sec-ch-ua-platform", HeaderValue::from_str("\"Windows\"").unwrap());
+        headers.insert("upgrade-insecure-requests", HeaderValue::from_str("1").unwrap());
         headers.insert(
             "user-agent",
             HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36").unwrap(),
@@ -276,15 +299,11 @@ impl Client {
     //_______________________________________________________________________
     pub async fn get_clan_warlog(
         &self,
-        mut clan_tag: String,
+        clan_tag: &str,
     ) -> Result<APIResponse<war_log::WarLog>, APIError> {
-        clan_tag = LogicLong::fix_tag(clan_tag);
-        let url = format!(
-            "{}/clans/{}/warlog",
-            Self::BASE_URL,
-            urlencoding::encode(&clan_tag)
-        );
-        self.parse_json(self.get(url)).await
+        clan_tag.parse::<LogicLong>()?;
+        let url = format!("{}/clans/{}/warlog", Self::BASE_URL, urlencoding::encode(clan_tag));
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_clans(
@@ -293,68 +312,49 @@ impl Client {
     ) -> Result<APIResponse<clan::Clan>, APIError> {
         let url =
             Url::parse_with_params(&format!("{}/clans", Self::BASE_URL), options.items).unwrap();
-        self.parse_json(self.get(url.to_string())).await
+        self.parse_json(self.get(url.to_string()), false).await
     }
 
-    pub async fn get_current_war(&self, mut clan_tag: String) -> Result<war::War, APIError> {
-        clan_tag = LogicLong::fix_tag(clan_tag);
-        let url = format!(
-            "{}/clans/{}/currentwar",
-            Self::BASE_URL,
-            urlencoding::encode(&clan_tag)
-        );
-        self.parse_json(self.get(url)).await
+    pub async fn get_current_war(&self, clan_tag: &str) -> Result<war::War, APIError> {
+        clan_tag.parse::<LogicLong>()?;
+        let url = format!("{}/clans/{}/currentwar", Self::BASE_URL, urlencoding::encode(clan_tag));
+        self.parse_json(self.get(url), false).await
     }
 
-    pub async fn get_clan(&self, mut clan_tag: String) -> Result<clan::Clan, APIError> {
-        clan_tag = LogicLong::fix_tag(clan_tag);
-        let url = format!(
-            "{}/clans/{}",
-            Self::BASE_URL,
-            urlencoding::encode(&clan_tag)
-        );
-        self.parse_json(self.get(url)).await
+    pub async fn get_clan(&self, clan_tag: &str) -> Result<clan::Clan, APIError> {
+        clan_tag.parse::<LogicLong>()?;
+        let url = format!("{}/clans/{}", Self::BASE_URL, urlencoding::encode(clan_tag));
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_clan_members(
         &self,
-        mut clan_tag: String,
+        clan_tag: &str,
     ) -> Result<APIResponse<clan::ClanMember>, APIError> {
-        clan_tag = LogicLong::fix_tag(clan_tag);
-        let url = format!(
-            "{}/clans/{}/members",
-            Self::BASE_URL,
-            urlencoding::encode(&clan_tag)
-        );
-        self.parse_json(self.get(url)).await
+        clan_tag.parse::<LogicLong>()?;
+        let url = format!("{}/clans/{}/members", Self::BASE_URL, urlencoding::encode(clan_tag));
+        self.parse_json(self.get(url), false).await
     }
 
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Player Methods
     //_______________________________________________________________________
-    pub async fn get_player(&self, mut player_tag: String) -> Result<player::Player, APIError> {
-        player_tag = LogicLong::fix_tag(player_tag);
-        let url = format!(
-            "{}/players/{}",
-            Self::BASE_URL,
-            urlencoding::encode(&player_tag)
-        );
-        self.parse_json(self.get(url)).await
+    pub async fn get_player(&self, player_tag: &str) -> Result<player::Player, APIError> {
+        player_tag.parse::<LogicLong>()?;
+        let url = format!("{}/players/{}", Self::BASE_URL, urlencoding::encode(player_tag));
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn verify_player_token(
         &self,
-        mut player_tag: String,
-        token: String,
+        player_tag: &str,
+        token: &str,
     ) -> Result<player::PlayerToken, APIError> {
-        player_tag = LogicLong::fix_tag(player_tag);
-        let url = format!(
-            "{}/players/{}/verifytoken",
-            Self::BASE_URL,
-            urlencoding::encode(&player_tag)
-        );
+        player_tag.parse::<LogicLong>()?;
+        let url =
+            format!("{}/players/{}/verifytoken", Self::BASE_URL, urlencoding::encode(player_tag));
         let token = format!("{{\"token\":\"{}\"}}", token);
-        self.parse_json(self.post(url, token)).await
+        self.parse_json(self.post(url, token), false).await
     }
 
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -362,7 +362,7 @@ impl Client {
     //_______________________________________________________________________
     pub async fn get_leagues(&self) -> Result<APIResponse<leagues::League>, APIError> {
         let url = format!("{}/leagues", Self::BASE_URL);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     // /leagues/{leagueId}/seasons/{seasonId}
@@ -378,18 +378,12 @@ impl Client {
                     .to_string(),
             ));
         }
-        let mut url = format!(
-            "{}/leagues/{}/seasons/{}",
-            Self::BASE_URL,
-            league_id as i32,
-            season_id
-        );
+        let mut url =
+            format!("{}/leagues/{}/seasons/{}", Self::BASE_URL, league_id as i32, season_id);
         if paging.is_some() {
-            url = Url::parse_with_params(&url, paging.to_vec())
-                .unwrap()
-                .to_string();
+            url = Url::parse_with_params(&url, paging.to_vec()).unwrap().to_string();
         }
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_league(
@@ -397,7 +391,7 @@ impl Client {
         league_id: leagues::LeagueKind,
     ) -> Result<leagues::League, APIError> {
         let url = format!("{}/leagues/{}", Self::BASE_URL, league_id as i32);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_league_seasons(
@@ -411,7 +405,7 @@ impl Client {
             ));
         }
         let url = format!("{}/leagues/{}/seasons", Self::BASE_URL, league_id as i32);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_war_league(
@@ -419,12 +413,12 @@ impl Client {
         war_league: leagues::WarLeagueKind,
     ) -> Result<leagues::WarLeague, APIError> {
         let url = format!("{}/warleagues/{}", Self::BASE_URL, war_league as i32);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_war_leagues(&self) -> Result<APIResponse<leagues::WarLeague>, APIError> {
         let url = format!("{}/warleagues", Self::BASE_URL);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -435,53 +429,38 @@ impl Client {
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::ClanRanking>, APIError> {
-        let url = format!(
-            "{}/locations/{}/rankings/clans",
-            Self::BASE_URL,
-            location as i32,
-        );
-        self.parse_json(self.get(url)).await
+        let url = format!("{}/locations/{}/rankings/clans", Self::BASE_URL, location as i32);
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_player_rankings(
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::PlayerRanking>, APIError> {
-        let url = format!(
-            "{}/locations/{}/rankings/players",
-            Self::BASE_URL,
-            location as i32,
-        );
-        self.parse_json(self.get(url)).await
+        let url = format!("{}/locations/{}/rankings/players", Self::BASE_URL, location as i32);
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_versus_clan_rankings(
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::ClanRanking>, APIError> {
-        let url = format!(
-            "{}/locations/{}/rankings/clans-versus",
-            Self::BASE_URL,
-            location as i32,
-        );
-        self.parse_json(self.get(url)).await
+        let url = format!("{}/locations/{}/rankings/clans-versus", Self::BASE_URL, location as i32);
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_versus_player_rankings(
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::PlayerVersusRanking>, APIError> {
-        let url = format!(
-            "{}/locations/{}/rankings/players-versus",
-            Self::BASE_URL,
-            location as i32,
-        );
-        self.parse_json(self.get(url)).await
+        let url =
+            format!("{}/locations/{}/rankings/players-versus", Self::BASE_URL, location as i32);
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_locations(&self) -> Result<APIResponse<location::Location>, APIError> {
         let url = format!("{}/locations", Self::BASE_URL);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_location(
@@ -489,7 +468,7 @@ impl Client {
         location: location::Local,
     ) -> Result<location::Location, APIError> {
         let url = format!("{}/locations/{}", Self::BASE_URL, location as i32);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -497,7 +476,7 @@ impl Client {
     //_______________________________________________________________________
     pub async fn get_goldpass(&self) -> Result<gold_pass::GoldPass, APIError> {
         let url = format!("{}{}", Self::BASE_URL, Self::GOLDPASS_ENDPOINT);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -505,32 +484,24 @@ impl Client {
     //_______________________________________________________________________
     pub async fn get_player_labels(&self) -> Result<APIResponse<labels::PlayerLabel>, APIError> {
         let url = format!("{}/labels/players", Self::BASE_URL);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_clan_labels(&self) -> Result<APIResponse<labels::ClanLabel>, APIError> {
         let url = format!("{}/labels/clans", Self::BASE_URL);
-        self.parse_json(self.get(url)).await
+        self.parse_json(self.get(url), false).await
     }
 
-    // pub fn is_valid_tag(&self, tag: String) -> bool {
-    //     VALID_REGEX.is_match(&tag.to_uppercase().replace('O', "0"))
-    // }
-
-    // pub fn fix_tag(&self, tag: String) -> String {
-    //     "#".to_owned()
-    //         + &FIX_REGEX
-    //             .replace_all(&tag.to_uppercase(), "")
-    //             .replace('O', "0")
-    // }
-
     /// Runs the future that implements `Send` and parses the reqwest response into a `APIResponse`.
+    #[async_recursion]
     pub(crate) async fn parse_json<T: DeserializeOwned>(
         &self,
         rb: Result<RequestBuilder, APIError>,
+        is_retry_and_not_cos: bool,
     ) -> Result<T, APIError> {
         match rb {
             Ok(rb) => {
+                let cloned_rb = rb.try_clone().unwrap();
                 match rb.send().await {
                     Ok(resp) => {
                         match resp.status() {
@@ -541,8 +512,15 @@ impl Client {
                             }
                             // 400
                             reqwest::StatusCode::BAD_REQUEST => Err(APIError::BadParameters),
-                            // 403
-                            reqwest::StatusCode::FORBIDDEN => Err(APIError::AccessDenied),
+                            // 403 - likely means the IP address has changed, let's reinit the client then and try this again
+                            reqwest::StatusCode::FORBIDDEN => {
+                                self.reinit().await?;
+                                if !is_retry_and_not_cos {
+                                    self.parse_json(Ok(cloned_rb), true).await
+                                } else {
+                                    Err(APIError::AccessDenied)
+                                }
+                            }
                             // 404
                             reqwest::StatusCode::NOT_FOUND => Err(APIError::NotFound),
                             // 429
@@ -580,11 +558,7 @@ impl Client {
 
         let unlocked_accounts = self.accounts.lock().unwrap();
         if key_token_index
-            == (unlocked_accounts[key_account_index as usize]
-                .keys
-                .keys
-                .len()
-                - 1) as i8
+            == (unlocked_accounts[key_account_index as usize].keys.keys.len() - 1) as i8
         {
             key_token_index = 0;
             if key_account_index == (unlocked_accounts.len() - 1) as i8 {

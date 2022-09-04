@@ -16,11 +16,7 @@ pub mod cos_options {
 
     impl Options {
         pub fn new(location: location::Local, level: Level, page: i32) -> Self {
-            Options {
-                location,
-                level,
-                page: page.max(0).min(100000),
-            }
+            Options { location, level, page: page.max(0).min(100000) }
         }
         pub fn builder() -> OptionsBuilder {
             OptionsBuilder {
