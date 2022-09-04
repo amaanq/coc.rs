@@ -159,18 +159,14 @@ impl APIAccount {
             keys: Keys::default(),
         };
 
-        println!("getting keys");
-
         account.get_keys().await;
 
         if account.keys.keys.len() != 10 {
-            println!("creating keys...");
             for _ in 0..(10 - account.keys.keys.len()) {
                 account.create_key(ip.clone()).await;
             }
         }
 
-        println!("updating keys");
         account.update_all_keys(ip).await;
 
         Ok(account)
