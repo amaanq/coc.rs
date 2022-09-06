@@ -507,8 +507,8 @@ impl Client {
                         match resp.status() {
                             reqwest::StatusCode::OK => {
                                 let text = resp.text().await.unwrap();
-                                Ok(serde_json::from_str(&text).unwrap_or_else(|_| panic!("Failure parsing json (please file a bug on the GitHub): {}",
-                                    text)))
+                                Ok(serde_json::from_str(&text).unwrap_or_else(|e| panic!("Failure parsing json (please file a bug on the GitHub): {}\nError: {}",
+                                    text, e)))
                             }
                             // 400
                             reqwest::StatusCode::BAD_REQUEST => Err(APIError::BadParameters),

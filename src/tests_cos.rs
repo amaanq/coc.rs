@@ -213,7 +213,7 @@ mod tests {
 
         let cos_player_versus_trophies_history = client
             .cos_get_player_legend_trophies_leaderboard(
-                cos_options::Options::builder().page(1).build(),
+                cos_options::Options::builder().page(5555).build(),
             )
             .await
             .unwrap();
