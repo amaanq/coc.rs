@@ -58,7 +58,7 @@ pub struct LegendsRanking {
     pub trophies: i32,
     pub value: i32,
     pub rank: i32,
-    pub previous_rank: i32,
+    pub previous_rank: Option<i32>,
     pub clan: Option<Clan>,
     pub clan_tag: Option<String>,
     pub character_id: String,
