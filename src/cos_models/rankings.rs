@@ -54,7 +54,7 @@ pub struct Clan {
 #[serde(rename_all = "camelCase")]
 pub struct LegendsRanking {
     pub tag: String,
-    pub name: String,
+    pub name: Option<String>,
     pub trophies: i32,
     pub value: i32,
     pub rank: i32,
