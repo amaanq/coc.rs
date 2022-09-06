@@ -2,4 +2,4 @@
 /Cargo.lock
 .env
 *.bin
-/.idea
+.idea
