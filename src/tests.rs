@@ -200,11 +200,11 @@ mod tests {
         client.load(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let player = client.get_player("#Y9PPQ8GJ").await.unwrap();
+        let player = client.get_player("#8G0UGC99").await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Player: {:#?}", player);
-        println!("Heroes: {:#?}", player.hero_pets());
+        println!("Hero Pets: {:#?}", player.hero_pets());
         Ok(())
     }
 
