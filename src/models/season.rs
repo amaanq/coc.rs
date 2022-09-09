@@ -16,7 +16,7 @@ pub struct SeasonBuilder {
 pub struct Season {
     #[serde(rename = "id")]
     id: String,
-    #[serde(skip_serializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     year: i32,
     #[serde(skip_deserializing, skip_serializing, default = "Season::default_month")]
     month: Month,
@@ -109,6 +109,10 @@ impl Season {
 
 impl std::fmt::Display for Season {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}-{:02}", self.year, self.month as i32)
+        let mut season_split = self.id.split('-');
+        let year = season_split.next().unwrap().parse::<i32>().unwrap();
+        let month =
+            Month::try_from(season_split.next().unwrap().parse::<i32>().unwrap() as u8).unwrap();
+        write!(f, "{}-{:02}", year, month as i32)
     }
 }
