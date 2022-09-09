@@ -293,6 +293,26 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_get_league_seasons() -> Result<(), APIError> {
+        let now = Instant::now();
+        let credentials = Credentials::builder()
+            .add_credential(env::var("username").unwrap(), env::var("password").unwrap())
+            .build();
+        let client = Client::new(credentials).await?;
+        println!("Logged in! {:?}", now.elapsed());
+
+        let league_seasons =
+            client.get_league_seasons(leagues::LeagueKind::LegendLeague).await.unwrap();
+        println!("Time elapsed! {:?}", now.elapsed());
+
+        league_seasons.items.iter().for_each(|season| {
+            println!("Season: {}", season.to_string());
+        });
+
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn test_get_war_league() -> Result<(), APIError> {
         let now = Instant::now();
         let credentials = Credentials::builder()
