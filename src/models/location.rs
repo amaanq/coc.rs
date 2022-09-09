@@ -13,7 +13,19 @@ pub struct Location {
     pub is_country: bool,
 }
 
-#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize_repr,
+    Deserialize_repr,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    ToPrimitive,
+    FromPrimitive,
+)]
 #[repr(i32)]
 pub enum Local {
     None = 0,
@@ -288,5 +300,31 @@ pub enum Local {
 impl Default for Local {
     fn default() -> Self {
         Local::None
+    }
+}
+
+impl Local {
+    pub fn from_i32(num: i32) -> Option<Self> {
+        num_traits::FromPrimitive::from_i32(num)
+    }
+
+    pub fn from_u32(num: u32) -> Option<Self> {
+        num_traits::FromPrimitive::from_u32(num)
+    }
+
+    pub fn from_usize(num: usize) -> Option<Self> {
+        num_traits::FromPrimitive::from_usize(num)
+    }
+
+    pub fn to_i32(&self) -> i32 {
+        num_traits::ToPrimitive::to_i32(self).unwrap()
+    }
+
+    pub fn to_u32(&self) -> u32 {
+        num_traits::ToPrimitive::to_u32(self).unwrap()
+    }
+
+    pub fn to_usize(&self) -> usize {
+        num_traits::ToPrimitive::to_usize(self).unwrap()
     }
 }

@@ -12,6 +12,7 @@ mod tests {
         api::{APIError, Client},
         credentials::Credentials,
         events::{EventHandler, EventType, EventsListenerBuilder},
+        location::Local,
         models::*,
     };
 
@@ -200,7 +201,7 @@ mod tests {
         client.load(credentials).await?;
         println!("Logged in! {:?}", now.elapsed());
 
-        let player = client.get_player("#8G0UGC99").await.unwrap();
+        let player = client.get_player("#2PP").await.unwrap();
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Player: {:#?}", player);
@@ -621,5 +622,11 @@ mod tests {
             x.add_clans(vec!["#2PP".to_string()]).await.build(S).init().await;
         });
         task.await.unwrap();
+    }
+
+    #[test]
+    fn test_primitive_to_local() {
+        let local = Local::from_i32(32000249);
+        assert_eq!(local, Some(Local::UnitedStates));
     }
 }
