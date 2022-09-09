@@ -20,3 +20,6 @@ mod tests;
 mod tests_cos;
 
 pub mod prelude;
+
+#[macro_use]
+extern crate num_derive;
