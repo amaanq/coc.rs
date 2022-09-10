@@ -514,8 +514,8 @@ impl Client {
                             reqwest::StatusCode::BAD_REQUEST => Err(APIError::BadParameters),
                             // 403 - likely means the IP address has changed, let's reinit the client then and try this again
                             reqwest::StatusCode::FORBIDDEN => {
-                                self.reinit().await?;
                                 if !is_retry_and_not_cos {
+                                    self.reinit().await?;
                                     self.parse_json(Ok(cloned_rb), true).await
                                 } else {
                                     Err(APIError::AccessDenied)
