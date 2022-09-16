@@ -115,7 +115,7 @@ pub struct KeyResponse {
     status: Status,
     #[serde(rename = "sessionExpiresInSeconds")]
     session_expires_in_seconds: i64,
-    key: Key,
+    key: Option<Key>,
 }
 
 // manage a session
