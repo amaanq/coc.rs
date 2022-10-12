@@ -1,7 +1,7 @@
 # coc.rs
 A Clash of Clans API wrapper written in rust!
 
-# Key feature
+# Key Features
 - Asynchronous code
 - Entire coverage of [Clash of clans API](https://developer.clashofclans.com)
 - Email and Password Login
@@ -25,7 +25,7 @@ coc-rs = "x.x.x"
 Alternatively with `cargo add`
 
 ```shell
-$ cargo add coc-rs
+$ cargo add coc-rs --features=all
 ```
 
 ## Quick Example
