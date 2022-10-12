@@ -1,7 +1,7 @@
 # coc.rs
 A Clash of Clans API wrapper written in rust!
 
-# Key feature
+# Key Features
 - Asynchronous code
 - Entire coverage of [Clash of clans API](https://developer.clashofclans.com)
 - Email and Password Login
@@ -25,7 +25,7 @@ coc-rs = "x.x.x"
 Alternatively with `cargo add`
 
 ```shell
-$ cargo add coc-rs
+$ cargo add coc-rs --features=all
 ```
 
 ## Quick Example
@@ -80,7 +80,7 @@ async fn main() {
 
 ### Basic Events
 
-First we need to make a Event handler struct, that will implement the trait `EventHandler`
+First a struct should be created that will implement the trait `EventHandler`
 
 ```rust
 struct Handler;
@@ -89,7 +89,7 @@ struct Handler;
 impl events::EventHandler for S {
     /// Next we bring the player method in scope, and define the behaviour
     async fn player(&self, _old_player: Option<player::Player>, _new_player: player::Player) {
-        println!("new player")
+        println!("Player change detected!")
     }
 
     ///  to handle errors in the events task we need a separate error handler
@@ -115,12 +115,10 @@ async fn main() {
 
     let task = tokio::spawn(async move {
         /// staring the API events in a separate thread
-        let mut x = events::EventsListenerBuilder::new(client);
-        x.add_player("#2PP".to_string()).await;
-        x.add_players(vec!["#CVJLQOLR".to_string()])
-            .await
+        let mut event_builder = events::EventsListenerBuilder::new(client);
+        event_builder.add_player("#2PP").add_players(vec!["#CVJLQOLR"])
             .build(Handler) /// Building the eventListener struct 
-            .init() /// starting the continuous polling of the clan/player/current_war endpoints
+            .start() /// starting the continuous polling of the clan/player/current_war endpoints
             .await;
     });
     task.await.unwrap();
@@ -155,7 +153,7 @@ the API.*
 
 #### Note
 
-`src/test.rs` & `src/test_cos.rs` contains examples for every endpoint in more detail.
+`src/lib.rs` contains examples (in the form of tests) for every endpoint in a bit more detail.
 
 # Contributing
 Contributing is fantastic and much welcomed! If you have an issue, feel free to open an issue and start working on it.
