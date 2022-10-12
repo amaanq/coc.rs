@@ -53,7 +53,8 @@ pub struct Attack {
 }
 
 impl War {
-    #[must_use] pub fn start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+    #[must_use]
+    pub fn start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         self.start_time.as_ref().map(|start_time| {
             chrono::Utc.from_utc_datetime(
                 &chrono::NaiveDateTime::parse_from_str(start_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
@@ -61,7 +62,8 @@ impl War {
         })
     }
 
-    #[must_use] pub fn end_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+    #[must_use]
+    pub fn end_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         self.end_time.as_ref().map(|end_time| {
             chrono::Utc.from_utc_datetime(
                 &chrono::NaiveDateTime::parse_from_str(end_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
@@ -69,7 +71,8 @@ impl War {
         })
     }
 
-    #[must_use] pub fn preparation_start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+    #[must_use]
+    pub fn preparation_start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         self.preparation_start_time.as_ref().map(|preparation_start_time| {
             chrono::Utc.from_utc_datetime(
                 &chrono::NaiveDateTime::parse_from_str(preparation_start_time, "%Y%m%dT%H%M%S.%fZ")

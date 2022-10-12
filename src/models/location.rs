@@ -304,27 +304,33 @@ impl Default for Local {
 }
 
 impl Local {
-    #[must_use] pub fn from_i32(num: i32) -> Option<Self> {
+    #[must_use]
+    pub fn from_i32(num: i32) -> Option<Self> {
         num_traits::FromPrimitive::from_i32(num)
     }
 
-    #[must_use] pub fn from_u32(num: u32) -> Option<Self> {
+    #[must_use]
+    pub fn from_u32(num: u32) -> Option<Self> {
         num_traits::FromPrimitive::from_u32(num)
     }
 
-    #[must_use] pub fn from_usize(num: usize) -> Option<Self> {
+    #[must_use]
+    pub fn from_usize(num: usize) -> Option<Self> {
         num_traits::FromPrimitive::from_usize(num)
     }
 
-    #[must_use] pub fn to_i32(&self) -> i32 {
+    #[must_use]
+    pub fn to_i32(&self) -> i32 {
         num_traits::ToPrimitive::to_i32(self).unwrap()
     }
 
-    #[must_use] pub fn to_u32(&self) -> u32 {
+    #[must_use]
+    pub fn to_u32(&self) -> u32 {
         num_traits::ToPrimitive::to_u32(self).unwrap()
     }
 
-    #[must_use] pub fn to_usize(&self) -> usize {
+    #[must_use]
+    pub fn to_usize(&self) -> usize {
         num_traits::ToPrimitive::to_usize(self).unwrap()
     }
 }

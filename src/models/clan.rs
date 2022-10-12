@@ -37,7 +37,8 @@ pub struct Clan {
 }
 
 impl Clan {
-    #[must_use] pub fn game_link(&self) -> String {
+    #[must_use]
+    pub fn game_link(&self) -> String {
         format!(
             "https://link.clashofclans.com/en?action=OpenClanProfile&tag={}",
             self.tag.replace('#', ""),
@@ -64,13 +65,16 @@ pub enum Privacy {
 }
 
 impl Privacy {
-    #[must_use] pub fn is_open(&self) -> bool {
+    #[must_use]
+    pub fn is_open(&self) -> bool {
         self == &Self::Open
     }
-    #[must_use] pub fn is_invite_only(&self) -> bool {
+    #[must_use]
+    pub fn is_invite_only(&self) -> bool {
         self == &Self::InviteOnly
     }
-    #[must_use] pub fn is_closed(&self) -> bool {
+    #[must_use]
+    pub fn is_closed(&self) -> bool {
         self == &Self::Closed
     }
 }
@@ -104,25 +108,32 @@ pub enum WarFrequency {
 }
 
 impl WarFrequency {
-    #[must_use] pub fn is_unknown(&self) -> bool {
+    #[must_use]
+    pub fn is_unknown(&self) -> bool {
         self == &Self::Unknown
     }
-    #[must_use] pub fn is_always(&self) -> bool {
+    #[must_use]
+    pub fn is_always(&self) -> bool {
         self == &Self::Always
     }
-    #[must_use] pub fn is_more_than_once_per_week(&self) -> bool {
+    #[must_use]
+    pub fn is_more_than_once_per_week(&self) -> bool {
         self == &Self::MoreThanOncePerWeek
     }
-    #[must_use] pub fn is_once_per_week(&self) -> bool {
+    #[must_use]
+    pub fn is_once_per_week(&self) -> bool {
         self == &Self::OncePerWeek
     }
-    #[must_use] pub fn is_less_than_once_per_week(&self) -> bool {
+    #[must_use]
+    pub fn is_less_than_once_per_week(&self) -> bool {
         self == &Self::LessThanOncePerWeek
     }
-    #[must_use] pub fn is_never(&self) -> bool {
+    #[must_use]
+    pub fn is_never(&self) -> bool {
         self == &Self::Never
     }
-    #[must_use] pub fn is_any(&self) -> bool {
+    #[must_use]
+    pub fn is_any(&self) -> bool {
         self == &Self::Any
     }
 }
@@ -180,19 +191,24 @@ pub enum Role {
 }
 
 impl Role {
-    #[must_use] pub fn is_not_member(&self) -> bool {
+    #[must_use]
+    pub fn is_not_member(&self) -> bool {
         self == &Self::NotMember
     }
-    #[must_use] pub fn is_member(&self) -> bool {
+    #[must_use]
+    pub fn is_member(&self) -> bool {
         self == &Self::Member
     }
-    #[must_use] pub fn is_elder(&self) -> bool {
+    #[must_use]
+    pub fn is_elder(&self) -> bool {
         self == &Self::Elder
     }
-    #[must_use] pub fn is_co_leader(&self) -> bool {
+    #[must_use]
+    pub fn is_co_leader(&self) -> bool {
         self == &Self::CoLeader
     }
-    #[must_use] pub fn is_leader(&self) -> bool {
+    #[must_use]
+    pub fn is_leader(&self) -> bool {
         self == &Self::Leader
     }
 }
@@ -217,10 +233,12 @@ pub struct ClanCapital {
 }
 
 impl ClanCapital {
-    #[must_use] pub fn capital_hall_level(&self) -> i8 {
+    #[must_use]
+    pub fn capital_hall_level(&self) -> i8 {
         self.capital_hall_level.unwrap_or_default()
     }
-    #[must_use] pub fn districts(&self) -> Vec<District> {
+    #[must_use]
+    pub fn districts(&self) -> Vec<District> {
         self.districts.clone().unwrap_or_default()
     }
 }

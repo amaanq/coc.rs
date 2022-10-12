@@ -75,7 +75,8 @@ pub struct WarLeague {
 #[allow(non_snake_case)]
 /// I need to think of a better way to do this, enum variants with struct types seem stupid as they're all the same type.
 impl League {
-    #[must_use] pub fn Unranked() -> Self {
+    #[must_use]
+    pub fn Unranked() -> Self {
         Self {
             id: LeagueKind::Unranked,
             name: "Unranked".to_string(),
@@ -87,7 +88,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn BronzeLeagueIII() -> Self {
+    #[must_use]
+    pub fn BronzeLeagueIII() -> Self {
         Self {
             id: LeagueKind::BronzeLeagueIII,
             name: "Bronze League III".to_string(),
@@ -99,7 +101,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn BronzeLeagueII() -> Self {
+    #[must_use]
+    pub fn BronzeLeagueII() -> Self {
         Self {
             id: LeagueKind::BronzeLeagueII,
             name: "Bronze League II".to_string(),
@@ -111,7 +114,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn BronzeLeagueI() -> Self {
+    #[must_use]
+    pub fn BronzeLeagueI() -> Self {
         Self {
             id: LeagueKind::BronzeLeagueI,
             name: "Bronze League I".to_string(),
@@ -123,7 +127,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn SilverLeagueIII() -> Self {
+    #[must_use]
+    pub fn SilverLeagueIII() -> Self {
         Self {
             id: LeagueKind::SilverLeagueIII,
             name: "Silver League III".to_string(),
@@ -135,7 +140,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn SilverLeagueII() -> Self {
+    #[must_use]
+    pub fn SilverLeagueII() -> Self {
         Self {
             id: LeagueKind::SilverLeagueII,
             name: "Silver League II".to_string(),
@@ -147,7 +153,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn SilverLeagueI() -> Self {
+    #[must_use]
+    pub fn SilverLeagueI() -> Self {
         Self {
             id: LeagueKind::SilverLeagueI,
             name: "Silver League I".to_string(),
@@ -159,7 +166,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn GoldLeagueIII() -> Self {
+    #[must_use]
+    pub fn GoldLeagueIII() -> Self {
         Self {
             id: LeagueKind::GoldLeagueIII,
             name: "Gold League III".to_string(),
@@ -171,7 +179,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn GoldLeagueII() -> Self {
+    #[must_use]
+    pub fn GoldLeagueII() -> Self {
         Self {
             id: LeagueKind::GoldLeagueII,
             name: "Gold League II".to_string(),
@@ -183,7 +192,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn GoldLeagueI() -> Self {
+    #[must_use]
+    pub fn GoldLeagueI() -> Self {
         Self {
             id: LeagueKind::GoldLeagueI,
             name: "Gold League I".to_string(),
@@ -195,7 +205,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn CrystalLeagueIII() -> Self {
+    #[must_use]
+    pub fn CrystalLeagueIII() -> Self {
         Self {
             id: LeagueKind::CrystalLeagueIII,
             name: "Crystal League III".to_string(),
@@ -207,7 +218,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn CrystalLeagueII() -> Self {
+    #[must_use]
+    pub fn CrystalLeagueII() -> Self {
         Self {
             id: LeagueKind::CrystalLeagueII,
             name: "Crystal League II".to_string(),
@@ -219,7 +231,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn CrystalLeagueI() -> Self {
+    #[must_use]
+    pub fn CrystalLeagueI() -> Self {
         Self {
             id: LeagueKind::CrystalLeagueI,
             name: "Crystal League I".to_string(),
@@ -231,7 +244,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn MasterLeagueIII() -> Self {
+    #[must_use]
+    pub fn MasterLeagueIII() -> Self {
         Self {
             id: LeagueKind::MasterLeagueIII,
             name: "Master League III".to_string(),
@@ -243,7 +257,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn MasterLeagueII() -> Self {
+    #[must_use]
+    pub fn MasterLeagueII() -> Self {
         Self {
             id: LeagueKind::MasterLeagueII,
             name: "Master League II".to_string(),
@@ -255,7 +270,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn MasterLeagueI() -> Self {
+    #[must_use]
+    pub fn MasterLeagueI() -> Self {
         Self {
             id: LeagueKind::MasterLeagueI,
             name: "Master League I".to_string(),
@@ -267,7 +283,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn ChampionLeagueIII() -> Self {
+    #[must_use]
+    pub fn ChampionLeagueIII() -> Self {
         Self {
             id: LeagueKind::ChampionLeagueIII,
             name: "Champion League III".to_string(),
@@ -279,7 +296,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn ChampionLeagueII() -> Self {
+    #[must_use]
+    pub fn ChampionLeagueII() -> Self {
         Self {
             id: LeagueKind::ChampionLeagueII,
             name: "Champion League II".to_string(),
@@ -291,7 +309,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn ChampionLeagueI() -> Self {
+    #[must_use]
+    pub fn ChampionLeagueI() -> Self {
         Self {
             id: LeagueKind::ChampionLeagueI,
             name: "Champion League I".to_string(),
@@ -303,7 +322,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn TitanLeagueIII() -> Self {
+    #[must_use]
+    pub fn TitanLeagueIII() -> Self {
         Self {
             id: LeagueKind::TitanLeagueIII,
             name: "Titan League III".to_string(),
@@ -315,7 +335,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn TitanLeagueII() -> Self {
+    #[must_use]
+    pub fn TitanLeagueII() -> Self {
         Self {
             id: LeagueKind::TitanLeagueII,
             name: "Titan League II".to_string(),
@@ -327,7 +348,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn TitanLeagueI() -> Self {
+    #[must_use]
+    pub fn TitanLeagueI() -> Self {
         Self {
             id: LeagueKind::TitanLeagueI,
             name: "Titan League I".to_string(),
@@ -339,7 +361,8 @@ impl League {
         }
     }
 
-    #[must_use] pub fn LegendLeague() -> Self {
+    #[must_use]
+    pub fn LegendLeague() -> Self {
         Self {
             id: LeagueKind::LegendLeague,
             name: "Legend League".to_string(),

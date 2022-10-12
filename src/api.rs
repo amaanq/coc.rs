@@ -12,7 +12,10 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use crate::{
     credentials::Credentials,
     dev::{self, CLIENT},
-    models::{clan, clan_capital, clan_search, gold_pass, labels, leagues, location, paging, player, rankings, season, war, war_log},
+    models::{
+        clan, clan_capital, clan_search, gold_pass, labels, leagues, location, paging, player,
+        rankings, season, war, war_log,
+    },
 };
 
 #[derive(Clone, Debug, Default)]
