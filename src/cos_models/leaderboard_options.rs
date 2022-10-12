@@ -152,7 +152,7 @@ pub mod cos_options {
         Thirteen = 13,
         /// Town Hall 14
         Fourteen = 14,
-        // TODO: Town Hall 15 
+        // TODO: Town Hall 15
         // Fifteen = 15,
     }
 

@@ -45,10 +45,12 @@ pub enum WarPreference {
 }
 
 impl WarPreference {
-    #[must_use] pub fn is_opted_in(&self) -> bool {
+    #[must_use]
+    pub fn is_opted_in(&self) -> bool {
         self == &Self::In
     }
-    #[must_use] pub fn is_opted_out(&self) -> bool {
+    #[must_use]
+    pub fn is_opted_out(&self) -> bool {
         self == &Self::Out
     }
 }
@@ -121,10 +123,12 @@ pub enum Village {
 }
 
 impl Village {
-    #[must_use] pub fn is_home(&self) -> bool {
+    #[must_use]
+    pub fn is_home(&self) -> bool {
         self == &Self::HomeVillage
     }
-    #[must_use] pub fn is_builder_base(&self) -> bool {
+    #[must_use]
+    pub fn is_builder_base(&self) -> bool {
         self == &Self::BuilderBase
     }
 }

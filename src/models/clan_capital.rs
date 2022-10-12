@@ -21,13 +21,15 @@ pub struct ClanCapitalRaidSeason {
 }
 
 impl ClanCapitalRaidSeason {
-    #[must_use] pub fn start_time(&self) -> chrono::DateTime<chrono::Utc> {
+    #[must_use]
+    pub fn start_time(&self) -> chrono::DateTime<chrono::Utc> {
         chrono::Utc.from_utc_datetime(
             &chrono::NaiveDateTime::parse_from_str(&self.start_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
         )
     }
 
-    #[must_use] pub fn end_time(&self) -> chrono::DateTime<chrono::Utc> {
+    #[must_use]
+    pub fn end_time(&self) -> chrono::DateTime<chrono::Utc> {
         chrono::Utc.from_utc_datetime(
             &chrono::NaiveDateTime::parse_from_str(&self.end_time, "%Y%m%dT%H%M%S.%fZ").unwrap(),
         )

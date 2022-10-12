@@ -73,17 +73,20 @@ impl SeasonBuilder {
         Self { season: Season { id: String::new(), year: 2015, month: Month::July } }
     }
 
-    #[must_use] pub fn year(mut self, year: i32) -> Self {
+    #[must_use]
+    pub fn year(mut self, year: i32) -> Self {
         self.season.year = year;
         self
     }
 
-    #[must_use] pub fn month(mut self, month: Month) -> Self {
+    #[must_use]
+    pub fn month(mut self, month: Month) -> Self {
         self.season.month = month;
         self
     }
 
-    #[must_use] pub fn build(mut self) -> Season {
+    #[must_use]
+    pub fn build(mut self) -> Season {
         self.season.id = format!("{}-{:02}", self.season.year, self.season.month as i32);
         self.season
     }
@@ -99,11 +102,13 @@ impl Season {
         })
     }
 
-    #[must_use] pub fn default_month() -> Month {
+    #[must_use]
+    pub fn default_month() -> Month {
         Month::July
     }
 
-    #[must_use] pub fn builder() -> SeasonBuilder {
+    #[must_use]
+    pub fn builder() -> SeasonBuilder {
         SeasonBuilder::new()
     }
 }
