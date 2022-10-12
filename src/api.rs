@@ -336,6 +336,19 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    pub async fn get_clan_capital_raid_seasons(
+        &self,
+        clan_tag: &str,
+    ) -> Result<APIResponse<clan_capital::ClanCapitalRaidSeason>, APIError> {
+        clan_tag.parse::<LogicLong>()?;
+        let url = format!(
+            "{}/clans/{}/capitalraidseasons",
+            Self::BASE_URL,
+            urlencoding::encode(clan_tag)
+        );
+        self.parse_json(self.get(url), false).await
+    }
+
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Player Methods
     //_______________________________________________________________________
