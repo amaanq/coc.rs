@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::badge_urls::BadgeUrls;
 
-use super::*;
+use super::{labels, leagues, location};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -37,7 +37,7 @@ pub struct Clan {
 }
 
 impl Clan {
-    pub fn game_link(&self) -> String {
+    #[must_use] pub fn game_link(&self) -> String {
         format!(
             "https://link.clashofclans.com/en?action=OpenClanProfile&tag={}",
             self.tag.replace('#', ""),
@@ -64,23 +64,23 @@ pub enum Privacy {
 }
 
 impl Privacy {
-    pub fn is_open(&self) -> bool {
-        self == &Privacy::Open
+    #[must_use] pub fn is_open(&self) -> bool {
+        self == &Self::Open
     }
-    pub fn is_invite_only(&self) -> bool {
-        self == &Privacy::InviteOnly
+    #[must_use] pub fn is_invite_only(&self) -> bool {
+        self == &Self::InviteOnly
     }
-    pub fn is_closed(&self) -> bool {
-        self == &Privacy::Closed
+    #[must_use] pub fn is_closed(&self) -> bool {
+        self == &Self::Closed
     }
 }
 
 impl ToString for Privacy {
     fn to_string(&self) -> String {
         match self {
-            Privacy::Open => "Anyone Can Join".to_string(),
-            Privacy::InviteOnly => "Invite Only".to_string(),
-            Privacy::Closed => "Closed".to_string(),
+            Self::Open => "Anyone Can Join".to_string(),
+            Self::InviteOnly => "Invite Only".to_string(),
+            Self::Closed => "Closed".to_string(),
         }
     }
 }
@@ -104,39 +104,39 @@ pub enum WarFrequency {
 }
 
 impl WarFrequency {
-    pub fn is_unknown(&self) -> bool {
-        self == &WarFrequency::Unknown
+    #[must_use] pub fn is_unknown(&self) -> bool {
+        self == &Self::Unknown
     }
-    pub fn is_always(&self) -> bool {
-        self == &WarFrequency::Always
+    #[must_use] pub fn is_always(&self) -> bool {
+        self == &Self::Always
     }
-    pub fn is_more_than_once_per_week(&self) -> bool {
-        self == &WarFrequency::MoreThanOncePerWeek
+    #[must_use] pub fn is_more_than_once_per_week(&self) -> bool {
+        self == &Self::MoreThanOncePerWeek
     }
-    pub fn is_once_per_week(&self) -> bool {
-        self == &WarFrequency::OncePerWeek
+    #[must_use] pub fn is_once_per_week(&self) -> bool {
+        self == &Self::OncePerWeek
     }
-    pub fn is_less_than_once_per_week(&self) -> bool {
-        self == &WarFrequency::LessThanOncePerWeek
+    #[must_use] pub fn is_less_than_once_per_week(&self) -> bool {
+        self == &Self::LessThanOncePerWeek
     }
-    pub fn is_never(&self) -> bool {
-        self == &WarFrequency::Never
+    #[must_use] pub fn is_never(&self) -> bool {
+        self == &Self::Never
     }
-    pub fn is_any(&self) -> bool {
-        self == &WarFrequency::Any
+    #[must_use] pub fn is_any(&self) -> bool {
+        self == &Self::Any
     }
 }
 
 impl ToString for WarFrequency {
     fn to_string(&self) -> String {
         match self {
-            WarFrequency::Unknown => "Not set".to_string(),
-            WarFrequency::Always => "Always".to_string(),
-            WarFrequency::MoreThanOncePerWeek => "Twice a week".to_string(),
-            WarFrequency::OncePerWeek => "Once a week".to_string(),
-            WarFrequency::LessThanOncePerWeek => "Rarely".to_string(),
-            WarFrequency::Never => "Never".to_string(),
-            WarFrequency::Any => "Any".to_string(),
+            Self::Unknown => "Not set".to_string(),
+            Self::Always => "Always".to_string(),
+            Self::MoreThanOncePerWeek => "Twice a week".to_string(),
+            Self::OncePerWeek => "Once a week".to_string(),
+            Self::LessThanOncePerWeek => "Rarely".to_string(),
+            Self::Never => "Never".to_string(),
+            Self::Any => "Any".to_string(),
         }
     }
 }
@@ -180,31 +180,31 @@ pub enum Role {
 }
 
 impl Role {
-    pub fn is_not_member(&self) -> bool {
-        self == &Role::NotMember
+    #[must_use] pub fn is_not_member(&self) -> bool {
+        self == &Self::NotMember
     }
-    pub fn is_member(&self) -> bool {
-        self == &Role::Member
+    #[must_use] pub fn is_member(&self) -> bool {
+        self == &Self::Member
     }
-    pub fn is_elder(&self) -> bool {
-        self == &Role::Elder
+    #[must_use] pub fn is_elder(&self) -> bool {
+        self == &Self::Elder
     }
-    pub fn is_co_leader(&self) -> bool {
-        self == &Role::CoLeader
+    #[must_use] pub fn is_co_leader(&self) -> bool {
+        self == &Self::CoLeader
     }
-    pub fn is_leader(&self) -> bool {
-        self == &Role::Leader
+    #[must_use] pub fn is_leader(&self) -> bool {
+        self == &Self::Leader
     }
 }
 
 impl ToString for Role {
     fn to_string(&self) -> String {
         match self {
-            Role::NotMember => "Not Member".to_string(),
-            Role::Member => "Member".to_string(),
-            Role::Elder => "Elder".to_string(),
-            Role::CoLeader => "Co-Leader".to_string(),
-            Role::Leader => "Leader".to_string(),
+            Self::NotMember => "Not Member".to_string(),
+            Self::Member => "Member".to_string(),
+            Self::Elder => "Elder".to_string(),
+            Self::CoLeader => "Co-Leader".to_string(),
+            Self::Leader => "Leader".to_string(),
         }
     }
 }
@@ -217,10 +217,10 @@ pub struct ClanCapital {
 }
 
 impl ClanCapital {
-    pub fn capital_hall_level(&self) -> i8 {
+    #[must_use] pub fn capital_hall_level(&self) -> i8 {
         self.capital_hall_level.unwrap_or_default()
     }
-    pub fn districts(&self) -> Vec<District> {
+    #[must_use] pub fn districts(&self) -> Vec<District> {
         self.districts.clone().unwrap_or_default()
     }
 }

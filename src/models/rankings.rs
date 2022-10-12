@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::*;
+use super::{badge_urls, leagues, location};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

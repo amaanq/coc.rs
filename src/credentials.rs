@@ -19,28 +19,28 @@ impl CredentialsBuilder {
         Self { credentials: Credentials(Vec::new()) }
     }
 
-    pub fn add_credential(mut self, email: String, password: String) -> Self {
+    #[must_use] pub fn add_credential(mut self, email: String, password: String) -> Self {
         self.credentials.0.push(Credential { email, password });
         self
     }
 
-    pub fn build(self) -> Credentials {
+    #[must_use] pub fn build(self) -> Credentials {
         self.credentials
     }
 }
 
 impl Credential {
-    pub fn email(&self) -> &str {
+    #[must_use] pub fn email(&self) -> &str {
         &self.email
     }
 
-    pub fn password(&self) -> &str {
+    #[must_use] pub fn password(&self) -> &str {
         &self.password
     }
 }
 
 impl Credentials {
-    pub fn builder() -> CredentialsBuilder {
+    #[must_use] pub fn builder() -> CredentialsBuilder {
         CredentialsBuilder::new()
     }
 }

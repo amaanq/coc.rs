@@ -37,7 +37,7 @@ mod tests {
         credentials::Credentials,
         events::{EventHandler, EventType, EventsListenerBuilder},
         location::Local,
-        models::*,
+        models::{clan, clan_search, leagues, location, paging, player, season},
     };
 
     static mut LOADED: bool = false;
@@ -49,7 +49,7 @@ mod tests {
     /// Get an environment variable, returning an Err with a
     /// nice error message mentioning the missing variable in case the value is not found.
     fn required_env_var(key: &str) -> Result<String> {
-        env::var(key).with_context(|| format!("Missing environment variable {}", key))
+        env::var(key).with_context(|| format!("Missing environment variable {key}"))
     }
 
     async fn load_client() -> anyhow::Result<()> {
@@ -98,7 +98,7 @@ mod tests {
         let clan_warlog = CLIENT.lock().await.get_clan_warlog("#2PJP2Q0PY").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Clan warlog: {:#?}", clan_warlog);
+        println!("Clan warlog: {clan_warlog:#?}");
         Ok(())
     }
 
@@ -136,7 +136,7 @@ mod tests {
         let current_war = CLIENT.lock().await.get_current_war("#2L29GJ0G0").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Current war: {:#?}", current_war);
+        println!("Current war: {current_war:#?}");
         Ok(())
     }
 
@@ -149,7 +149,7 @@ mod tests {
         let clan = CLIENT.lock().await.get_clan("#90PU0RRG").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Clan: {:?}", clan);
+        println!("Clan: {clan:?}");
 
         Ok(())
     }
@@ -169,9 +169,9 @@ mod tests {
             .iter()
             .filter(|member| member.role == clan::Role::CoLeader)
             .collect::<Vec<_>>();
-        co_leaders.iter().for_each(|member| {
+        for member in &co_leaders {
             println!("{} - {}", member.tag, member.name);
-        });
+        }
         println!("And there are {} co-leaders", co_leaders.len());
 
         Ok(())
@@ -187,7 +187,7 @@ mod tests {
             CLIENT.lock().await.get_clan_capital_raid_seasons("#2PP").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Clan capital raid seasons: {:#?}", clan_capital_raid_seasons);
+        println!("Clan capital raid seasons: {clan_capital_raid_seasons:#?}");
         Ok(())
     }
 
@@ -200,7 +200,7 @@ mod tests {
         let player = CLIENT.lock().await.get_player("#2PP").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Player: {:#?}", player);
+        println!("Player: {player:#?}");
         #[cfg(feature = "extra")]
         println!("Hero Pets: {:#?}", player.hero_pets());
         Ok(())
@@ -215,7 +215,7 @@ mod tests {
         let verified = CLIENT.lock().await.verify_player_token("#CVJLQOLR", "").await?;
 
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("Verified: {:?}", verified);
+        println!("Verified: {verified:?}");
 
         Ok(())
     }
@@ -229,7 +229,7 @@ mod tests {
         let leagues = CLIENT.lock().await.get_leagues().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Leagues: {:#?}", leagues);
+        println!("Leagues: {leagues:#?}");
 
         Ok(())
     }
@@ -274,7 +274,7 @@ mod tests {
         let league = CLIENT.lock().await.get_league(leagues::LeagueKind::LegendLeague).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("League: {:#?}", league);
+        println!("League: {league:#?}");
 
         Ok(())
     }
@@ -290,7 +290,7 @@ mod tests {
         println!("Time elapsed! {:?}", now.elapsed());
 
         league_seasons.items.iter().for_each(|season| {
-            println!("Season: {}", season);
+            println!("Season: {season}");
         });
 
         Ok(())
@@ -306,7 +306,7 @@ mod tests {
             CLIENT.lock().await.get_war_league(leagues::WarLeagueKind::ChampionLeagueI).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("War league: {:#?}", war_league);
+        println!("War league: {war_league:#?}");
 
         Ok(())
     }
@@ -320,7 +320,7 @@ mod tests {
         let war_leagues = CLIENT.lock().await.get_war_leagues().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("War leagues: {:#?}", war_leagues);
+        println!("War leagues: {war_leagues:#?}");
 
         Ok(())
     }
@@ -417,7 +417,7 @@ mod tests {
         let locations = CLIENT.lock().await.get_locations().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Locations: {:#?}", locations);
+        println!("Locations: {locations:#?}");
 
         Ok(())
     }
@@ -431,7 +431,7 @@ mod tests {
         let location = CLIENT.lock().await.get_location(location::Local::UnitedStates).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Location: {:#?}", location);
+        println!("Location: {location:#?}");
 
         Ok(())
     }
@@ -459,7 +459,7 @@ mod tests {
 
         let player_labels = CLIENT.lock().await.get_player_labels().await?;
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("Player Labels: {:#?}", player_labels);
+        println!("Player Labels: {player_labels:#?}");
 
         Ok(())
     }
@@ -473,7 +473,7 @@ mod tests {
         let player_label = CLIENT.lock().await.get_clan_labels().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Player Label: {:#?}", player_label);
+        println!("Player Label: {player_label:#?}");
 
         Ok(())
     }
@@ -482,7 +482,7 @@ mod tests {
     fn test_url() {
         let tag = "#2PP";
         let encoded = urlencoding::encode(tag);
-        println!("{}", encoded);
+        println!("{encoded}");
     }
 
     #[tokio::test]
@@ -491,7 +491,7 @@ mod tests {
             let arr: Vec<char> =
                 vec!['0', '2', '8', '9', 'P', 'Y', 'L', 'Q', 'G', 'R', 'J', 'C', 'U', 'V'];
             let mut tag = String::new();
-            let mut total = low as i64 + high as i64 * 0x100;
+            let mut total = i64::from(low) + i64::from(high) * 0x100;
             let mut b14;
 
             while total != 0 {
@@ -550,7 +550,7 @@ mod tests {
             task.await?;
         }
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("Throttle counter: {:#?}", throttle_counter);
+        println!("Throttle counter: {throttle_counter:#?}");
 
         Ok(())
     }
@@ -578,7 +578,7 @@ mod tests {
             }
 
             async fn handle_error(&self, error: APIError, tag: String, event_type: EventType) {
-                println!("Houston we have a problem! {} with {} @ {}", error, tag, event_type);
+                println!("Houston we have a problem! {error} with {tag} @ {event_type}");
             }
         }
 
@@ -597,7 +597,7 @@ mod tests {
 
     #[test]
     fn test_primitive_to_local() {
-        let local = Local::from_i32(32000249);
+        let local = Local::from_i32(32_000_249);
         assert_eq!(local, Some(Local::UnitedStates));
     }
 
