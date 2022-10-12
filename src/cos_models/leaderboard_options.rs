@@ -100,6 +100,8 @@ pub mod cos_options {
                 12 => Level::Twelve,
                 13 => Level::Thirteen,
                 14 => Level::Fourteen,
+                // TODO: Clash of Stats hasn't added th15 leaderboards yet!
+                // 15 => Level::Fifteen,
                 _ => Level::default(),
             };
             self
@@ -150,6 +152,8 @@ pub mod cos_options {
         Thirteen = 13,
         /// Town Hall 14
         Fourteen = 14,
+        // TODO: Town Hall 15 
+        // Fifteen = 15,
     }
 
     impl Default for Level {
