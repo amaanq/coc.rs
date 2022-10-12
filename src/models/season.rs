@@ -83,7 +83,8 @@ impl SeasonBuilder {
         self
     }
 
-    pub fn build(self) -> Season {
+    pub fn build(mut self) -> Season {
+        self.season.id = format!("{}-{:02}", self.season.year, self.season.month as i32);
         self.season
     }
 }

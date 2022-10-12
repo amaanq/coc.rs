@@ -17,7 +17,7 @@ pub struct APIAccount {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Keys {
-    pub status: Status,
+    pub status: Option<Status>,
     #[serde(rename = "sessionExpiresInSeconds")]
     pub session_expires_in_seconds: i32,
     pub keys: Vec<Key>,

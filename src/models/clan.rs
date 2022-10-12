@@ -30,7 +30,9 @@ pub struct Clan {
     pub labels: Vec<labels::ClanLabel>,
     pub required_versus_trophies: i32,
     pub required_townhall_level: i8,
-    pub clan_capital: ClanCapital,
+    /// Unfortunately this isn't returned in the /clans endpoint, only for a specific clan so I'm
+    /// using an option for now
+    pub clan_capital: Option<ClanCapital>,
     pub chat_language: Option<ChatLanguage>,
 }
 

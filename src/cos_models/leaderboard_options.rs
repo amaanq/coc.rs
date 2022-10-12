@@ -10,14 +10,16 @@ pub mod cos_options {
         /// All methods take this
         pub page: i32,
     }
+
     pub struct OptionsBuilder {
         pub options: Options,
     }
 
     impl Options {
         pub fn new(location: location::Local, level: Level, page: i32) -> Self {
-            Options { location, level, page: page.max(0).min(100000) }
+            Options { location, level, page: page.clamp(0, 100000) }
         }
+
         pub fn builder() -> OptionsBuilder {
             OptionsBuilder {
                 options: Options {
@@ -27,6 +29,7 @@ pub mod cos_options {
                 },
             }
         }
+
         pub(crate) fn build_for_clan(self) -> Vec<(String, String)> {
             match self.location {
                 location::Local::None => vec![
@@ -39,6 +42,7 @@ pub mod cos_options {
                 ],
             }
         }
+
         pub(crate) fn build_for_player(self) -> Vec<(String, String)> {
             match self.location {
                 location::Local::None => vec![
@@ -53,9 +57,11 @@ pub mod cos_options {
                 ],
             }
         }
+
         pub(crate) fn build_for_legends(self) -> Vec<(String, String)> {
             vec![("page".to_string(), self.page.to_string())]
         }
+
         pub(crate) fn build_for_builder(self) -> Vec<(String, String)> {
             match self.location {
                 location::Local::None => vec![
@@ -77,6 +83,7 @@ pub mod cos_options {
             self.options.location = location;
             self
         }
+
         pub fn level(mut self, level: i32) -> Self {
             self.options.level = match level {
                 1 => Level::One,
@@ -97,14 +104,16 @@ pub mod cos_options {
             };
             self
         }
+
         /// minimum of 1
         pub fn page(mut self, mut page: i32) -> Self {
             if page <= 0 {
                 page = 1;
             }
-            self.options.page = (page - 1).max(0).min(100000);
+            self.options.page = (page - 1).clamp(0, 100000);
             self
         }
+
         pub fn build(self) -> Options {
             self.options
         }
@@ -142,6 +151,7 @@ pub mod cos_options {
         /// Town Hall 14
         Fourteen = 14,
     }
+
     impl Default for Level {
         fn default() -> Self {
             Level::None

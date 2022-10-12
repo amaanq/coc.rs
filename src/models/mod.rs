@@ -1,5 +1,6 @@
 pub mod badge_urls;
 pub mod clan;
+pub mod clan_capital;
 pub mod clan_search;
 pub mod gold_pass;
 pub mod icon_urls;
