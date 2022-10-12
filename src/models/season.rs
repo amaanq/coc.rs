@@ -64,46 +64,46 @@ pub struct CurrentSeasonData {
 
 impl From<std::num::ParseIntError> for SeasonError {
     fn from(err: std::num::ParseIntError) -> Self {
-        SeasonError::ParseFailed(err.to_string())
+        Self::ParseFailed(err.to_string())
     }
 }
 
 impl SeasonBuilder {
-    fn new() -> SeasonBuilder {
-        SeasonBuilder { season: Season { id: String::new(), year: 2015, month: Month::July } }
+    fn new() -> Self {
+        Self { season: Season { id: String::new(), year: 2015, month: Month::July } }
     }
 
-    pub fn year(mut self, year: i32) -> SeasonBuilder {
+    #[must_use] pub fn year(mut self, year: i32) -> Self {
         self.season.year = year;
         self
     }
 
-    pub fn month(mut self, month: Month) -> SeasonBuilder {
+    #[must_use] pub fn month(mut self, month: Month) -> Self {
         self.season.month = month;
         self
     }
 
-    pub fn build(mut self) -> Season {
+    #[must_use] pub fn build(mut self) -> Season {
         self.season.id = format!("{}-{:02}", self.season.year, self.season.month as i32);
         self.season
     }
 }
 
 impl Season {
-    pub fn from_string(season: String) -> Result<Season, SeasonError> {
+    pub fn from_string(season: String) -> Result<Self, SeasonError> {
         let mut season_split = season.split('-');
-        Ok(Season {
+        Ok(Self {
             id: season.clone(),
             year: season_split.next().unwrap().parse::<i32>()?,
             month: Month::try_from(season_split.next().unwrap().parse::<i32>()? as u8).unwrap(),
         })
     }
 
-    pub fn default_month() -> Month {
+    #[must_use] pub fn default_month() -> Month {
         Month::July
     }
 
-    pub fn builder() -> SeasonBuilder {
+    #[must_use] pub fn builder() -> SeasonBuilder {
         SeasonBuilder::new()
     }
 }
@@ -114,6 +114,6 @@ impl std::fmt::Display for Season {
         let year = season_split.next().unwrap().parse::<i32>().unwrap();
         let month =
             Month::try_from(season_split.next().unwrap().parse::<i32>().unwrap() as u8).unwrap();
-        write!(f, "{}-{:02}", year, month as i32)
+        write!(f, "{year}-{:02}", month as i32)
     }
 }

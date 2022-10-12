@@ -12,7 +12,7 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use crate::{
     credentials::Credentials,
     dev::{self, CLIENT},
-    models::*,
+    models::{clan, clan_capital, clan_search, gold_pass, labels, leagues, location, paging, player, rankings, season, war, war_log},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -64,27 +64,27 @@ impl std::error::Error for APIError {}
 
 impl From<logic_long::LogicLongError> for APIError {
     fn from(e: logic_long::LogicLongError) -> Self {
-        APIError::InvalidTag(e.to_string())
+        Self::InvalidTag(e.to_string())
     }
 }
 
 impl std::fmt::Display for APIError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            APIError::ClientNotReady => write!(f, "Client not ready"),
-            APIError::FailedGetIP(e) => write!(f, "Failed to get IP address: {}", e),
-            APIError::LoginFailed(e) => write!(f, "Failed to login: {}", e),
-            APIError::RequestFailed(e) => write!(f, "Request failed: {}", e),
-            APIError::BadParameters => write!(f, "Bad parameters"),
-            APIError::AccessDenied => write!(f, "Access denied"),
-            APIError::NotFound => write!(f, "Not found"),
-            APIError::RequestThrottled => write!(f, "Request throttled"),
-            APIError::UnknownError => write!(f, "Unknown error"),
-            APIError::InMaintenance => write!(f, "In maintenance"),
-            APIError::BadResponse(e, s) => write!(f, "Bad response: {} ({})", e, s),
-            APIError::InvalidParameters(e) => write!(f, "Invalid parameters: {}", e),
-            APIError::InvalidTag(e) => write!(f, "Invalid tag: {}", e),
-            APIError::EventFailure(e) => write!(f, "Event failure: {}", e),
+            Self::ClientNotReady => write!(f, "Client not ready"),
+            Self::FailedGetIP(e) => write!(f, "Failed to get IP address: {e}"),
+            Self::LoginFailed(e) => write!(f, "Failed to login: {e}"),
+            Self::RequestFailed(e) => write!(f, "Request failed: {e}"),
+            Self::BadParameters => write!(f, "Bad parameters"),
+            Self::AccessDenied => write!(f, "Access denied"),
+            Self::NotFound => write!(f, "Not found"),
+            Self::RequestThrottled => write!(f, "Request throttled"),
+            Self::UnknownError => write!(f, "Unknown error"),
+            Self::InMaintenance => write!(f, "In maintenance"),
+            Self::BadResponse(e, s) => write!(f, "Bad response: {e} ({s})"),
+            Self::InvalidParameters(e) => write!(f, "Invalid parameters: {e}"),
+            Self::InvalidTag(e) => write!(f, "Invalid tag: {e}"),
+            Self::EventFailure(e) => write!(f, "Event failure: {e}"),
         }
     }
 }
@@ -121,10 +121,10 @@ impl Client {
 
     /// Called when the client is created to initialize every credential.
     async fn init(&self) -> Result<(), APIError> {
-        let ip = Client::get_ip().await?;
+        let ip = Self::get_ip().await?;
         *self.ip_address.lock().unwrap() = ip.clone();
 
-        for credential in self.credentials.lock().await.0.iter() {
+        for credential in &self.credentials.lock().await.0 {
             let account = dev::APIAccount::login(credential, ip.clone()).await;
             self.accounts.lock().unwrap().push(account?);
         }
@@ -134,11 +134,11 @@ impl Client {
 
     /// Called when an IP address change is detected
     async fn reinit(&self) -> Result<(), APIError> {
-        let ip = Client::get_ip().await?;
+        let ip = Self::get_ip().await?;
         if ip != *self.ip_address.lock().unwrap() {
             *self.ip_address.lock().unwrap() = ip.clone();
 
-            for credential in self.credentials.lock().await.0.iter() {
+            for credential in &self.credentials.lock().await.0 {
                 let account = dev::APIAccount::login(credential, ip.clone()).await;
                 // find the account in the list where the email matches and replace it
                 let mut accounts = self.accounts.lock().unwrap();
@@ -175,7 +175,7 @@ impl Client {
         let res = CLIENT.get(Self::IP_URL).send().await;
         let ip = match res {
             Ok(res) => res.text().await.unwrap(),
-            Err(err) => return Err(APIError::FailedGetIP(format!("client.get_ip(): `{}`", err))),
+            Err(err) => return Err(APIError::FailedGetIP(format!("client.get_ip(): `{err}`"))),
         };
         Ok(ip)
     }
@@ -190,7 +190,7 @@ impl Client {
     /// ```
     pub async fn print_keys(&self) {
         for account in self.accounts.lock().unwrap().iter() {
-            for key in account.keys.keys.iter() {
+            for key in &account.keys.keys {
                 println!("{key}");
             }
         }
@@ -366,7 +366,7 @@ impl Client {
         player_tag.parse::<LogicLong>()?;
         let url =
             format!("{}/players/{}/verifytoken", Self::BASE_URL, urlencoding::encode(player_tag));
-        let token = format!("{{\"token\":\"{}\"}}", token);
+        let token = format!("{{\"token\":\"{token}\"}}");
         self.parse_json(self.post(url, token), false).await
     }
 
@@ -392,7 +392,7 @@ impl Client {
             ));
         }
         let mut url =
-            format!("{}/leagues/{}/seasons/{}", Self::BASE_URL, league_id as i32, season_id);
+            format!("{}/leagues/{}/seasons/{season_id}", Self::BASE_URL, league_id as i32);
         if paging.is_some() {
             url = Url::parse_with_params(&url, paging.to_vec()).unwrap().to_string();
         }

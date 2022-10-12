@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use crate::{
     api::{APIError, Client},
-    models::*,
+    models::{clan, player},
     war::War,
 };
 
@@ -33,16 +33,17 @@ pub enum EventType {
 impl std::fmt::Display for EventType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            EventType::Player(tag, _, _) => write!(f, "PlayerEvent({})", tag),
-            EventType::Clan(tag, _, _) => write!(f, "ClanEvent({})", tag),
-            EventType::War(tag, _, _) => write!(f, "WarEvent({})", tag),
+            Self::Player(tag, _, _) => write!(f, "PlayerEvent({tag})"),
+            Self::Clan(tag, _, _) => write!(f, "ClanEvent({tag})"),
+            Self::War(tag, _, _) => write!(f, "WarEvent({tag})"),
         }
     }
 }
 
 impl EventsListenerBuilder {
+    #[must_use]
     pub fn new(client: Client) -> Self {
-        EventsListenerBuilder { event_type: vec![], client }
+        Self { event_type: vec![], client }
     }
 
     pub fn add_clan(mut self, tag: impl ToString) -> Self {
@@ -60,6 +61,7 @@ impl EventsListenerBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_clans(mut self, tags: Vec<impl ToString>) -> Self {
         // since add_clan takes self by value, we have to use a for loop
         for tag in tags {
@@ -68,6 +70,7 @@ impl EventsListenerBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_players(mut self, tags: Vec<impl ToString>) -> Self {
         // since add_player takes self by value, we have to use a for loop
         for tag in tags {
@@ -158,7 +161,7 @@ where
 
     async fn fire_events(&mut self) -> Result<bool, EventsError> {
         #[inline(always)]
-        fn should_fire_again(duration: Duration, seconds: u64) -> bool {
+        const fn should_fire_again(duration: Duration, seconds: u64) -> bool {
             duration.as_secs() >= seconds
         }
 
@@ -170,16 +173,13 @@ where
                             return match self.client.get_player(tag).await {
                                 Ok(new) => {
                                     self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
-                                    self.event_type[i] = EventType::Player(
-                                        tag.to_owned(),
-                                        Instant::now(),
-                                        Some(new),
-                                    );
+                                    self.event_type[i] =
+                                        EventType::Player(tag.clone(), Instant::now(), Some(new));
                                     Ok(true)
                                 }
                                 Err(err) => Err(EventsError {
                                     api_error: err,
-                                    tag: tag.to_owned(),
+                                    tag: tag.clone(),
                                     event_type: event.clone(),
                                     index: i,
                                 }),
@@ -194,12 +194,12 @@ where
                                 Ok(new) => {
                                     self.handler.clan(old.clone(), new.clone()).await; // invoking the handler function the user defined
                                     self.event_type[i] =
-                                        EventType::Clan(tag.to_owned(), Instant::now(), Some(new));
+                                        EventType::Clan(tag.clone(), Instant::now(), Some(new));
                                     Ok(true)
                                 }
                                 Err(err) => Err(EventsError {
                                     api_error: err,
-                                    tag: tag.to_owned(),
+                                    tag: tag.clone(),
                                     event_type: event.clone(),
                                     index: i,
                                 }),
@@ -214,12 +214,12 @@ where
                                 Ok(new) => {
                                     self.handler.war(old.clone(), new.clone()).await; // invoking the handler function the user defined
                                     self.event_type[i] =
-                                        EventType::War(tag.to_owned(), Instant::now(), Some(new));
+                                        EventType::War(tag.clone(), Instant::now(), Some(new));
                                     Ok(true)
                                 }
                                 Err(err) => Err(EventsError {
                                     api_error: err,
-                                    tag: tag.to_owned(),
+                                    tag: tag.clone(),
                                     event_type: event.clone(),
                                     index: i,
                                 }),

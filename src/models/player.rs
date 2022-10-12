@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::*;
+use super::{badge_urls, clan, labels, leagues, season};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -45,19 +45,19 @@ pub enum WarPreference {
 }
 
 impl WarPreference {
-    pub fn is_opted_in(&self) -> bool {
-        self == &WarPreference::In
+    #[must_use] pub fn is_opted_in(&self) -> bool {
+        self == &Self::In
     }
-    pub fn is_opted_out(&self) -> bool {
-        self == &WarPreference::Out
+    #[must_use] pub fn is_opted_out(&self) -> bool {
+        self == &Self::Out
     }
 }
 
 impl ToString for WarPreference {
     fn to_string(&self) -> String {
         match self {
-            WarPreference::In => "in".to_string(),
-            WarPreference::Out => "out".to_string(),
+            Self::In => "in".to_string(),
+            Self::Out => "out".to_string(),
         }
     }
 }
@@ -121,19 +121,19 @@ pub enum Village {
 }
 
 impl Village {
-    pub fn is_home(&self) -> bool {
-        self == &Village::HomeVillage
+    #[must_use] pub fn is_home(&self) -> bool {
+        self == &Self::HomeVillage
     }
-    pub fn is_builder_base(&self) -> bool {
-        self == &Village::BuilderBase
+    #[must_use] pub fn is_builder_base(&self) -> bool {
+        self == &Self::BuilderBase
     }
 }
 
 impl ToString for Village {
     fn to_string(&self) -> String {
         match self {
-            Village::HomeVillage => "Home Village".to_string(),
-            Village::BuilderBase => "Builder Base".to_string(),
+            Self::HomeVillage => "Home Village".to_string(),
+            Self::BuilderBase => "Builder Base".to_string(),
         }
     }
 }

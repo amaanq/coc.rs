@@ -230,7 +230,7 @@ impl APIAccount {
         let key = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
             .header("Content-Type", "application/json")
-            .body(format!("{{\"id\":\"{}\"}}", key_id))
+            .body(format!("{{\"id\":\"{key_id}\"}}"))
             .send()
             .await
             .unwrap()
