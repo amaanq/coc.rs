@@ -159,12 +159,17 @@ impl Client {
     /// Here you can create a client yourself and load them here later (for example .env parsing)
     ///
     /// Example:
-    /// ```
-    /// use coc_rs::{Client, Credentials};
+    /// ```no_run
+    /// use coc_rs::{coc_rs::api::Client, coc_rs::credentials::Credentials};
     ///
-    /// let client = Client::default();
-    /// let credentials = Credentials::builder().add_credential("email", "password").add_credential("email2", "password2").build();
-    /// client.load(credentials).await?;
+    /// #[tokio::main]
+    /// async fn main() -> anyhow::Result<()> {
+    ///     let client = Client::default();
+    ///     let credentials = Credentials::builder().add_credential("email", "password").add_credential("email2", "password2").build();
+    ///     client.load(credentials).await?;
+    ///
+    ///     Ok(())
+    /// }
     /// ```
     pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
         *self.credentials.lock().await = credentials;
