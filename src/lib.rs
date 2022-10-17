@@ -55,6 +55,8 @@ mod tests {
     async fn load_client() -> anyhow::Result<()> {
         unsafe {
             if !LOADED {
+                let client = CLIENT.lock().await; // lock the client so no others can take it while we're loading
+
                 let credentials = Credentials::builder();
                 let credentials = required_env_var("emails")?
                     .split(',')
@@ -69,7 +71,7 @@ mod tests {
                     })
                     .build();
 
-                CLIENT.lock().await.load(credentials).await?;
+                client.load(credentials).await?;
                 LOADED = true;
             }
         }
