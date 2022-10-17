@@ -9,12 +9,12 @@ pub struct ClanCapitalRaidSeason {
     pub state: State,
     start_time: String,
     end_time: String,
-    pub capital_total_loot: i64,
-    pub raids_completed: i64,
-    pub total_attacks: i64,
-    pub enemy_districts_destroyed: i64,
-    pub offensive_reward: i64,
-    pub defensive_reward: i64,
+    pub capital_total_loot: i32,
+    pub raids_completed: i32,
+    pub total_attacks: i32,
+    pub enemy_districts_destroyed: i32,
+    pub offensive_reward: i32,
+    pub defensive_reward: i32,
     pub attack_log: Vec<AttackLog>,
     pub defense_log: Vec<DefenseLog>,
     pub members: Option<Vec<Member>>,
@@ -39,31 +39,31 @@ impl ClanCapitalRaidSeason {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct District {
-    pub id: i64,
+    pub id: i32,
     pub name: DistrictName,
-    pub destruction_percent: i64,
-    pub attack_count: i64,
-    pub total_looted: i64,
+    pub destruction_percent: i32,
+    pub attack_count: i32,
+    pub total_looted: i32,
     pub attacks: Option<Vec<Attack>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AttackLog {
-    pub defender: Defender,
-    pub attack_count: i64,
-    pub district_count: i64,
-    pub districts_destroyed: i64,
+    pub defender: Clan,
+    pub attack_count: i32,
+    pub district_count: i32,
+    pub districts_destroyed: i32,
     pub districts: Vec<District>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DefenseLog {
-    pub attacker: Defender,
-    pub attack_count: i64,
-    pub district_count: i64,
-    pub districts_destroyed: i64,
+    pub attacker: Clan,
+    pub attack_count: i32,
+    pub district_count: i32,
+    pub districts_destroyed: i32,
     pub districts: Vec<District>,
 }
 
@@ -71,7 +71,7 @@ pub struct DefenseLog {
 #[serde(rename_all = "camelCase")]
 pub struct Attack {
     pub attacker: Attacker,
-    pub destruction_percent: i64,
+    pub destruction_percent: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,10 +82,10 @@ pub struct Attacker {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Defender {
+pub struct Clan {
     pub tag: String,
     pub name: String,
-    pub level: i64,
+    pub level: i32,
     pub badge_urls: BadgeUrls,
 }
 
@@ -94,10 +94,10 @@ pub struct Defender {
 pub struct Member {
     pub tag: String,
     pub name: String,
-    pub attacks: i64,
-    pub attack_limit: i64,
-    pub bonus_attack_limit: i64,
-    pub capital_resources_looted: i64,
+    pub attacks: i32,
+    pub attack_limit: i32,
+    pub bonus_attack_limit: i32,
+    pub capital_resources_looted: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
