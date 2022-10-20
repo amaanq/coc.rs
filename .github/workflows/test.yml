@@ -36,6 +36,9 @@ jobs:
             target
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}
       - name: Generate test result and coverage report
+        env:
+          emails: ${{ secrets.EMAIL }}
+          passwords: ${{ secrets.PASSWORD }}
         run: |
           cargo install cargo2junit grcov;
           cargo test $CARGO_OPTIONS -- -Z unstable-options --format json | cargo2junit > results.xml;
