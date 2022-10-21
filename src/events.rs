@@ -3,7 +3,8 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 
 use crate::{
-    api::{APIError, Client},
+    api::Client,
+    error::APIError,
     models::{clan, player},
     war::War,
 };
@@ -46,17 +47,20 @@ impl EventsListenerBuilder {
         Self { event_type: vec![], client }
     }
 
-    pub fn add_clan(mut self, tag: impl ToString) -> Self {
+    #[must_use]
+    pub fn add_clan(mut self, tag: &(impl ToString + ?Sized)) -> Self {
         self.event_type.push(EventType::Clan(tag.to_string(), Instant::now(), None));
         self
     }
 
-    pub fn add_player(mut self, tag: impl ToString) -> Self {
+    #[must_use]
+    pub fn add_player(mut self, tag: &(impl ToString + ?Sized)) -> Self {
         self.event_type.push(EventType::Player(tag.to_string(), Instant::now(), None));
         self
     }
 
-    pub fn add_war(mut self, tag: impl ToString) -> Self {
+    #[must_use]
+    pub fn add_war(mut self, tag: &(impl ToString + ?Sized)) -> Self {
         self.event_type.push(EventType::War(tag.to_string(), Instant::now(), None));
         self
     }
@@ -80,6 +84,7 @@ impl EventsListenerBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_wars(&mut self, tags: Vec<impl ToString>) -> &mut Self {
         // since add_war takes self by value, we have to use a for loop
         for tag in tags {

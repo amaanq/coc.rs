@@ -1,4 +1,4 @@
-use crate::{api::APIError, credentials::Credential};
+use crate::{credentials::Credential, error::APIError};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
@@ -80,10 +80,7 @@ pub struct Key {
 
 impl std::fmt::Display for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let desc = match &self.description {
-            Some(d) => d,
-            None => "None",
-        };
+        let desc = self.description.as_ref().map_or("None", |d| d);
         writeln!(
             f,
             "Key {{ id: {}, name: {}, description: {}, key: {}, cidr_ranges: {} }}",
@@ -131,27 +128,15 @@ impl APIAccount {
     const KEY_CREATE_ENDPOINT: &'static str = "/api/apikey/create";
     const KEY_REVOKE_ENDPOINT: &'static str = "/api/apikey/revoke";
 
-    pub async fn login(credential: &Credential, ip: String) -> Result<Self, APIError> {
+    pub async fn login(credential: Credential, ip: String) -> Result<Self, APIError> {
         let login_response = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
-            .json::<Credential>(credential)
+            .json::<Credential>(&credential)
             .send()
-            .await
-            .unwrap()
-            .text()
-            .await
-            .unwrap();
-
-        let login_response = match serde_json::from_str::<LoginResponse>(&login_response) {
-            Ok(login_response) => login_response,
-            Err(err) => {
-                return Err(APIError::LoginFailed(format!(
-                    "Error parsing login response: `{}`\nResponse: `{}`",
-                    err, login_response
-                )))
-            }
-        };
+            .await?
+            .json()
+            .await?;
 
         let mut account = Self {
             credential: credential.clone(),
@@ -159,31 +144,34 @@ impl APIAccount {
             keys: Keys::default(),
         };
 
-        account.get_keys().await;
+        println!("getting keys");
+        account.get_keys().await?;
 
         if account.keys.keys.len() != 10 {
+            println!("creating {} keys", 10 - account.keys.keys.len());
             for _ in 0..(10 - account.keys.keys.len()) {
-                account.create_key(ip.clone()).await;
+                account.create_key(ip.clone()).await?;
             }
         }
 
-        account.update_all_keys(ip).await;
+        println!("updating keys");
+        account.update_all_keys(ip).await?;
 
         Ok(account)
     }
 
-    pub async fn get_keys(&mut self) {
+    pub async fn get_keys(&mut self) -> Result<(), APIError> {
         self.keys = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_LIST_ENDPOINT))
             .send()
-            .await
-            .unwrap()
+            .await?
             .json::<Keys>()
-            .await
-            .unwrap();
+            .await?;
+
+        Ok(())
     }
 
-    pub async fn update_all_keys(&mut self, ip: String) {
+    pub async fn update_all_keys(&mut self, ip: String) -> Result<(), APIError> {
         let cloned_keys = self.keys.clone();
         let bad_keys = cloned_keys
             .keys
@@ -195,14 +183,16 @@ impl APIAccount {
         let len = bad_keys.len();
 
         for key in bad_keys {
-            self.revoke_key(&key.id).await;
+            self.revoke_key(&key.id).await?;
         }
         for _ in 0..len {
-            self.create_key(ip.clone()).await;
+            self.create_key(ip.clone()).await?;
         }
+
+        Ok(())
     }
 
-    pub async fn create_key(&mut self, ip: String) -> KeyResponse {
+    pub async fn create_key(&mut self, ip: String) -> Result<KeyResponse, APIError> {
         // sample json {"name":"coc-rs","description":"Created on 2022-08-24T06:34:28Z","cidrRanges":["1.1.1.1"],"scopes":["clash"]}
         let key = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_CREATE_ENDPOINT))
@@ -213,38 +203,33 @@ impl APIAccount {
                 ip
             ))
             .send()
-            .await
-            .unwrap()
+            .await?
             .json()
-            .await
-            .unwrap();
+            .await?;
 
         // asynchronously call self.get_keys()
-        self.get_keys().await;
+        let mut account = self.clone();
+        tokio::spawn(async move { account.get_keys().await });
 
-        key
+        Ok(key)
     }
 
-    pub async fn revoke_key(&mut self, key_id: &str) -> KeyResponse {
+    pub async fn revoke_key(&mut self, key_id: &str) -> Result<KeyResponse, APIError> {
         // post to KEY_REVOKE_ENDPOINT with header application/json and body {"id":"%s"}, where id is key_id
         let key = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
             .header("Content-Type", "application/json")
             .body(format!("{{\"id\":\"{key_id}\"}}"))
             .send()
-            .await
-            .unwrap()
+            .await?
             .json()
-            .await
-            .unwrap();
+            .await?;
 
         // asynchronously call self.get_keys()
 
-        let mut c_self = self.clone();
-        tokio::spawn(async move {
-            c_self.get_keys().await;
-        });
+        let mut account = self.clone();
+        tokio::spawn(async move { account.get_keys().await });
 
-        key
+        Ok(key)
     }
 }

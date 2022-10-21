@@ -1,5 +1,7 @@
 /// Base API wrapper
 pub mod api;
+
+/// API models
 mod models;
 pub use models::*;
 
@@ -9,9 +11,14 @@ pub use clash_of_stats::*;
 mod cos_models;
 pub use cos_models::*;
 
+/// To structure a login
 pub mod credentials;
+
 /// Developer Site API wrapper
 mod dev;
+
+/// API + `CoS` + General Errors
+mod error;
 
 /// Events to track changes
 pub mod events;
@@ -33,8 +40,9 @@ mod tests {
     use tokio::sync::Mutex;
 
     use crate::{
-        api::{APIError, Client},
+        api::Client,
         credentials::Credentials,
+        error::APIError,
         events::{EventHandler, EventType, EventsListenerBuilder},
         location::Local,
         models::{clan, clan_search, leagues, location, paging, player, season},
@@ -608,7 +616,7 @@ mod tests {
     mod tests_cos {
         use std::{env, time::Instant};
 
-        use crate::{api::APIError, cos_options, credentials::Credentials, location::Local};
+        use crate::{cos_options, credentials::Credentials, error::APIError, location::Local};
 
         #[tokio::test]
         async fn test_cos_login() -> Result<(), APIError> {
@@ -616,7 +624,7 @@ mod tests {
             let credentials = Credentials::builder()
                 .add_credential(env::var("cosemail").unwrap(), env::var("cospassword").unwrap())
                 .build();
-            super::CLIENT.lock().await.cos_login(&credentials).await.unwrap();
+            super::CLIENT.lock().await.cos_login(&credentials).await?;
 
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -627,7 +635,7 @@ mod tests {
         async fn test_cos_get_player() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_player = super::CLIENT.lock().await.cos_get_player("#2PP").await.unwrap();
+            let cos_player = super::CLIENT.lock().await.cos_get_player("#2PP").await?;
 
             println!("{:?}", cos_player);
             println!("Time elapsed! {:?}", now.elapsed());
@@ -640,7 +648,7 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_history =
-                super::CLIENT.lock().await.cos_get_player_history("#2PP").await.unwrap();
+                super::CLIENT.lock().await.cos_get_player_history("#2PP").await?;
             println!("{:?}", cos_player_history);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -651,7 +659,7 @@ mod tests {
         async fn test_cos_get_clan() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_clan = super::CLIENT.lock().await.cos_get_clan("#2PP").await.unwrap();
+            let cos_clan = super::CLIENT.lock().await.cos_get_clan("#2PP").await?;
             println!("{:?}", cos_clan);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -663,7 +671,7 @@ mod tests {
             let now = Instant::now();
 
             let cos_clan_history =
-                super::CLIENT.lock().await.cos_get_clan_past_members("#2PP").await.unwrap();
+                super::CLIENT.lock().await.cos_get_clan_past_members("#2PP").await?;
             println!("{:?}", cos_clan_history);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -680,8 +688,7 @@ mod tests {
                 .cos_get_war_wins_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_clan_history);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -698,8 +705,7 @@ mod tests {
                 .cos_get_war_win_streak_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_clan_history);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -716,8 +722,7 @@ mod tests {
                 .cos_get_best_war_win_streak_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_clan_history);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -734,8 +739,7 @@ mod tests {
                 .cos_get_clan_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_clan_ranking);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -752,8 +756,7 @@ mod tests {
                 .cos_get_clan_versus_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_clan_ranking);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -770,8 +773,7 @@ mod tests {
                 .cos_get_player_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_ranking);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -787,8 +789,7 @@ mod tests {
                 .cos_get_player_versus_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_ranking);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -804,8 +805,7 @@ mod tests {
                 .cos_get_player_best_versus_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_ranking);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -821,8 +821,7 @@ mod tests {
                 .cos_get_player_legend_trophies_leaderboard(
                     cos_options::Options::builder().page(5555).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -838,8 +837,7 @@ mod tests {
                 .cos_get_player_war_stars_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -855,8 +853,7 @@ mod tests {
                 .cos_get_player_cwl_war_stars_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -872,8 +869,7 @@ mod tests {
                 .cos_get_player_attack_wins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -889,8 +885,7 @@ mod tests {
                 .cos_get_player_defense_wins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -907,8 +902,7 @@ mod tests {
                 .cos_get_player_versus_battle_wins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -924,8 +918,7 @@ mod tests {
                 .cos_get_player_heroic_heist_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -941,8 +934,7 @@ mod tests {
                 .cos_get_player_conqueror_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -958,8 +950,7 @@ mod tests {
                 .cos_get_player_unbreakable_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -975,8 +966,7 @@ mod tests {
                 .cos_get_player_humiliator_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -992,8 +982,7 @@ mod tests {
                 .cos_get_player_un_build_it_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1009,8 +998,7 @@ mod tests {
                 .cos_get_player_games_champion_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1026,8 +1014,7 @@ mod tests {
                 .cos_get_player_troops_donated_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1043,8 +1030,7 @@ mod tests {
                 .cos_get_player_troops_received_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1060,8 +1046,7 @@ mod tests {
                 .cos_get_player_friend_in_need_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1077,8 +1062,7 @@ mod tests {
                 .cos_get_player_exp_level_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1094,8 +1078,7 @@ mod tests {
                 .cos_get_player_well_seasoned_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1111,8 +1094,7 @@ mod tests {
                 .cos_get_player_get_those_goblins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
@@ -1128,8 +1110,7 @@ mod tests {
                 .cos_get_player_nice_and_tidy_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
-                .await
-                .unwrap();
+                .await?;
             println!("{:?}", cos_player_versus_trophies_history);
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())

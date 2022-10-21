@@ -32,18 +32,21 @@ impl ClanSearchOptionsBuilder {
         s.options.items = vec![(String::new(), String::new()); 11];
         s
     }
+
     #[must_use]
     pub fn name(mut self, name: String) -> Self {
         self.options.name = Some(name.clone());
         self.options.items[0] = ("name".to_string(), name);
         self
     }
+
     #[must_use]
     pub fn war_frequency(mut self, war_frequency: String) -> Self {
         self.options.war_frequency = Some(war_frequency.clone());
         self.options.items[1] = ("warFrequency".to_string(), war_frequency);
         self
     }
+
     #[must_use]
     pub fn location_id(mut self, location_id: Local) -> Self {
         let i = location_id as i32;
@@ -51,6 +54,7 @@ impl ClanSearchOptionsBuilder {
         self.options.items[2] = ("locationId".to_string(), (i).to_string());
         self
     }
+
     #[must_use]
     pub fn min_members(mut self, min_members: i32) -> Self {
         if min_members >= 2 {
@@ -59,6 +63,7 @@ impl ClanSearchOptionsBuilder {
         }
         self
     }
+
     #[must_use]
     pub fn max_members(mut self, max_members: i32) -> Self {
         if max_members <= 50 {
@@ -67,12 +72,14 @@ impl ClanSearchOptionsBuilder {
         }
         self
     }
+
     #[must_use]
     pub fn min_clan_points(mut self, min_clan_points: i32) -> Self {
         self.options.min_clan_points = Some(min_clan_points);
         self.options.items[5] = ("minClanPoints".to_string(), min_clan_points.to_string());
         self
     }
+
     #[must_use]
     pub fn min_clan_level(mut self, min_clan_level: i8) -> Self {
         if min_clan_level >= 2 {
@@ -81,30 +88,35 @@ impl ClanSearchOptionsBuilder {
         }
         self
     }
+
     #[must_use]
     pub fn limit(mut self, limit: i32) -> Self {
         self.options.limit = Some(limit);
         self.options.items[7] = ("limit".to_string(), limit.to_string());
         self
     }
+
     #[must_use]
     pub fn after(mut self, after: String) -> Self {
         self.options.after = Some(after.clone());
         self.options.items[8] = ("after".to_string(), after);
         self
     }
+
     #[must_use]
     pub fn before(mut self, before: String) -> Self {
         self.options.before = Some(before.clone());
         self.options.items[9] = ("before".to_string(), before);
         self
     }
+
     #[must_use]
-    pub fn label_ids(mut self, label_ids: Vec<String>) -> Self {
-        self.options.label_ids = Some(label_ids.clone());
+    pub fn label_ids(mut self, label_ids: &[String]) -> Self {
+        self.options.label_ids = Some(label_ids.to_vec());
         self.options.items[10] = ("labelIds".to_string(), label_ids.join(","));
         self
     }
+
     #[must_use]
     pub fn build(self) -> ClanSearchOptions {
         self.options
