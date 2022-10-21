@@ -13,25 +13,25 @@ categories = ["api-bindings", "asynchronous", "concurrency", "config", "web-prog
 exclude = [".idea/", ".vscode/", "*.txt"]
 
 [dependencies]
-anyhow = "1.0"
-async-trait = "0.1.57"
-base64 = "0.13.0"
+anyhow = "1.0.66"
+async-trait = "0.1.58"
+base64 = "0.13.1"
 chrono = "0.4.22"
 lazy_static = "1.4.0"
 logic-long = "0.2.0"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
-regex = "1"
-time = "0.3.14"
-urlencoding = "2.1.0"
+regex = "1.6.0"
+time = "0.3.15"
+urlencoding = "2.1.2"
 
-serde = { version = "1.0.137", features = ["derive"] }
-serde_json = "1.0.82"
+serde = { version = "1.0.147", features = ["derive"] }
+serde_json = "1.0.87"
 serde_repr = "0.1.9"
 
-reqwest = { version = "0.11.10", features = ["json", "cookie_store", "cookies"] }
-tokio = { version = "1.19.2", features = ["full"] }
-futures = "0.3.24"
+reqwest = { version = "0.11.12", features = ["json", "cookie_store", "cookies"] }
+tokio = { version = "1.21.2", features = ["full"] }
+futures = "0.3.25"
 async-recursion = "1.0.0"
 url = "2.3.1"
 parking_lot = "0.12.1"

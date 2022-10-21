@@ -18,7 +18,7 @@ pub mod credentials;
 mod dev;
 
 /// API + `CoS` + General Errors
-mod error;
+pub mod error;
 
 /// Events to track changes
 pub mod events;
