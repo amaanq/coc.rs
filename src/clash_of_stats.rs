@@ -4,10 +4,7 @@ pub mod cos {
     use reqwest::Url;
 
     use crate::cos_models::*;
-    use crate::{
-        api::{APIError, Client},
-        credentials::Credentials,
-    };
+    use crate::{api::Client, credentials::Credentials, error::APIError};
 
     impl Client {
         const BASE_COS_URL: &'static str = "https://api.clashofstats.com";
@@ -153,8 +150,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_CLAN_WAR_WINS_ENDPOINT,),
                 options.build_for_clan(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -169,8 +165,7 @@ pub mod cos {
                     Self::COS_RANKINGS_CLAN_WAR_WIN_STREAK_ENDPOINT,
                 ),
                 options.build_for_clan(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -185,8 +180,7 @@ pub mod cos {
                     Self::COS_RANKINGS_CLAN_BEST_WAR_WIN_STREAK_ENDPOINT,
                 ),
                 options.build_for_clan(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -197,8 +191,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_CLAN_TROPHIES_ENDPOINT,),
                 options.build_for_clan(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -213,8 +206,7 @@ pub mod cos {
                     Self::COS_RANKINGS_CLAN_VERSUS_TROPHIES_ENDPOINT,
                 ),
                 options.build_for_clan(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -225,8 +217,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROPHIES_ENDPOINT,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -241,8 +232,7 @@ pub mod cos {
                     Self::COS_RANKINGS_PLAYER_VERSUS_TROPHIES_ENDPOINT,
                 ),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -257,8 +247,7 @@ pub mod cos {
                     Self::COS_RANKINGS_PLAYER_BEST_TROPHIES_ENDPOINT,
                 ),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -273,8 +262,7 @@ pub mod cos {
                     Self::COS_RANKINGS_PLAYER_BEST_VERSUS_TROPHIES_ENDPOINT,
                 ),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -285,8 +273,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_LEGEND_TROPHIES,),
                 options.build_for_legends(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -297,8 +284,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_WAR_STARS,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -309,8 +295,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_CWL_WAR_STARS,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -321,8 +306,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_ATTACK_WINS,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -333,8 +317,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_DEFENSE_WINS,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -345,8 +328,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_VERSUS_BATTLE_WINS,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -357,8 +339,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_HEROIC_HEIST,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -369,8 +350,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_CONQUEROR,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -381,8 +361,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_UNBREAKABLE,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -393,8 +372,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_HUMILIATOR,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -405,8 +383,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_UN_BUILD_IT,),
                 options.build_for_builder(),
-            )
-            .unwrap();
+            )?;
             println!("{}", url);
             self.parse_json(self.cos_get(url), true).await
         }
@@ -418,8 +395,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_GAMES_CHAMPION,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -430,8 +406,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROOPS_DONATED,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -442,8 +417,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROOPS_RECEIVED,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -454,8 +428,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_FRIEND_IN_NEED,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -466,8 +439,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_EXP_LEVEL,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -478,8 +450,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_WELL_SEASONED,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -490,8 +461,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_GET_THOSE_GOBLINS,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -502,8 +472,7 @@ pub mod cos {
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_NICE_AND_TIDY,),
                 options.build_for_player(),
-            )
-            .unwrap();
+            )?;
             self.parse_json(self.cos_get(url), true).await
         }
     }

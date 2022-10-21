@@ -15,7 +15,7 @@ pub struct Credential {
 }
 
 impl CredentialsBuilder {
-    fn new() -> Self {
+    const fn new() -> Self {
         Self { credentials: Credentials(Vec::new()) }
     }
 
@@ -45,7 +45,7 @@ impl Credential {
 
 impl Credentials {
     #[must_use]
-    pub fn builder() -> CredentialsBuilder {
+    pub const fn builder() -> CredentialsBuilder {
         CredentialsBuilder::new()
     }
 }

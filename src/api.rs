@@ -1,7 +1,8 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use async_recursion::async_recursion;
 use logic_long::LogicLong;
+use parking_lot::Mutex;
 use reqwest::{RequestBuilder, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::sync::Mutex as TokioMutex;
@@ -12,6 +13,7 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use crate::{
     credentials::Credentials,
     dev::{self, CLIENT},
+    error::APIError,
     models::{
         clan, clan_capital, clan_search, gold_pass, labels, leagues, location, paging, player,
         rankings, season, war, war_log,
@@ -30,66 +32,6 @@ pub struct Client {
     #[cfg(feature = "cos")]
     #[allow(dead_code)]
     pub(crate) is_cos_logged_in: Arc<Mutex<bool>>,
-}
-
-#[derive(Debug)]
-pub enum APIError {
-    /// API hasn't been initialized yet (logging in + making keys).
-    ClientNotReady,
-    /// Failed to query the current ip address.
-    FailedGetIP(String),
-    /// Failed to login to an account, either due to invalid credentials or a server error.
-    LoginFailed(String),
-    /// Reqwest error
-    RequestFailed(reqwest::Error),
-    /// Status code of 400
-    BadParameters,
-    /// Status code of 403
-    AccessDenied,
-    /// Status code of 404
-    NotFound,
-    /// Status code of 429
-    RequestThrottled,
-    /// Status code of 500
-    UnknownError,
-    /// Status code of 503
-    InMaintenance,
-    /// All other cases (edge cases/unknown status codes)
-    BadResponse(String, reqwest::StatusCode),
-    /// From malformed cursors or using invalid leagues
-    InvalidParameters(String),
-    InvalidTag(String),
-
-    EventFailure(String),
-}
-
-impl std::error::Error for APIError {}
-
-impl From<logic_long::LogicLongError> for APIError {
-    fn from(e: logic_long::LogicLongError) -> Self {
-        Self::InvalidTag(e.to_string())
-    }
-}
-
-impl std::fmt::Display for APIError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::ClientNotReady => write!(f, "Client not ready"),
-            Self::FailedGetIP(e) => write!(f, "Failed to get IP address: {e}"),
-            Self::LoginFailed(e) => write!(f, "Failed to login: {e}"),
-            Self::RequestFailed(e) => write!(f, "Request failed: {e}"),
-            Self::BadParameters => write!(f, "Bad parameters"),
-            Self::AccessDenied => write!(f, "Access denied"),
-            Self::NotFound => write!(f, "Not found"),
-            Self::RequestThrottled => write!(f, "Request throttled"),
-            Self::UnknownError => write!(f, "Unknown error"),
-            Self::InMaintenance => write!(f, "In maintenance"),
-            Self::BadResponse(e, s) => write!(f, "Bad response: {e} ({s})"),
-            Self::InvalidParameters(e) => write!(f, "Invalid parameters: {e}"),
-            Self::InvalidTag(e) => write!(f, "Invalid tag: {e}"),
-            Self::EventFailure(e) => write!(f, "Event failure: {e}"),
-        }
-    }
 }
 
 impl Client {
@@ -118,18 +60,25 @@ impl Client {
         };
 
         client.init().await?;
-        *client.ready.lock().unwrap() = true;
+        *client.ready.lock() = true;
         Ok(client)
     }
 
     /// Called when the client is created to initialize every credential.
     async fn init(&self) -> Result<(), APIError> {
         let ip = Self::get_ip().await?;
-        *self.ip_address.lock().unwrap() = ip.clone();
+        *self.ip_address.lock() = ip.clone();
 
-        for credential in &self.credentials.lock().await.0 {
-            let account = dev::APIAccount::login(credential, ip.clone()).await;
-            self.accounts.lock().unwrap().push(account?);
+        let mut tasks = vec![];
+        let credentials = self.credentials.lock().await;
+        for credential in &credentials.0 {
+            let cred = credential.clone();
+            tasks.push(dev::APIAccount::login(cred, ip.clone()));
+        }
+
+        let accounts = futures::future::join_all(tasks).await;
+        for account in accounts {
+            self.accounts.lock().push(account?);
         }
 
         Ok(())
@@ -138,13 +87,13 @@ impl Client {
     /// Called when an IP address change is detected
     async fn reinit(&self) -> Result<(), APIError> {
         let ip = Self::get_ip().await?;
-        if ip != *self.ip_address.lock().unwrap() {
-            *self.ip_address.lock().unwrap() = ip.clone();
+        if ip != *self.ip_address.lock() {
+            *self.ip_address.lock() = ip.clone();
 
             for credential in &self.credentials.lock().await.0 {
-                let account = dev::APIAccount::login(credential, ip.clone()).await;
+                let account = dev::APIAccount::login(credential.clone(), ip.clone()).await;
                 // find the account in the list where the email matches and replace it
-                let mut accounts = self.accounts.lock().unwrap();
+                let mut accounts = self.accounts.lock();
                 let index = accounts
                     .iter()
                     .position(|a| a.response.developer.email == credential.email())
@@ -173,31 +122,31 @@ impl Client {
     /// ```
     pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
         *self.credentials.lock().await = credentials;
-        *self.ready.lock().unwrap() = false;
+        *self.ready.lock() = false;
         self.init().await?;
-        *self.ready.lock().unwrap() = true;
+        *self.ready.lock() = true;
         Ok(())
     }
 
     async fn get_ip() -> Result<String, APIError> {
         let res = CLIENT.get(Self::IP_URL).send().await;
         let ip = match res {
-            Ok(res) => res.text().await.unwrap(),
+            Ok(res) => res.text().await?,
             Err(err) => return Err(APIError::FailedGetIP(format!("client.get_ip(): `{err}`"))),
         };
         Ok(ip)
     }
 
     /// This is purely for diagnostics, it's not used anywhere else.
-    /// ```
+    /// ```no_run
     /// use coc_rs::Client;
     ///
     /// let credentials = Credentials::builder().add_credential("email", "password").add_credential("email2", "password2").build();
     /// let client = Client::new(credentials);
     /// client.print_keys().await;
     /// ```
-    pub async fn print_keys(&self) {
-        for account in self.accounts.lock().unwrap().iter() {
+    pub fn print_keys(&self) {
+        for account in self.accounts.lock().iter() {
             for key in &account.keys.keys {
                 println!("{key}");
             }
@@ -211,7 +160,7 @@ impl Client {
         &self,
         url: U,
     ) -> Result<reqwest::RequestBuilder, APIError> {
-        if !*self.ready.lock().unwrap() {
+        if !*self.ready.lock() {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.get(url).bearer_auth(&self.cycle()))
@@ -222,7 +171,7 @@ impl Client {
         url: U,
         body: T,
     ) -> Result<reqwest::RequestBuilder, APIError> {
-        if !*self.ready.lock().unwrap() {
+        if !*self.ready.lock() {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.post(url).bearer_auth(&self.cycle()).body(body))
@@ -235,29 +184,28 @@ impl Client {
         url: U,
     ) -> Result<reqwest::RequestBuilder, APIError> {
         let mut headers = HeaderMap::new();
-        headers.insert("authority", HeaderValue::from_str("api.clashofstats.com").unwrap());
-        headers.insert("method", HeaderValue::from_str("GET").unwrap());
-        headers.insert("scheme", HeaderValue::from_str("https").unwrap());
+        headers.insert("authority", HeaderValue::from_str("api.clashofstats.com")?);
+        headers.insert("method", HeaderValue::from_str("GET")?);
+        headers.insert("scheme", HeaderValue::from_str("https")?);
         headers.insert(
             "accept",
-            HeaderValue::from_str("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9").unwrap(),
+            HeaderValue::from_str("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")?,
         );
         headers.insert(
             "accept-language",
-            HeaderValue::from_str("en-US,en;q=0.9,zh-CN;q=0.8,z;q=0.7").unwrap(),
+            HeaderValue::from_str("en-US,en;q=0.9,zh-CN;q=0.8,z;q=0.7")?,
         );
         headers.insert(
             "sec-ch-ua",
             HeaderValue::from_str(
                 "\"Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"103\", \"Chromium\";v=\"103\"",
-            )
-            .unwrap(),
+            )?,
         );
-        headers.insert("sec-ch-ua-platform", HeaderValue::from_str("\"Windows\"").unwrap());
-        headers.insert("upgrade-insecure-requests", HeaderValue::from_str("1").unwrap());
+        headers.insert("sec-ch-ua-platform", HeaderValue::from_str("\"Windows\"")?);
+        headers.insert("upgrade-insecure-requests", HeaderValue::from_str("1")?);
         headers.insert(
             "user-agent",
-            HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36").unwrap(),
+            HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")?,
         );
 
         Ok(CLIENT.get(url).headers(headers))
@@ -271,32 +219,27 @@ impl Client {
         body: T,
     ) -> Result<reqwest::RequestBuilder, APIError> {
         let mut headers = HeaderMap::new();
-        headers.insert("authority", HeaderValue::from_str("api.clashofstats.com").unwrap());
-        headers.insert("method", HeaderValue::from_str("POST").unwrap());
-        headers.insert("scheme", HeaderValue::from_str("https").unwrap());
-        headers
-            .insert("accept", HeaderValue::from_str("application/json, text/plain, */*").unwrap());
-        headers.insert("accept-encoding", HeaderValue::from_str("gzip, deflate, br").unwrap());
+        headers.insert("authority", HeaderValue::from_str("api.clashofstats.com")?);
+        headers.insert("method", HeaderValue::from_str("POST")?);
+        headers.insert("scheme", HeaderValue::from_str("https")?);
+        headers.insert("accept", HeaderValue::from_str("application/json, text/plain, */*")?);
+        headers.insert("accept-encoding", HeaderValue::from_str("gzip, deflate, br")?);
         headers.insert(
             "accept-language",
-            HeaderValue::from_str("en-US,en;q=0.9,zh-CN;q=0.8,z;q=0.7").unwrap(),
+            HeaderValue::from_str("en-US,en;q=0.9,zh-CN;q=0.8,z;q=0.7")?,
         );
-        headers.insert(
-            "content-type",
-            HeaderValue::from_str("application/json;charset=UTF-8").unwrap(),
-        );
+        headers.insert("content-type", HeaderValue::from_str("application/json;charset=UTF-8")?);
         headers.insert(
             "sec-ch-ua",
             HeaderValue::from_str(
                 "\"Not/A)Brand\";v=\"99\", \"Google Chrome\";v=\"103\", \"Chromium\";v=\"103\"",
-            )
-            .unwrap(),
+            )?,
         );
-        headers.insert("sec-ch-ua-platform", HeaderValue::from_str("\"Windows\"").unwrap());
-        headers.insert("upgrade-insecure-requests", HeaderValue::from_str("1").unwrap());
+        headers.insert("sec-ch-ua-platform", HeaderValue::from_str("\"Windows\"")?);
+        headers.insert("upgrade-insecure-requests", HeaderValue::from_str("1")?);
         headers.insert(
             "user-agent",
-            HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36").unwrap(),
+            HeaderValue::from_str("Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")?,
         );
 
         Ok(CLIENT.post(url).body(body).headers(headers))
@@ -318,8 +261,7 @@ impl Client {
         &self,
         options: clan_search::ClanSearchOptions,
     ) -> Result<APIResponse<clan::Clan>, APIError> {
-        let url =
-            Url::parse_with_params(&format!("{}/clans", Self::BASE_URL), options.items).unwrap();
+        let url = Url::parse_with_params(&format!("{}/clans", Self::BASE_URL), options.items)?;
         self.parse_json(self.get(url.to_string()), false).await
     }
 
@@ -402,7 +344,7 @@ impl Client {
         let mut url =
             format!("{}/leagues/{}/seasons/{season_id}", Self::BASE_URL, league_id as i32);
         if paging.is_some() {
-            url = Url::parse_with_params(&url, paging.to_vec()).unwrap().to_string();
+            url = Url::parse_with_params(&url, paging.to_vec())?.to_string();
         }
         self.parse_json(self.get(url), false).await
     }
@@ -522,12 +464,12 @@ impl Client {
     ) -> Result<T, APIError> {
         match rb {
             Ok(rb) => {
-                let cloned_rb = rb.try_clone().unwrap();
+                let cloned_rb = rb.try_clone();
                 match rb.send().await {
                     Ok(resp) => {
                         match resp.status() {
                             reqwest::StatusCode::OK => {
-                                let text = resp.text().await.unwrap();
+                                let text = resp.text().await?;
                                 Ok(serde_json::from_str(&text).unwrap_or_else(|e| panic!("Failure parsing json (please file a bug on the GitHub): {}\nError: {}",
                                     text, e)))
                             }
@@ -537,7 +479,11 @@ impl Client {
                             reqwest::StatusCode::FORBIDDEN => {
                                 if !is_retry_and_not_cos {
                                     self.reinit().await?;
-                                    self.parse_json(Ok(cloned_rb), true).await
+                                    if let Some(rb) = cloned_rb {
+                                        self.parse_json(Ok(rb), true).await
+                                    } else {
+                                        Err(APIError::AccessDenied)
+                                    }
                                 } else {
                                     Err(APIError::AccessDenied)
                                 }
@@ -559,7 +505,7 @@ impl Client {
                             // edge cases
                             _ => {
                                 let status = resp.status();
-                                Err(APIError::BadResponse(resp.text().await.unwrap(), status))
+                                Err(APIError::BadResponse(resp.text().await?, status))
                             }
                         }
                     }
@@ -572,12 +518,12 @@ impl Client {
 
     fn cycle(&self) -> String {
         // increment key_token_index, unless it would be larger than the account's token size (10), then reset to 0 and increment key_account_index
-        let mut unlocked = self.index.lock().unwrap();
+        let mut unlocked = self.index.lock();
 
         let mut key_token_index = unlocked.key_token_index;
         let mut key_account_index = unlocked.key_account_index;
 
-        let unlocked_accounts = self.accounts.lock().unwrap();
+        let unlocked_accounts = self.accounts.lock();
         if key_token_index
             == (unlocked_accounts[key_account_index as usize].keys.keys.len() - 1) as i8
         {

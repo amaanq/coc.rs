@@ -18,19 +18,22 @@ pub struct PagingBuilder {
 }
 
 impl PagingBuilder {
-    fn new() -> Self {
+    const fn new() -> Self {
         Self { paging: Paging { cursor: Cursor { before: None, after: None } } }
     }
+
     #[must_use]
     pub fn before(mut self, before: i32) -> Self {
         self.paging.cursor.set_before(before);
         self
     }
+
     #[must_use]
     pub fn after(mut self, after: i32) -> Self {
         self.paging.cursor.set_after(after);
         self
     }
+
     #[must_use]
     pub fn build(self) -> Paging {
         self.paging
@@ -59,7 +62,7 @@ impl Paging {
     }
 
     #[must_use]
-    pub fn builder() -> PagingBuilder {
+    pub const fn builder() -> PagingBuilder {
         PagingBuilder::new()
     }
 }
@@ -72,13 +75,15 @@ impl Default for Paging {
 
 impl Cursor {
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { before: None, after: None }
     }
+
     fn set_before(&mut self, before: i32) {
         // {"pos": before} base64 encoded and cant be less than 0
         self.before = Some(base64::encode(&format!("{{\"pos\":{before}}}")));
     }
+
     fn set_after(&mut self, after: i32) {
         // {"pos": after} base64 encoded and cant be less than 0
         self.after = Some(base64::encode(&format!("{{\"pos\":{after}}}")));

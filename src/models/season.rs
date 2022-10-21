@@ -69,7 +69,7 @@ impl From<std::num::ParseIntError> for SeasonError {
 }
 
 impl SeasonBuilder {
-    fn new() -> Self {
+    const fn new() -> Self {
         Self { season: Season { id: String::new(), year: 2015, month: Month::July } }
     }
 
@@ -93,23 +93,27 @@ impl SeasonBuilder {
 }
 
 impl Season {
-    pub fn from_string(season: String) -> Result<Self, SeasonError> {
-        let mut season_split = season.split('-');
-        Ok(Self {
-            id: season.clone(),
-            year: season_split.next().unwrap().parse::<i32>()?,
-            month: Month::try_from(season_split.next().unwrap().parse::<i32>()? as u8).unwrap(),
-        })
-    }
-
     #[must_use]
-    pub fn default_month() -> Month {
+    pub const fn default_month() -> Month {
         Month::July
     }
 
     #[must_use]
     pub fn builder() -> SeasonBuilder {
         SeasonBuilder::new()
+    }
+}
+
+impl std::str::FromStr for Season {
+    type Err = SeasonError;
+
+    fn from_str(season: &str) -> Result<Self, Self::Err> {
+        let mut season_split = season.split('-');
+        Ok(Self {
+            id: season.to_string(),
+            year: season_split.next().unwrap().parse::<i32>()?,
+            month: Month::try_from(season_split.next().unwrap().parse::<i32>()? as u8).unwrap(),
+        })
     }
 }
 

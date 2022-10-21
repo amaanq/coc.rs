@@ -122,4 +122,5 @@ pub enum DistrictName {
 #[serde(rename_all = "camelCase")]
 pub enum State {
     Ended,
+    Ongoing,
 }
