@@ -3,10 +3,10 @@ A Clash of Clans API wrapper written in rust!
 
 # Key Features
 - Asynchronous code
-- Entire coverage of [Clash of clans API](https://developer.clashofclans.com)
-- Email and Password Login
-- Multiple Accounts Login to handle concurrent requests
-- API Events!
+- Entire coverage of [Clash of Clans API](https://developer.clashofclans.com)
+- Email and password Login
+- Ability to login with multiple accounts to handle many concurrent requests
+- API Events to track changes
 - [Clash of Stats](https://www.clashofstats.com/) support
 
 Getting Started
@@ -19,7 +19,7 @@ Add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
 
 ```toml
 [dependencies]
-coc-rs = "x.x.x"
+coc-rs = "0.7.3"
 ```
 
 Alternatively with `cargo add`
@@ -44,7 +44,7 @@ async fn main() {
 }
 ```
 
-### How to Handle Errors
+### Error Handling
 ```rust
 #[tokio::main]
 async fn main() {
@@ -53,25 +53,28 @@ async fn main() {
         .build();
     let client = Client::new(credentials).await;
 
-    let clan = match client.get_clan("#IncorrectTag".to_string()).await {
-        Ok(c) => {
+    let clan = match client.get_clan("#InvalidTag".to_string()).await {
+        Ok(clan) => {
             println!("Clan: {:?}", clan);
         }
         Err(err) => {
             match err {
-                APIError::BadRequest(err) => {} // caused when a BadRequest is made, such as invalid url parameters 
-                APIError::RequestFailed(err) => {} // Request never made it to the API
-                APIError::BadResponse(msg, code) => {
-                    match code {
-                        StatusCode::NOT_FOUND => {
-                            println!("Player Not found")
-                        },
-                        _ => {
-                            //There are other status code that the api can return in case of error.
-                        }
-                    }
-                } // this is common error you will face and will be expected to handle it almost everytime
-                APIError::InvalidParameters(err) => {}
+                APIError::ClientNotReady => {}, // API login hasn't been initialized yet, try not to request with milliseconds of initializing a client
+                APIError::FailedGetIP(err) => {}, // A request is made to api.ipify.org to set your IP dynamically when making keys, ensure this url isn't blocked
+                APIError::LoginFailed(err) => {}, // Failed to login to a Clash of Stats account
+                APIError::RequestFailed(err) => {}, // Request never made it to the API
+                APIError::InvalidHeader(err) => {}, // you should not get this
+                APIError::BadUrl(err) => {}, // you should also not get this
+                APIError::BadParameters => {}, // bad input parameters for endpoints that have this
+                APIError::AccessDenied => {}, // ip changed? or accessing something you shouldn't...
+                APIError::NotFound => {}, // bad input "tags" or banned players result in this
+                APIError::RequestThrottled => {}, // slow down!
+                APIError::UnknownError => {}, // 🤨
+                APIError::InMaintenance => {}, // doofus wait until it's over!
+                APIError::BadResponse(err, err_code) => {}, // Catch-all error for those that don't fall in any of the above
+                APIError::InvalidParameters(err) => {}, // I caught your parameter mistake, not the API!
+                APIError::InvalidTag(err) => {}, // malformed tag
+                APIError::EventFailure(err) => {}, // ? maybe I should remove this..
             }
         }
     };
@@ -80,7 +83,7 @@ async fn main() {
 
 ### Basic Events
 
-First a struct should be created that will implement the trait `EventHandler`
+First a struct should be created that will implement the trait `EventHandler`, this is similar to how the serenity discord library does event handling.
 
 ```rust
 struct Handler;
@@ -125,33 +128,43 @@ async fn main() {
 }
 ```
 
+*Note: Each endpoint has a different cache refresh time. Each event will be fired at the exact time of new cache data in
+the API.*
+<br/>
+
 ### Features
 
-To Enable `cos` feature, add this to your `Cargo.toml`
+To Enable the `cos` feature (to use the Clash of Stats API), add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
 coc-rs = { version = "x.x.x", features = ["cos"] }
 ```
 
+To Enable the `extra` feature (which gives you some helper functions with players and clans), add this to your `Cargo.toml`
+
+```toml
+[dependencies]
+coc-rs = { version = "x.x.x", features = ["extra"] }
+```
+
+Or for both...
+
+To Enable the `cos` feature, add this to your `Cargo.toml`
+
+```toml
+[dependencies]
+coc-rs = { version = "x.x.x", features = ["all"] }
+```
+
 - Alternately with `cargo add`
 
 ```shell
-$ cargo add coc-rs --features cos
+$ cargo add coc-rs --features cos # or extra...or all (you get it)
 ```
 
-*Note: Each endpoint has a different cache refresh time. Each event will be fired at the exact time of new cache data in
-the API.*
 
-#### Possible Error Code
-
-400 -> BadRequestException <br/>
-403 -> AuthException <br/>
-404 -> NotFoundException<br/>
-429 -> RateLimitException <br/>
-503 -> MaintenanceException<br/>
-
-#### Note
+## Tests
 
 `src/lib.rs` contains examples (in the form of tests) for every endpoint in a bit more detail.
 
