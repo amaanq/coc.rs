@@ -138,14 +138,14 @@ To Enable the `cos` feature (to use the Clash of Stats API), add this to your `C
 
 ```toml
 [dependencies]
-coc-rs = { version = "x.x.x", features = ["cos"] }
+coc-rs = { version = "0.7.3", features = ["cos"] }
 ```
 
 To Enable the `extra` feature (which gives you some helper functions with players and clans), add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-coc-rs = { version = "x.x.x", features = ["extra"] }
+coc-rs = { version = "0.7.3", features = ["extra"] }
 ```
 
 Or for both...
@@ -154,7 +154,7 @@ To Enable the `cos` feature, add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-coc-rs = { version = "x.x.x", features = ["all"] }
+coc-rs = { version = "0.7.3", features = ["all"] }
 ```
 
 - Alternately with `cargo add`
