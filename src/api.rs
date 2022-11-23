@@ -30,7 +30,6 @@ pub struct Client {
     ip_address: Arc<Mutex<String>>,
 
     #[cfg(feature = "cos")]
-    #[allow(dead_code)]
     pub(crate) is_cos_logged_in: Arc<Mutex<bool>>,
 }
 
