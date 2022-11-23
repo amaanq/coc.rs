@@ -5,7 +5,7 @@ use crate::icon_urls::LeagueIconUrls;
 
 use super::icon_urls;
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Clone, Ord)]
+#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum LeagueKind {
     Unranked = 29_000_000,
@@ -33,7 +33,7 @@ pub enum LeagueKind {
     LegendLeague = 29_000_022,
 }
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Clone, Ord)]
+#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum WarLeagueKind {
     Unranked = 48_000_000,
@@ -72,8 +72,8 @@ pub struct WarLeague {
     pub name: String,
 }
 
-#[allow(non_snake_case)]
 /// I need to think of a better way to do this, enum variants with struct types seem stupid as they're all the same type.
+#[allow(non_snake_case)]
 impl League {
     #[must_use]
     pub fn Unranked() -> Self {
