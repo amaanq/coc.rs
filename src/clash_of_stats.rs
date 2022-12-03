@@ -1,9 +1,9 @@
 #[cfg(feature = "cos")]
 pub mod cos {
-    use logic_long::LogicLong;
     use reqwest::Url;
 
     use crate::cos_models::*;
+    use crate::util::LogicLong;
     use crate::{api::Client, credentials::Credentials, error::APIError};
 
     impl Client {
@@ -84,6 +84,8 @@ pub mod cos {
 
             let _login: LoginResponse = self.parse_json(self.cos_post(url, body), true).await?;
 
+            self.is_cos_logged_in.store(true, std::sync::atomic::Ordering::SeqCst);
+
             Ok(())
         }
 
@@ -91,14 +93,15 @@ pub mod cos {
             &self,
             player_tag: &str,
         ) -> Result<cos_player::Player, APIError> {
-            player_tag.parse::<LogicLong>()?;
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player({})", player_tag);
+            player_tag.parse::<LogicLong>()?.to_string();
             let url = format!(
                 "{}{}/{}",
                 Self::BASE_COS_URL,
                 Self::COS_PLAYERS_ENDPOINT,
                 urlencoding::encode(player_tag)
             );
-            println!("url: {}", url);
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -106,6 +109,8 @@ pub mod cos {
             &self,
             player_tag: &str,
         ) -> Result<cos_player_history::PlayerHistory, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_history({})", player_tag);
             player_tag.parse::<LogicLong>()?;
             let url = format!(
                 "{}{}/{}{}",
@@ -118,6 +123,8 @@ pub mod cos {
         }
 
         pub async fn cos_get_clan(&self, clan_tag: &str) -> Result<cos_clan::Clan, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_clan({})", clan_tag);
             clan_tag.parse::<LogicLong>()?;
             let url = format!(
                 "{}{}/{}",
@@ -132,6 +139,8 @@ pub mod cos {
             &self,
             clan_tag: &str,
         ) -> Result<cos_clan_history::ClanPastMembers, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_clan_past_members({})", clan_tag);
             clan_tag.parse::<LogicLong>()?;
             let url = format!(
                 "{}{}/{}{}",
@@ -147,6 +156,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::ClanLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_war_wins_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_CLAN_WAR_WINS_ENDPOINT,),
                 options.build_for_clan(),
@@ -158,6 +169,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::ClanLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_war_win_streak_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!(
                     "{}{}",
@@ -173,6 +186,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::ClanLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_best_war_win_streak_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!(
                     "{}{}",
@@ -188,6 +203,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::ClanLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_clan_trophies_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_CLAN_TROPHIES_ENDPOINT,),
                 options.build_for_clan(),
@@ -199,6 +216,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::ClanLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_clan_versus_trophies_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!(
                     "{}{}",
@@ -214,6 +233,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_trophies_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROPHIES_ENDPOINT,),
                 options.build_for_player(),
@@ -225,6 +246,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_versus_trophies_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!(
                     "{}{}",
@@ -240,6 +263,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_best_trophies_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!(
                     "{}{}",
@@ -255,6 +280,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_best_versus_trophies_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!(
                     "{}{}",
@@ -270,6 +297,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::LegendsLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_legend_trophies_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_LEGEND_TROPHIES,),
                 options.build_for_legends(),
@@ -281,6 +310,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_war_stars_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_WAR_STARS,),
                 options.build_for_player(),
@@ -292,6 +323,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_cwl_war_stars_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_CWL_WAR_STARS,),
                 options.build_for_player(),
@@ -303,6 +336,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_attack_wins_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_ATTACK_WINS,),
                 options.build_for_player(),
@@ -314,6 +349,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_defense_wins_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_DEFENSE_WINS,),
                 options.build_for_player(),
@@ -325,6 +362,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_versus_battle_wins_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_VERSUS_BATTLE_WINS,),
                 options.build_for_player(),
@@ -336,6 +375,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_heroic_heist_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_HEROIC_HEIST,),
                 options.build_for_player(),
@@ -347,6 +388,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_conqueror_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_CONQUEROR,),
                 options.build_for_player(),
@@ -358,6 +401,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_unbreakable_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_UNBREAKABLE,),
                 options.build_for_player(),
@@ -369,6 +414,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_humiliator_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_HUMILIATOR,),
                 options.build_for_player(),
@@ -380,11 +427,12 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_un_build_it_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_UN_BUILD_IT,),
                 options.build_for_builder(),
             )?;
-            println!("{}", url);
             self.parse_json(self.cos_get(url), true).await
         }
 
@@ -392,6 +440,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_games_champion_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_GAMES_CHAMPION,),
                 options.build_for_player(),
@@ -403,6 +453,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_troops_donated_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROOPS_DONATED,),
                 options.build_for_player(),
@@ -414,6 +466,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_troops_received_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_TROOPS_RECEIVED,),
                 options.build_for_player(),
@@ -425,6 +479,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_friend_in_need_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_FRIEND_IN_NEED,),
                 options.build_for_player(),
@@ -436,6 +492,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_exp_level_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_EXP_LEVEL,),
                 options.build_for_player(),
@@ -447,6 +505,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_well_seasoned_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_WELL_SEASONED,),
                 options.build_for_player(),
@@ -458,6 +518,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_get_those_goblins_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_GET_THOSE_GOBLINS,),
                 options.build_for_player(),
@@ -469,6 +531,8 @@ pub mod cos {
             &self,
             options: cos_options::Options,
         ) -> Result<leaderboard::PlayerLeaderboard, APIError> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!("cos_get_player_nice_and_tidy_leaderboard({})", options);
             let url = Url::parse_with_params(
                 &format!("{}{}", Self::BASE_COS_URL, Self::COS_RANKINGS_PLAYER_NICE_AND_TIDY,),
                 options.build_for_player(),

@@ -26,6 +26,8 @@ pub mod events;
 /// To access crates that are interconnected with coc.rs without adding it as a dependency
 pub mod prelude;
 
+mod util;
+
 #[macro_use]
 extern crate num_derive;
 
@@ -35,7 +37,6 @@ mod tests {
 
     use anyhow::{Context, Result};
     use async_trait::async_trait;
-    use logic_long::LogicLong;
     use time::Month;
     use tokio::sync::Mutex;
 
@@ -46,6 +47,7 @@ mod tests {
         events::{EventHandler, EventType, EventsListenerBuilder},
         location::Local,
         models::{clan, clan_search, leagues, location, paging, player, season},
+        util::LogicLong,
     };
 
     static mut LOADED: bool = false;
@@ -105,10 +107,10 @@ mod tests {
 
         load_client().await.unwrap();
 
-        let clan_warlog = CLIENT.lock().await.get_clan_warlog("#2PJP2Q0PY").await?;
+        let clan_warlog = CLIENT.lock().await.get_clan_warlog("2PJP2Q0PY").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Clan warlog: {clan_warlog:#?}");
+        println!("Clan warlog: {clan_warlog:?}");
         Ok(())
     }
 
@@ -143,10 +145,10 @@ mod tests {
 
         load_client().await?;
 
-        let current_war = CLIENT.lock().await.get_current_war("#2L29GJ0G0").await?;
+        let current_war = CLIENT.lock().await.get_current_war("2L29GJ0G0").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Current war: {current_war:#?}");
+        println!("Current war: {current_war:?}");
         Ok(())
     }
 
@@ -156,7 +158,7 @@ mod tests {
 
         load_client().await?;
 
-        let clan = CLIENT.lock().await.get_clan("#90PU0RRG").await?;
+        let clan = CLIENT.lock().await.get_clan("90PU0RRG").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Clan: {clan:?}");
@@ -170,7 +172,7 @@ mod tests {
 
         load_client().await?;
 
-        let clan_members = CLIENT.lock().await.get_clan_members("#2PP").await?;
+        let clan_members = CLIENT.lock().await.get_clan_members("2PP").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         // retain clan members where role is Role::CoLeader and print each one when iterating, then collect
@@ -194,10 +196,10 @@ mod tests {
         load_client().await?;
 
         let clan_capital_raid_seasons =
-            CLIENT.lock().await.get_clan_capital_raid_seasons("#2PP").await?;
+            CLIENT.lock().await.get_clan_capital_raid_seasons("2PP").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Clan capital raid seasons: {clan_capital_raid_seasons:#?}");
+        println!("Clan capital raid seasons: {clan_capital_raid_seasons:?}");
         Ok(())
     }
 
@@ -207,12 +209,12 @@ mod tests {
 
         load_client().await?;
 
-        let player = CLIENT.lock().await.get_player("#2PP").await?;
+        let player = CLIENT.lock().await.get_player("2PP").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Player: {player:#?}");
+        println!("Player: {player:?}");
         #[cfg(feature = "extra")]
-        println!("Hero Pets: {:#?}", player.hero_pets());
+        println!("Hero Pets: {:?}", player.hero_pets());
         Ok(())
     }
 
@@ -222,7 +224,7 @@ mod tests {
 
         load_client().await?;
 
-        let verified = CLIENT.lock().await.verify_player_token("#CVJLQOLR", "").await?;
+        let verified = CLIENT.lock().await.verify_player_token("CVJLQOLR", "").await?;
 
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Verified: {verified:?}");
@@ -239,7 +241,7 @@ mod tests {
         let leagues = CLIENT.lock().await.get_leagues().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Leagues: {leagues:#?}");
+        println!("Leagues: {leagues:?}");
 
         Ok(())
     }
@@ -284,7 +286,7 @@ mod tests {
         let league = CLIENT.lock().await.get_league(leagues::LeagueKind::LegendLeague).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("League: {league:#?}");
+        println!("League: {league:?}");
 
         Ok(())
     }
@@ -316,7 +318,7 @@ mod tests {
             CLIENT.lock().await.get_war_league(leagues::WarLeagueKind::ChampionLeagueI).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("War league: {war_league:#?}");
+        println!("War league: {war_league:?}");
 
         Ok(())
     }
@@ -330,7 +332,7 @@ mod tests {
         let war_leagues = CLIENT.lock().await.get_war_leagues().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("War leagues: {war_leagues:#?}");
+        println!("War leagues: {war_leagues:?}");
 
         Ok(())
     }
@@ -427,7 +429,7 @@ mod tests {
         let locations = CLIENT.lock().await.get_locations().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Locations: {locations:#?}");
+        println!("Locations: {locations:?}");
 
         Ok(())
     }
@@ -441,7 +443,7 @@ mod tests {
         let location = CLIENT.lock().await.get_location(location::Local::UnitedStates).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Location: {location:#?}");
+        println!("Location: {location:?}");
 
         Ok(())
     }
@@ -469,7 +471,7 @@ mod tests {
 
         let player_labels = CLIENT.lock().await.get_player_labels().await?;
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("Player Labels: {player_labels:#?}");
+        println!("Player Labels: {player_labels:?}");
 
         Ok(())
     }
@@ -483,43 +485,29 @@ mod tests {
         let player_label = CLIENT.lock().await.get_clan_labels().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
-        println!("Player Label: {player_label:#?}");
+        println!("Player Label: {player_label:?}");
 
         Ok(())
     }
 
     #[test]
     fn test_url() {
-        let tag = "#2PP";
+        let tag = "2PP";
         let encoded = urlencoding::encode(tag);
         println!("{encoded}");
     }
 
     #[tokio::test]
     async fn test_10000_tags() -> anyhow::Result<()> {
-        fn to_tag(low: u32, high: u32) -> String {
-            let arr: Vec<char> =
-                vec!['0', '2', '8', '9', 'P', 'Y', 'L', 'Q', 'G', 'R', 'J', 'C', 'U', 'V'];
-            let mut tag = String::new();
-            let mut total = i64::from(low) + i64::from(high) * 0x100;
-            let mut b14;
-
-            while total != 0 {
-                b14 = total % 14;
-                total /= 14;
-                tag.insert(0, arr[b14 as usize]);
-            }
-            "#".to_owned() + &tag
-        }
+        use crate::util::HASH_TAG_CODE_GENERATOR;
 
         let start = 1;
         let end = 101;
         let vec_ll = (start..end)
             .map(|n| LogicLong {
                 // putting this here as a reminder to add a pure LogicLong::random() method
-                low: 0,
-                high: n,
-                tag: to_tag(0, n),
+                high_integer: 0,
+                low_integer: n,
             })
             .collect::<Vec<_>>();
         println!("done creating logic longs");
@@ -538,7 +526,7 @@ mod tests {
             let cloned_throttle_counter = throttle_counter.clone();
             let task = tokio::spawn(async move {
                 loop {
-                    match client.get_player(&logic_long.tag).await {
+                    match client.get_player(&HASH_TAG_CODE_GENERATOR.to_code(logic_long)).await {
                         Ok(_) => break,
                         Err(e) => match e {
                             APIError::BadResponse(_, code) => {
@@ -560,7 +548,7 @@ mod tests {
             task.await?;
         }
         println!("Time elapsed! {:?}", now.elapsed());
-        println!("Throttle counter: {throttle_counter:#?}");
+        println!("Throttle counter: {throttle_counter:?}");
 
         Ok(())
     }
@@ -594,8 +582,8 @@ mod tests {
 
         let task = tokio::spawn(async move {
             let events_listener = EventsListenerBuilder::new(CLIENT.lock().await.clone())
-                .add_player("#2PP")
-                .add_clans(vec!["#2PP"])
+                .add_player("2PP")
+                .add_clans(vec!["2PP"])
                 .build(S);
             events_listener.start(Some(std::time::Duration::from_secs(5))).await
         });
@@ -638,7 +626,7 @@ mod tests {
         async fn test_cos_get_player() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_player = super::CLIENT.lock().await.cos_get_player("#2PP").await?;
+            let cos_player = super::CLIENT.lock().await.cos_get_player("2PP").await?;
 
             println!("{:?}", cos_player);
             println!("Time elapsed! {:?}", now.elapsed());
@@ -651,7 +639,7 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_history =
-                super::CLIENT.lock().await.cos_get_player_history("#2PP").await?;
+                super::CLIENT.lock().await.cos_get_player_history("2PP").await?;
             println!("{:?}", cos_player_history);
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -662,7 +650,7 @@ mod tests {
         async fn test_cos_get_clan() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_clan = super::CLIENT.lock().await.cos_get_clan("#2PP").await?;
+            let cos_clan = super::CLIENT.lock().await.cos_get_clan("2PP").await?;
             println!("{:?}", cos_clan);
             println!("Time elapsed! {:?}", now.elapsed());
 

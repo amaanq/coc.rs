@@ -37,12 +37,6 @@ pub enum APIError {
 
 impl std::error::Error for APIError {}
 
-impl From<logic_long::LogicLongError> for APIError {
-    fn from(e: logic_long::LogicLongError) -> Self {
-        Self::InvalidTag(e.to_string())
-    }
-}
-
 impl From<reqwest::Error> for APIError {
     fn from(e: reqwest::Error) -> Self {
         Self::RequestFailed(e)

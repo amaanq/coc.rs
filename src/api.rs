@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use async_recursion::async_recursion;
-use logic_long::LogicLong;
 use parking_lot::Mutex;
 use reqwest::{RequestBuilder, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use tokio::sync::Mutex as TokioMutex;
 
 #[cfg(feature = "cos")]
 use reqwest::header::{HeaderMap, HeaderValue};
+#[cfg(feature = "cos")]
+use std::sync::atomic::AtomicBool;
 
 use crate::{
     credentials::Credentials,
@@ -18,11 +18,12 @@ use crate::{
         clan, clan_capital, clan_search, gold_pass, labels, leagues, location, paging, player,
         rankings, season, war, war_log,
     },
+    util::LogicLong,
 };
 
 #[derive(Clone, Debug, Default)]
 pub struct Client {
-    credentials: Arc<TokioMutex<Credentials>>,
+    credentials: Arc<Mutex<Credentials>>,
     ready: Arc<Mutex<bool>>,
     accounts: Arc<Mutex<Vec<dev::APIAccount>>>,
     index: Arc<Mutex<dev::Index>>,
@@ -30,32 +31,24 @@ pub struct Client {
     ip_address: Arc<Mutex<String>>,
 
     #[cfg(feature = "cos")]
-    pub(crate) is_cos_logged_in: Arc<Mutex<bool>>,
+    pub(crate) is_cos_logged_in: Arc<AtomicBool>,
 }
 
 impl Client {
     const IP_URL: &'static str = "https://api.ipify.org";
 
     const BASE_URL: &'static str = "https://api.clashofclans.com/v1";
-    // const CLAN_ENDPOINT: &str = "/clans/{}";
-    // const CLAN_WARLOG_ENDPOINT: &str = "/clans/{}/warlog";
-    // const PLAYER_ENDPOINT: &str = "/players/{}";
-    // const LEAGUE_ENDPOINT: &str = "/leagues";
-    // const WAR_LEAGUE_ENDPOINT: &str = "/warleagues";
-    // const LOCATION_ENDPOINT: &str = "/locations";
-    const GOLDPASS_ENDPOINT: &'static str = "/goldpass/seasons/current";
-    // const LABEL_ENDPOINT: &str = "/labels";
 
     pub async fn new(credentials: Credentials) -> Result<Self, APIError> {
         let client = Self {
-            credentials: Arc::new(TokioMutex::new(credentials)),
+            credentials: Arc::new(Mutex::new(credentials)),
             ready: Arc::new(Mutex::new(false)),
             accounts: Arc::new(Mutex::new(vec![])),
             index: Arc::new(Mutex::new(dev::Index::default())),
             ip_address: Arc::new(Mutex::new(String::new())),
 
             #[cfg(feature = "cos")]
-            is_cos_logged_in: Arc::new(Mutex::new(false)),
+            is_cos_logged_in: Arc::new(AtomicBool::new(false)),
         };
 
         client.init().await?;
@@ -68,12 +61,9 @@ impl Client {
         let ip = Self::get_ip().await?;
         *self.ip_address.lock() = ip.clone();
 
-        let mut tasks = vec![];
-        let credentials = self.credentials.lock().await;
-        for credential in &credentials.0 {
-            let cred = credential.clone();
-            tasks.push(dev::APIAccount::login(cred, ip.clone()));
-        }
+        let credentials = self.credentials.lock().clone();
+        let tasks =
+            credentials.0.into_iter().map(|credential| dev::APIAccount::login(credential, &ip));
 
         let accounts = futures::future::join_all(tasks).await;
         for account in accounts {
@@ -85,19 +75,26 @@ impl Client {
 
     /// Called when an IP address change is detected
     async fn reinit(&self) -> Result<(), APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!("reinitializing client");
         let ip = Self::get_ip().await?;
         if ip != *self.ip_address.lock() {
             *self.ip_address.lock() = ip.clone();
 
-            for credential in &self.credentials.lock().await.0 {
-                let account = dev::APIAccount::login(credential.clone(), ip.clone()).await;
-                // find the account in the list where the email matches and replace it
+            let credentials = self.credentials.lock().clone();
+            for credential in credentials.0 {
+                let email = credential.email().to_owned();
+                let api_account = dev::APIAccount::login(credential, &ip).await?;
                 let mut accounts = self.accounts.lock();
                 let index = accounts
                     .iter()
-                    .position(|a| a.response.developer.email == credential.email())
-                    .unwrap();
-                accounts[index] = account?;
+                    .position(|a| a.response.developer.email == email)
+                    .unwrap_or_else(|| {
+                        #[cfg(feature = "tracing")]
+                        tracing::warn!("could not find account with email {}", email);
+                        panic!("could not find account with email {}", email)
+                    });
+                accounts[index] = api_account;
             }
         }
 
@@ -108,7 +105,7 @@ impl Client {
     ///
     /// Example:
     /// ```no_run
-    /// use coc_rs::{coc_rs::api::Client, coc_rs::credentials::Credentials};
+    /// use coc_rs::{api::Client, credentials::Credentials};
     ///
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
@@ -120,7 +117,9 @@ impl Client {
     /// }
     /// ```
     pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
-        *self.credentials.lock().await = credentials;
+        #[cfg(feature = "tracing")]
+        tracing::trace!(credentials = ?credentials, "Loading credentials");
+        *self.credentials.lock() = credentials;
         *self.ready.lock() = false;
         self.init().await?;
         *self.ready.lock() = true;
@@ -131,8 +130,12 @@ impl Client {
         let res = CLIENT.get(Self::IP_URL).send().await;
         let ip = match res {
             Ok(res) => res.text().await?,
-            Err(err) => return Err(APIError::FailedGetIP(format!("client.get_ip(): `{err}`"))),
+            Err(err) => {
+                return Err(APIError::FailedGetIP(format!("coc.rs: Client::get_ip(): `{err}`")))
+            }
         };
+        #[cfg(feature = "tracing")]
+        tracing::trace!(ip = ip, "Got public IP");
         Ok(ip)
     }
 
@@ -144,10 +147,12 @@ impl Client {
     /// let client = Client::new(credentials);
     /// client.print_keys().await;
     /// ```
-    pub fn print_keys(&self) {
+    #[cfg(feature = "tracing")]
+    pub fn debug_keys(&self) {
         for account in self.accounts.lock().iter() {
             for key in &account.keys.keys {
-                println!("{key}");
+                #[cfg(feature = "tracing")]
+                tracing::debug!(key = %key.key, key.id=%key.id, key.name=%key.name);
             }
         }
     }
@@ -162,7 +167,7 @@ impl Client {
         if !*self.ready.lock() {
             return Err(APIError::ClientNotReady);
         }
-        Ok(CLIENT.get(url).bearer_auth(&self.cycle()))
+        Ok(CLIENT.get(url).bearer_auth(self.get_next_key()))
     }
 
     pub(crate) fn post<U: reqwest::IntoUrl, T: Into<reqwest::Body>>(
@@ -173,7 +178,7 @@ impl Client {
         if !*self.ready.lock() {
             return Err(APIError::ClientNotReady);
         }
-        Ok(CLIENT.post(url).bearer_auth(&self.cycle()).body(body))
+        Ok(CLIENT.post(url).bearer_auth(self.get_next_key()).body(body))
     }
 
     /// To allow usage without a client being ready
@@ -251,8 +256,10 @@ impl Client {
         &self,
         clan_tag: &str,
     ) -> Result<APIResponse<war_log::WarLog>, APIError> {
-        clan_tag.parse::<LogicLong>()?;
-        let url = format!("{}/clans/{}/warlog", Self::BASE_URL, urlencoding::encode(clan_tag));
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_clan_warlog({})", clan_tag);
+        let clan_tag = clan_tag.parse::<LogicLong>()?.to_string();
+        let url = format!("{}/clans/{}/warlog", Self::BASE_URL, urlencoding::encode(&clan_tag));
         self.parse_json(self.get(url), false).await
     }
 
@@ -260,19 +267,25 @@ impl Client {
         &self,
         options: clan_search::ClanSearchOptions,
     ) -> Result<APIResponse<clan::Clan>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_clans({})", options);
         let url = Url::parse_with_params(&format!("{}/clans", Self::BASE_URL), options.items)?;
         self.parse_json(self.get(url.to_string()), false).await
     }
 
     pub async fn get_current_war(&self, clan_tag: &str) -> Result<war::War, APIError> {
-        clan_tag.parse::<LogicLong>()?;
-        let url = format!("{}/clans/{}/currentwar", Self::BASE_URL, urlencoding::encode(clan_tag));
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_current_war({})", clan_tag);
+        let clan_tag = clan_tag.parse::<LogicLong>()?.to_string();
+        let url = format!("{}/clans/{}/currentwar", Self::BASE_URL, urlencoding::encode(&clan_tag));
         self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_clan(&self, clan_tag: &str) -> Result<clan::Clan, APIError> {
-        clan_tag.parse::<LogicLong>()?;
-        let url = format!("{}/clans/{}", Self::BASE_URL, urlencoding::encode(clan_tag));
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_clan({})", clan_tag);
+        let clan_tag = clan_tag.parse::<LogicLong>()?.to_string();
+        let url = format!("{}/clans/{}", Self::BASE_URL, urlencoding::encode(&clan_tag));
         self.parse_json(self.get(url), false).await
     }
 
@@ -280,8 +293,10 @@ impl Client {
         &self,
         clan_tag: &str,
     ) -> Result<APIResponse<clan::ClanMember>, APIError> {
-        clan_tag.parse::<LogicLong>()?;
-        let url = format!("{}/clans/{}/members", Self::BASE_URL, urlencoding::encode(clan_tag));
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_clan_members({})", clan_tag);
+        let clan_tag = clan_tag.parse::<LogicLong>()?.to_string();
+        let url = format!("{}/clans/{}/members", Self::BASE_URL, urlencoding::encode(&clan_tag));
         self.parse_json(self.get(url), false).await
     }
 
@@ -289,11 +304,13 @@ impl Client {
         &self,
         clan_tag: &str,
     ) -> Result<APIResponse<clan_capital::ClanCapitalRaidSeason>, APIError> {
-        clan_tag.parse::<LogicLong>()?;
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_clan_capital_raid_seasons({})", clan_tag);
+        let clan_tag = clan_tag.parse::<LogicLong>()?.to_string();
         let url = format!(
             "{}/clans/{}/capitalraidseasons",
             Self::BASE_URL,
-            urlencoding::encode(clan_tag)
+            urlencoding::encode(&clan_tag)
         );
         self.parse_json(self.get(url), false).await
     }
@@ -302,8 +319,10 @@ impl Client {
     // Player Methods
     //_______________________________________________________________________
     pub async fn get_player(&self, player_tag: &str) -> Result<player::Player, APIError> {
-        player_tag.parse::<LogicLong>()?;
-        let url = format!("{}/players/{}", Self::BASE_URL, urlencoding::encode(player_tag));
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_player({})", player_tag);
+        let player_tag = player_tag.parse::<LogicLong>()?.to_string();
+        let url = format!("{}/players/{}", Self::BASE_URL, urlencoding::encode(&player_tag));
         self.parse_json(self.get(url), false).await
     }
 
@@ -312,9 +331,11 @@ impl Client {
         player_tag: &str,
         token: &str,
     ) -> Result<player::PlayerToken, APIError> {
-        player_tag.parse::<LogicLong>()?;
+        #[cfg(feature = "tracing")]
+        tracing::trace!("verify_player_token({}, {})", player_tag, token);
+        let player_tag = player_tag.parse::<LogicLong>()?.to_string();
         let url =
-            format!("{}/players/{}/verifytoken", Self::BASE_URL, urlencoding::encode(player_tag));
+            format!("{}/players/{}/verifytoken", Self::BASE_URL, urlencoding::encode(&player_tag));
         let token = format!("{{\"token\":\"{token}\"}}");
         self.parse_json(self.post(url, token), false).await
     }
@@ -323,6 +344,8 @@ impl Client {
     // League Methods
     //_______________________________________________________________________
     pub async fn get_leagues(&self) -> Result<APIResponse<leagues::League>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_leagues()");
         let url = format!("{}/leagues", Self::BASE_URL);
         self.parse_json(self.get(url), false).await
     }
@@ -334,6 +357,8 @@ impl Client {
         season_id: season::Season,
         paging: paging::Paging,
     ) -> Result<APIResponse<rankings::PlayerRanking>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_league_season_rankings({}, {}, {})", league_id, season_id, paging);
         if league_id != leagues::LeagueKind::LegendLeague {
             return Err(APIError::InvalidParameters(
                 "This league does not have seasons, only League::LegendLeague has seasons"
@@ -352,6 +377,8 @@ impl Client {
         &self,
         league_id: leagues::LeagueKind,
     ) -> Result<leagues::League, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_league({})", league_id);
         let url = format!("{}/leagues/{}", Self::BASE_URL, league_id as i32);
         self.parse_json(self.get(url), false).await
     }
@@ -360,6 +387,8 @@ impl Client {
         &self,
         league_id: leagues::LeagueKind,
     ) -> Result<APIResponse<season::Season>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_league_seasons({})", league_id);
         if league_id != leagues::LeagueKind::LegendLeague {
             return Err(APIError::InvalidParameters(
                 "This league does not have seasons, only League::LegendLeague has seasons"
@@ -374,11 +403,15 @@ impl Client {
         &self,
         war_league: leagues::WarLeagueKind,
     ) -> Result<leagues::WarLeague, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_war_league({})", war_league);
         let url = format!("{}/warleagues/{}", Self::BASE_URL, war_league as i32);
         self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_war_leagues(&self) -> Result<APIResponse<leagues::WarLeague>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_war_leagues()");
         let url = format!("{}/warleagues", Self::BASE_URL);
         self.parse_json(self.get(url), false).await
     }
@@ -391,6 +424,8 @@ impl Client {
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::ClanRanking>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_clan_rankings({})", location);
         let url = format!("{}/locations/{}/rankings/clans", Self::BASE_URL, location as i32);
         self.parse_json(self.get(url), false).await
     }
@@ -399,6 +434,8 @@ impl Client {
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::PlayerRanking>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_player_rankings({})", location);
         let url = format!("{}/locations/{}/rankings/players", Self::BASE_URL, location as i32);
         self.parse_json(self.get(url), false).await
     }
@@ -407,6 +444,8 @@ impl Client {
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::ClanRanking>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_versus_clan_rankings({})", location);
         let url = format!("{}/locations/{}/rankings/clans-versus", Self::BASE_URL, location as i32);
         self.parse_json(self.get(url), false).await
     }
@@ -415,12 +454,16 @@ impl Client {
         &self,
         location: location::Local,
     ) -> Result<APIResponse<rankings::PlayerVersusRanking>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_versus_player_rankings({})", location);
         let url =
             format!("{}/locations/{}/rankings/players-versus", Self::BASE_URL, location as i32);
         self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_locations(&self) -> Result<APIResponse<location::Location>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_locations()");
         let url = format!("{}/locations", Self::BASE_URL);
         self.parse_json(self.get(url), false).await
     }
@@ -429,6 +472,8 @@ impl Client {
         &self,
         location: location::Local,
     ) -> Result<location::Location, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_location({})", location);
         let url = format!("{}/locations/{}", Self::BASE_URL, location as i32);
         self.parse_json(self.get(url), false).await
     }
@@ -437,7 +482,9 @@ impl Client {
     // Gold Pass Method
     //_______________________________________________________________________
     pub async fn get_goldpass(&self) -> Result<gold_pass::GoldPass, APIError> {
-        let url = format!("{}{}", Self::BASE_URL, Self::GOLDPASS_ENDPOINT);
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_goldpass()");
+        let url = format!("{}/goldpass/seasons/current", Self::BASE_URL);
         self.parse_json(self.get(url), false).await
     }
 
@@ -445,11 +492,15 @@ impl Client {
     // Label Methods
     //_______________________________________________________________________
     pub async fn get_player_labels(&self) -> Result<APIResponse<labels::PlayerLabel>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_player_labels()");
         let url = format!("{}/labels/players", Self::BASE_URL);
         self.parse_json(self.get(url), false).await
     }
 
     pub async fn get_clan_labels(&self) -> Result<APIResponse<labels::ClanLabel>, APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!("get_clan_labels()");
         let url = format!("{}/labels/clans", Self::BASE_URL);
         self.parse_json(self.get(url), false).await
     }
@@ -484,6 +535,8 @@ impl Client {
                                         Err(APIError::AccessDenied)
                                     }
                                 } else {
+                                    #[cfg(feature = "tracing")]
+                                    tracing::debug!("403 Forbidden, but already retried, try checking your credentials?");
                                     Err(APIError::AccessDenied)
                                 }
                             }
@@ -504,6 +557,8 @@ impl Client {
                             // edge cases
                             _ => {
                                 let status = resp.status();
+                                #[cfg(feature = "tracing")]
+                                tracing::debug!("Unknown status code: {}", status);
                                 Err(APIError::BadResponse(resp.text().await?, status))
                             }
                         }
@@ -515,37 +570,45 @@ impl Client {
         }
     }
 
-    fn cycle(&self) -> String {
+    fn get_next_key(&self) -> String {
         // increment key_token_index, unless it would be larger than the account's token size (10), then reset to 0 and increment key_account_index
-        let mut unlocked = self.index.lock();
+        let mut index = self.index.lock();
 
-        let mut key_token_index = unlocked.key_token_index;
-        let mut key_account_index = unlocked.key_account_index;
+        let accounts = self.accounts.lock();
+        let size_of_keys = accounts[index.key_account_index].keys.keys.len();
 
-        let unlocked_accounts = self.accounts.lock();
-        if key_token_index
-            == (unlocked_accounts[key_account_index as usize].keys.keys.len() - 1) as i8
-        {
-            key_token_index = 0;
-            if key_account_index == (unlocked_accounts.len() - 1) as i8 {
-                key_account_index = 0;
+        // if we're at the end of this account's keys..
+        if index.key_token_index == size_of_keys - 1 {
+            // reset token index anyways
+            index.key_token_index = 0;
+            // ..and at the end of the accounts
+            if index.key_account_index == (accounts.len() - 1) {
+                // then we've reached end of accounts, go back to first account
+                index.key_account_index = 0;
             } else {
-                key_account_index += 1;
+                // otherwise, just increment account index
+                index.key_account_index += 1;
             }
         } else {
-            key_token_index += 1;
+            // otherwise, just increment token index
+            index.key_token_index += 1;
         }
 
-        unlocked.key_token_index = key_token_index;
-        unlocked.key_account_index = key_account_index;
-
-        let token = unlocked_accounts
-            .get(key_account_index as usize)
-            .unwrap()
+        let token = accounts
+            .get(index.key_account_index)
+            .unwrap_or_else(|| {
+                #[cfg(feature = "tracing")]
+                tracing::warn!("No account found at index {}", index.key_account_index);
+                panic!("No account found at index {}", index.key_account_index)
+            })
             .keys
             .keys
-            .get(key_token_index as usize)
-            .unwrap()
+            .get(index.key_token_index)
+            .unwrap_or_else(|| {
+                #[cfg(feature = "tracing")]
+                tracing::warn!("No key found at index {}", index.key_token_index);
+                panic!("No key found at index {}", index.key_token_index);
+            })
             .clone();
         token.key
     }
