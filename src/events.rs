@@ -15,7 +15,7 @@ pub trait EventHandler {
     async fn player(&self, old_player: Option<player::Player>, new_player: player::Player) {}
     async fn clan(&self, old_clan: Option<clan::Clan>, new_clan: clan::Clan) {}
     async fn war(&self, old_war: Option<War>, new_war: War) {}
-    async fn handle_error(&self, error: APIError, tag: String, event_type: EventType);
+    async fn on_error(&self, error: APIError, tag: String, event_type: EventType);
 }
 
 #[derive(Debug)]
@@ -149,14 +149,14 @@ where
             while start.elapsed() < duration {
                 if let Err(e) = self.fire_events().await {
                     self.event_type.remove(e.index);
-                    self.handler.handle_error(e.api_error, e.tag, e.event_type).await;
+                    self.handler.on_error(e.api_error, e.tag, e.event_type).await;
                 };
             }
         } else {
             loop {
                 if let Err(e) = self.fire_events().await {
                     self.event_type.remove(e.index);
-                    self.handler.handle_error(e.api_error, e.tag, e.event_type).await;
+                    self.handler.on_error(e.api_error, e.tag, e.event_type).await;
                 };
             }
         }

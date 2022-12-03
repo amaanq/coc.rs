@@ -111,8 +111,11 @@ impl std::str::FromStr for Season {
         let mut season_split = season.split('-');
         Ok(Self {
             id: season.to_string(),
-            year: season_split.next().unwrap().parse::<i32>()?,
-            month: Month::try_from(season_split.next().unwrap().parse::<i32>()? as u8).unwrap(),
+            year: season_split.next().ok_or(SeasonError::InvalidSeason)?.parse()?,
+            month: Month::try_from(
+                season_split.next().ok_or(SeasonError::InvalidSeason)?.parse::<i32>()? as u8,
+            )
+            .unwrap(),
         })
     }
 }

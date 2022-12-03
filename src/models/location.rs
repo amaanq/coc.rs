@@ -297,6 +297,12 @@ pub enum Local {
     DoNotUse5 = 32_000_265,
 }
 
+impl std::fmt::Display for Local {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
+
 impl Default for Local {
     fn default() -> Self {
         Self::None
