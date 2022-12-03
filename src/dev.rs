@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default)]
 pub struct Index {
-    pub key_account_index: i8,
-    pub key_token_index: i8,
+    pub key_account_index: usize,
+    pub key_token_index: usize,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -61,7 +61,7 @@ pub struct Developer {
     pub prev_login_ua: String,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, Eq)]
 pub struct Key {
     pub id: String,
     #[serde(rename = "developerId")]
@@ -76,6 +76,12 @@ pub struct Key {
     #[serde(rename = "validUntil")]
     pub valid_until: Option<String>,
     pub key: String,
+}
+
+impl PartialEq for Key {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 impl std::fmt::Display for Key {
@@ -128,7 +134,7 @@ impl APIAccount {
     const KEY_CREATE_ENDPOINT: &'static str = "/api/apikey/create";
     const KEY_REVOKE_ENDPOINT: &'static str = "/api/apikey/revoke";
 
-    pub async fn login(credential: Credential, ip: String) -> Result<Self, APIError> {
+    pub async fn login(credential: Credential, ip: impl AsRef<str>) -> Result<Self, APIError> {
         let login_response = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
@@ -144,18 +150,21 @@ impl APIAccount {
             keys: Keys::default(),
         };
 
-        println!("getting keys");
+        #[cfg(feature = "tracing")]
+        tracing::debug!("getting keys");
         account.get_keys().await?;
 
         if account.keys.keys.len() != 10 {
-            println!("creating {} keys", 10 - account.keys.keys.len());
+            #[cfg(feature = "tracing")]
+            tracing::debug!("creating {} keys", 10 - account.keys.keys.len());
             for _ in 0..(10 - account.keys.keys.len()) {
-                account.create_key(ip.clone()).await?;
+                account.create_key(ip.as_ref()).await?;
             }
         }
 
-        println!("updating keys");
-        account.update_all_keys(ip).await?;
+        #[cfg(feature = "tracing")]
+        tracing::debug!("updating keys");
+        account.update_all_keys(ip.as_ref()).await?;
 
         Ok(account)
     }
@@ -171,7 +180,7 @@ impl APIAccount {
         Ok(())
     }
 
-    pub async fn update_all_keys(&mut self, ip: String) -> Result<(), APIError> {
+    pub async fn update_all_keys(&mut self, ip: &str) -> Result<(), APIError> {
         let cloned_keys = self.keys.clone();
         let bad_keys = cloned_keys
             .keys
@@ -179,21 +188,44 @@ impl APIAccount {
             .filter(|key| !key.cidr_ranges.iter().any(|cidr| ip.contains(cidr)))
             .collect::<Vec<_>>();
 
-        // iter once to revoke all keys, then iter again to create new ones
-        let len = bad_keys.len();
+        let tasks = bad_keys.iter().map(|key| self.revoke_key(key.id.clone())).collect::<Vec<_>>();
+        futures::future::join_all(tasks).await.into_iter().for_each(|maybe_key| match maybe_key {
+            Ok(_) => {
+                // in revokes, we don't get a key back. we must remove the key ourselves.
+                self.keys.keys.retain(|key| !bad_keys.contains(&key));
+            }
+            #[cfg(feature = "tracing")]
+            Err(e) => {
+                tracing::warn!(error.message = %format!("{:?}", e))
+            }
+            #[cfg(not(feature = "tracing"))]
+            Err(_) => {}
+        });
 
-        for key in bad_keys {
-            self.revoke_key(&key.id).await?;
-        }
-        for _ in 0..len {
-            self.create_key(ip.clone()).await?;
-        }
+        let tasks = (0..bad_keys.len()).map(|_| self.create_key(ip));
+        futures::future::join_all(tasks).await.into_iter().for_each(|maybe_key| match maybe_key {
+            Ok(key_response) => {
+                if let Some(key) = key_response.key {
+                    #[cfg(feature = "tracing")]
+                    tracing::trace!("created key: {}", key);
+                    self.keys.keys.push(key);
+                } else {
+                    #[cfg(feature = "tracing")]
+                    tracing::error!(response = ?key_response, "why is key none?");
+                }
+            }
+            #[cfg(feature = "tracing")]
+            Err(e) => {
+                tracing::warn!(error.message = %format!("{:?}", e))
+            }
+            #[cfg(not(feature = "tracing"))]
+            Err(_) => {}
+        });
 
         Ok(())
     }
 
-    pub async fn create_key(&mut self, ip: String) -> Result<KeyResponse, APIError> {
-        // sample json {"name":"coc-rs","description":"Created on 2022-08-24T06:34:28Z","cidrRanges":["1.1.1.1"],"scopes":["clash"]}
+    pub async fn create_key(&self, ip: &str) -> Result<KeyResponse, APIError> {
         let key = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_CREATE_ENDPOINT))
             .header("Content-Type", "application/json")
@@ -207,28 +239,18 @@ impl APIAccount {
             .json()
             .await?;
 
-        // asynchronously call self.get_keys()
-        let mut account = self.clone();
-        tokio::spawn(async move { account.get_keys().await });
-
         Ok(key)
     }
 
-    pub async fn revoke_key(&mut self, key_id: &str) -> Result<KeyResponse, APIError> {
-        // post to KEY_REVOKE_ENDPOINT with header application/json and body {"id":"%s"}, where id is key_id
+    pub async fn revoke_key(&self, key_id: impl ToString) -> Result<KeyResponse, APIError> {
         let key = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
             .header("Content-Type", "application/json")
-            .body(format!("{{\"id\":\"{key_id}\"}}"))
+            .body(format!("{{\"id\":\"{}\"}}", key_id.to_string()))
             .send()
             .await?
             .json()
             .await?;
-
-        // asynchronously call self.get_keys()
-
-        let mut account = self.clone();
-        tokio::spawn(async move { account.get_keys().await });
 
         Ok(key)
     }
