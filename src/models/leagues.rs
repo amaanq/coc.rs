@@ -33,6 +33,12 @@ pub enum LeagueKind {
     LegendLeague = 29_000_022,
 }
 
+impl std::fmt::Display for LeagueKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum WarLeagueKind {
@@ -55,6 +61,12 @@ pub enum WarLeagueKind {
     ChampionLeagueIII = 48_000_016,
     ChampionLeagueII = 48_000_017,
     ChampionLeagueI = 48_000_018,
+}
+
+impl std::fmt::Display for WarLeagueKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -11,6 +11,16 @@ pub mod cos_options {
         pub page: i32,
     }
 
+    impl std::fmt::Display for Options {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(
+                f,
+                "Options {{ location: {}, level: {}, page: {} }}",
+                self.location, self.level, self.page
+            )
+        }
+    }
+
     pub struct OptionsBuilder {
         pub options: Options,
     }
@@ -100,8 +110,7 @@ pub mod cos_options {
                 12 => Level::Twelve,
                 13 => Level::Thirteen,
                 14 => Level::Fourteen,
-                // TODO: Clash of Stats hasn't added th15 leaderboards yet!
-                // 15 => Level::Fifteen,
+                15 => Level::Fifteen,
                 _ => Level::default(),
             };
             self
@@ -121,6 +130,7 @@ pub mod cos_options {
         }
     }
 
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub enum Level {
         /// All Town Halls
         None = 0,
@@ -152,13 +162,19 @@ pub mod cos_options {
         Thirteen = 13,
         /// Town Hall 14
         Fourteen = 14,
-        // TODO: Town Hall 15
-        // Fifteen = 15,
+        /// Town Hall 15
+        Fifteen = 15,
     }
 
     impl Default for Level {
         fn default() -> Self {
             Level::None
+        }
+    }
+
+    impl std::fmt::Display for Level {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            std::fmt::Debug::fmt(self, f)
         }
     }
 }

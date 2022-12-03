@@ -1,7 +1,9 @@
 # coc.rs
+
 A Clash of Clans API wrapper written in rust!
 
-# Key Features
+## Key Features
+
 - Asynchronous code
 - Entire coverage of [Clash of Clans API](https://developer.clashofclans.com)
 - Email and password Login
@@ -9,10 +11,9 @@ A Clash of Clans API wrapper written in rust!
 - API Events to track changes
 - [Clash of Stats](https://www.clashofstats.com/) support
 
-Getting Started
-================
+## Getting Started
 
-## Installing
+### Installing
 
 Add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
 <br/>
@@ -28,7 +29,7 @@ Alternatively with `cargo add`
 $ cargo add coc-rs --features=all
 ```
 
-## Quick Example
+### Quick Example
 
 ```rust
 #[tokio::main]
@@ -45,6 +46,7 @@ async fn main() {
 ```
 
 ### Error Handling
+
 ```rust
 #[tokio::main]
 async fn main() {
@@ -83,7 +85,8 @@ async fn main() {
 
 ### Basic Events
 
-First a struct should be created that will implement the trait `EventHandler`, this is similar to how the serenity discord library does event handling.
+First a struct should be created that will implement the trait `EventHandler`,
+this is similar to how the serenity discord library does event handling.
 
 ```rust
 struct Handler;
@@ -95,7 +98,7 @@ impl events::EventHandler for S {
         println!("Player change detected!")
     }
 
-    ///  to handle errors in the events task we need a separate error handler
+    /// To handle errors in the events task we need a separate error handler
     async fn handle_error(
         &self,
         _error: APIError,
@@ -107,8 +110,8 @@ impl events::EventHandler for S {
 }
 ```
 
-Next in the main function, we will create the main function, login and add the Player and clan tags we want to keep
-pulling the data from API.
+Next in the main function, we will create the main function,
+login and add the Player and clan tags we want to keep pulling the data from API.
 
 ```rust
 #[tokio::test]
@@ -117,19 +120,19 @@ async fn main() {
     /// see above example on how to create a client
 
     let task = tokio::spawn(async move {
-        /// staring the API events in a separate thread
+        // staring the API events in a separate thread
         let mut event_builder = events::EventsListenerBuilder::new(client);
         event_builder.add_player("#2PP").add_players(vec!["#CVJLQOLR"])
-            .build(Handler) /// Building the eventListener struct 
-            .start() /// starting the continuous polling of the clan/player/current_war endpoints
+            .build(Handler) // Building the EventListener struct
+            .start() // starting the continuous polling of the clan/player/war endpoints
             .await;
     });
-    task.await.unwrap();
+    task.await?;
 }
 ```
 
-*Note: Each endpoint has a different cache refresh time. Each event will be fired at the exact time of new cache data in
-the API.*
+_Note_: Each endpoint has a different cache refresh time.
+Each event will be fired at the exact time of new cache data in the API.
 <br/>
 
 ### Features
@@ -141,7 +144,7 @@ To Enable the `cos` feature (to use the Clash of Stats API), add this to your `C
 coc-rs = { version = "0.7.3", features = ["cos"] }
 ```
 
-To Enable the `extra` feature (which gives you some helper functions with players and clans), add this to your `Cargo.toml`
+To Enable the `extra` feature (which gives you extra tools), add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
@@ -163,15 +166,17 @@ coc-rs = { version = "0.7.3", features = ["all"] }
 $ cargo add coc-rs --features cos # or extra...or all (you get it)
 ```
 
-
 ## Tests
 
-`src/lib.rs` contains examples (in the form of tests) for every endpoint in a bit more detail.
+`src/lib.rs` contains examples as tests for every endpoint.
 
-# Contributing
-Contributing is fantastic and much welcomed! If you have an issue, feel free to open an issue and start working on it.
+## Contributing
 
-# Disclaimer
+Contributing is fantastic and much welcomed!
+If you have an issue, feel free to open an issue and start working on it.
+
+## Disclaimer
+
 This content is not affiliated with, endorsed, sponsored, or specifically
 approved by Supercell and Supercell is not responsible for it.
 For more information see [Supercell's Fan Content Policy](https://www.supercell.com/fan-content-policy).

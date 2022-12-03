@@ -103,7 +103,7 @@ mod tests {
     async fn test_get_clan_warlog() -> anyhow::Result<()> {
         let now = Instant::now();
 
-        load_client().await?;
+        load_client().await.unwrap();
 
         let clan_warlog = CLIENT.lock().await.get_clan_warlog("#2PJP2Q0PY").await?;
         println!("Time elapsed! {:?}", now.elapsed());
@@ -587,8 +587,8 @@ mod tests {
                 );
             }
 
-            async fn handle_error(&self, error: APIError, tag: String, event_type: EventType) {
-                println!("Houston we have a problem! {error} with {tag} @ {event_type}");
+            async fn on_error(&self, error: APIError, tag: String, event_type: EventType) {
+                println!("Houston, we have a problem! {error} with {tag} @ {event_type}");
             }
         }
 
@@ -600,7 +600,10 @@ mod tests {
             events_listener.start(Some(std::time::Duration::from_secs(5))).await
         });
 
-        task.await??;
+        match task.await? {
+            Ok(_) => println!("Done running task!"),
+            Err(e) => println!("Error running task: {e}"),
+        }
 
         Ok(())
     }

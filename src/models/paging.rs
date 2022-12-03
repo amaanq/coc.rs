@@ -6,11 +6,32 @@ pub struct Paging {
     cursor: Cursor,
 }
 
+impl std::fmt::Display for Paging {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Paging {{ ")?;
+        writeln!(f, "cursor: {}", self.cursor)?;
+        writeln!(f, "}}")
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Cursor {
     before: Option<String>,
     after: Option<String>,
+}
+
+impl std::fmt::Display for Cursor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Cursor {{ ")?;
+        if let Some(before) = &self.before {
+            writeln!(f, "before: {}", before)?;
+        }
+        if let Some(after) = &self.after {
+            writeln!(f, "after: {}", after)?;
+        }
+        writeln!(f, "}}")
+    }
 }
 
 pub struct PagingBuilder {
@@ -81,12 +102,12 @@ impl Cursor {
 
     fn set_before(&mut self, before: i32) {
         // {"pos": before} base64 encoded and cant be less than 0
-        self.before = Some(base64::encode(&format!("{{\"pos\":{before}}}")));
+        self.before = Some(base64::encode(format!("{{\"pos\":{before}}}")));
     }
 
     fn set_after(&mut self, after: i32) {
         // {"pos": after} base64 encoded and cant be less than 0
-        self.after = Some(base64::encode(&format!("{{\"pos\":{after}}}")));
+        self.after = Some(base64::encode(format!("{{\"pos\":{after}}}")));
     }
 
     #[must_use]
