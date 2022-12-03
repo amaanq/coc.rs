@@ -22,6 +22,21 @@ impl LogicLong {
     pub fn get_lower_int(&self) -> i32 {
         self.low_integer
     }
+
+    #[cfg(test)]
+    #[must_use]
+    /// Player ids have a max high of 100, all others seem to be much higher
+    pub fn random(max_high: i32) -> Self {
+        use rand::Rng;
+
+        assert!(max_high > 0, "max_high must be greater than 0");
+
+        let mut rng = rand::thread_rng();
+        let high = rng.gen_range(0..max_high);
+        let low = rng.gen();
+
+        Self::new(high, low)
+    }
 }
 
 impl FromStr for LogicLong {

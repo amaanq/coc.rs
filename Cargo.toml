@@ -37,6 +37,9 @@ tokio = { version = "1.22.0", features = ["full"] }
 
 tracing = { version = "0.1.37", optional = true }
 
+[dev-dependencies]
+rand = "0.8.5"
+
 [lib]
 doctest = false
 

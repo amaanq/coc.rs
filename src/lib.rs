@@ -498,18 +498,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_10000_tags() -> anyhow::Result<()> {
+    async fn test_1000_tags() -> anyhow::Result<()> {
         use crate::util::HASH_TAG_CODE_GENERATOR;
 
-        let start = 1;
-        let end = 101;
-        let vec_ll = (start..end)
-            .map(|n| LogicLong {
-                // putting this here as a reminder to add a pure LogicLong::random() method
-                high_integer: 0,
-                low_integer: n,
-            })
-            .collect::<Vec<_>>();
+        let vec_ll = (0..1000).map(|_| LogicLong::random(100)).collect::<Vec<_>>();
         println!("done creating logic longs");
 
         load_client().await?;
@@ -521,10 +513,11 @@ mod tests {
         let throttle_counter = Arc::new(Mutex::new(0));
 
         let now = Instant::now();
+
         for logic_long in vec_ll {
             let client = client.clone();
             let cloned_throttle_counter = throttle_counter.clone();
-            let task = tokio::spawn(async move {
+            let task = async move {
                 loop {
                     match client.get_player(&HASH_TAG_CODE_GENERATOR.to_code(logic_long)).await {
                         Ok(_) => break,
@@ -540,13 +533,12 @@ mod tests {
                         },
                     }
                 }
-            });
+            };
             tasks.push(task);
         }
 
-        for task in tasks {
-            task.await?;
-        }
+        futures::future::join_all(tasks).await;
+
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Throttle counter: {throttle_counter:?}");
 
