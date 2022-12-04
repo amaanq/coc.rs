@@ -499,44 +499,39 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_100_player_ids() -> anyhow::Result<()> {
+    async fn test_1000_player_ids() -> anyhow::Result<()> {
         use crate::util::HASH_TAG_CODE_GENERATOR;
-
-        let vec_ll = (0..100).map(|_| LogicLong::random(100)).collect::<Vec<_>>();
-        println!("done creating logic longs");
 
         load_client().await?;
 
         // hold the lock for the entire test so it's not dropped and another test picks it up
         let client = CLIENT.lock().await;
 
-        let mut tasks = Vec::new();
         let throttle_counter = Arc::new(Mutex::new(0));
 
         let now = Instant::now();
 
-        for logic_long in vec_ll {
-            let client = client.clone();
-            let cloned_throttle_counter = throttle_counter.clone();
-            let task = async move {
-                loop {
-                    match client.get_player(&HASH_TAG_CODE_GENERATOR.to_code(logic_long)).await {
-                        Ok(_) => break,
-                        Err(e) => match e {
-                            APIError::BadResponse(_, code) => {
-                                if code == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                                    *cloned_throttle_counter.lock().await += 1;
-                                } else {
-                                    break;
+        let tasks = (0..20000)
+            .map(|_| {
+                let logic_long = LogicLong::random(100);
+                let client = client.clone();
+                let cloned_throttle_counter = throttle_counter.clone();
+                async move {
+                    loop {
+                        match client.get_player(&HASH_TAG_CODE_GENERATOR.to_code(logic_long)).await
+                        {
+                            Ok(_) => break,
+                            Err(e) => match e {
+                                APIError::RequestThrottled => {
+                                    *cloned_throttle_counter.lock().await += 1
                                 }
-                            }
-                            _ => break,
-                        },
+                                _ => break,
+                            },
+                        }
                     }
                 }
-            };
-            tasks.push(task);
-        }
+            })
+            .collect::<Vec<_>>();
 
         futures::future::join_all(tasks).await;
 
