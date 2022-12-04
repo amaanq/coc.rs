@@ -74,13 +74,13 @@ impl SeasonBuilder {
     }
 
     #[must_use]
-    pub fn year(mut self, year: i32) -> Self {
+    pub const fn year(mut self, year: i32) -> Self {
         self.season.year = year;
         self
     }
 
     #[must_use]
-    pub fn month(mut self, month: Month) -> Self {
+    pub const fn month(mut self, month: Month) -> Self {
         self.season.month = month;
         self
     }
@@ -99,7 +99,7 @@ impl Season {
     }
 
     #[must_use]
-    pub fn builder() -> SeasonBuilder {
+    pub const fn builder() -> SeasonBuilder {
         SeasonBuilder::new()
     }
 }

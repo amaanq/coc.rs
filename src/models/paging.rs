@@ -25,10 +25,10 @@ impl std::fmt::Display for Cursor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Cursor {{ ")?;
         if let Some(before) = &self.before {
-            writeln!(f, "before: {}", before)?;
+            writeln!(f, "before: {before}")?;
         }
         if let Some(after) = &self.after {
-            writeln!(f, "after: {}", after)?;
+            writeln!(f, "after: {after}")?;
         }
         writeln!(f, "}}")
     }
@@ -63,17 +63,17 @@ impl PagingBuilder {
 
 impl Paging {
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { cursor: Cursor::new() }
     }
 
     #[must_use]
-    pub fn is_some(&self) -> bool {
+    pub const fn is_some(&self) -> bool {
         self.cursor.is_some()
     }
 
     #[must_use]
-    pub fn is_none(&self) -> bool {
+    pub const fn is_none(&self) -> bool {
         self.cursor.is_none()
     }
 
@@ -101,22 +101,20 @@ impl Cursor {
     }
 
     fn set_before(&mut self, before: i32) {
-        // {"pos": before} base64 encoded and cant be less than 0
         self.before = Some(base64::encode(format!("{{\"pos\":{before}}}")));
     }
 
     fn set_after(&mut self, after: i32) {
-        // {"pos": after} base64 encoded and cant be less than 0
         self.after = Some(base64::encode(format!("{{\"pos\":{after}}}")));
     }
 
     #[must_use]
-    pub fn is_some(&self) -> bool {
+    pub const fn is_some(&self) -> bool {
         self.before.is_some() || self.after.is_some()
     }
 
     #[must_use]
-    pub fn is_none(&self) -> bool {
+    pub const fn is_none(&self) -> bool {
         self.before.is_none() && self.after.is_none()
     }
 

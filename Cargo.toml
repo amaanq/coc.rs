@@ -1,6 +1,6 @@
 [package]
 name = "coc-rs"
-version = "0.7.4"
+version = "0.7.5"
 authors = ["Amaan Q <amaanq12@gmail.com>", "SaHiL"]
 edition = "2021"
 description = "A Rust crate wrapper around the Clash of Clans public API"

@@ -53,6 +53,11 @@ pub struct Attack {
 }
 
 impl War {
+    /// Returns the start time of this [`War`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if parsing the start time fails, which should never happen.
     #[must_use]
     pub fn start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         self.start_time.as_ref().map(|start_time| {
@@ -62,6 +67,11 @@ impl War {
         })
     }
 
+    /// Returns the end time of this [`War`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if parsing the end time fails, which should never happen.
     #[must_use]
     pub fn end_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         self.end_time.as_ref().map(|end_time| {
@@ -71,6 +81,11 @@ impl War {
         })
     }
 
+    /// Returns the preparation start time of this [`War`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if parsing the preparation start time fails, which should never happen.
     #[must_use]
     pub fn preparation_start_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         self.preparation_start_time.as_ref().map(|preparation_start_time| {
