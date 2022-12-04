@@ -1,17 +1,19 @@
-use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicBool, AtomicUsize, Ordering},
+    Arc,
+};
 
 use async_recursion::async_recursion;
+use dashmap::DashMap;
 use parking_lot::Mutex;
 use reqwest::{RequestBuilder, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[cfg(feature = "cos")]
 use reqwest::header::{HeaderMap, HeaderValue};
-#[cfg(feature = "cos")]
-use std::sync::atomic::AtomicBool;
 
 use crate::{
-    credentials::Credentials,
+    credentials::{Credential, Credentials},
     dev::{self, CLIENT},
     error::APIError,
     models::{
@@ -23,10 +25,11 @@ use crate::{
 
 #[derive(Clone, Debug, Default)]
 pub struct Client {
-    credentials: Arc<Mutex<Credentials>>,
-    ready: Arc<Mutex<bool>>,
-    accounts: Arc<Mutex<Vec<dev::APIAccount>>>,
-    index: Arc<Mutex<dev::Index>>,
+    ready: Arc<AtomicBool>,
+    accounts: Arc<DashMap<Credential, dev::APIAccount>>,
+
+    account_index: Arc<AtomicUsize>,
+    key_index: Arc<AtomicUsize>,
 
     ip_address: Arc<Mutex<String>>,
 
@@ -46,33 +49,37 @@ impl Client {
     /// This function will return an error if the credentials are invalid
     pub async fn new(credentials: Credentials) -> Result<Self, APIError> {
         let client = Self {
-            credentials: Arc::new(Mutex::new(credentials)),
-            ready: Arc::new(Mutex::new(false)),
-            accounts: Arc::new(Mutex::new(vec![])),
-            index: Arc::new(Mutex::new(dev::Index::default())),
+            ready: Arc::new(AtomicBool::new(false)),
+
+            accounts: Arc::new(DashMap::new()),
+
+            account_index: Arc::new(AtomicUsize::new(0)),
+            key_index: Arc::new(AtomicUsize::new(0)),
+
             ip_address: Arc::new(Mutex::new(String::new())),
 
             #[cfg(feature = "cos")]
             is_cos_logged_in: Arc::new(AtomicBool::new(false)),
         };
 
-        client.init().await?;
-        *client.ready.lock() = true;
+        client.init(credentials).await?;
+        // *client.ready.lock() = true;
+        client.ready.store(true, Ordering::SeqCst);
         Ok(client)
     }
 
     /// Called when the client is created to initialize every credential.
-    async fn init(&self) -> Result<(), APIError> {
+    async fn init(&self, credentials: Credentials) -> Result<(), APIError> {
         let ip = Self::get_ip().await?;
         *self.ip_address.lock() = ip.clone();
 
-        let credentials = self.credentials.lock().clone();
         let tasks =
             credentials.0.into_iter().map(|credential| dev::APIAccount::login(credential, &ip));
 
-        let accounts = futures::future::join_all(tasks).await;
+        let accounts =
+            futures::future::join_all(tasks).await.into_iter().collect::<Result<Vec<_>, _>>()?;
         for account in accounts {
-            self.accounts.lock().push(account?);
+            self.accounts.insert(account.credential.clone(), account);
         }
 
         Ok(())
@@ -82,26 +89,24 @@ impl Client {
     async fn reinit(&self) -> Result<(), APIError> {
         #[cfg(feature = "tracing")]
         tracing::debug!("reinitializing client");
+
+        self.ready.store(false, Ordering::SeqCst);
+
         let ip = Self::get_ip().await?;
         if ip != *self.ip_address.lock() {
             *self.ip_address.lock() = ip.clone();
 
-            let credentials = self.credentials.lock().clone();
-            for credential in credentials.0 {
-                let email = credential.email().to_owned();
-                let api_account = dev::APIAccount::login(credential, &ip).await?;
-                let mut accounts = self.accounts.lock();
-                let index = accounts
-                    .iter()
-                    .position(|a| a.response.developer.email == email)
-                    .unwrap_or_else(|| {
-                        #[cfg(feature = "tracing")]
-                        tracing::warn!("could not find account with email {}", email);
-                        panic!("could not find account with email {email}")
-                    });
-                accounts[index] = api_account;
+            let accounts = self.accounts.iter().map(|account| account.clone()).collect::<Vec<_>>();
+
+            for mut account in accounts {
+                account.re_login(&ip).await?;
+
+                // update the account in the DashMap
+                self.accounts.insert(account.credential.clone(), account);
             }
         }
+
+        self.ready.store(true, Ordering::SeqCst);
 
         Ok(())
     }
@@ -128,10 +133,10 @@ impl Client {
     pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(credentials = ?credentials, "Loading credentials");
-        *self.credentials.lock() = credentials;
-        *self.ready.lock() = false;
-        self.init().await?;
-        *self.ready.lock() = true;
+
+        self.ready.store(false, Ordering::SeqCst);
+        self.init(credentials).await?;
+        self.ready.store(true, Ordering::SeqCst);
         Ok(())
     }
 
@@ -160,12 +165,12 @@ impl Client {
     /// ```
     #[cfg(feature = "tracing")]
     pub fn debug_keys(&self) {
-        for account in self.accounts.lock().iter() {
-            for key in &account.keys.keys {
+        self.accounts.iter().for_each(|account| {
+            account.keys.keys.iter().for_each(|key| {
                 #[cfg(feature = "tracing")]
                 tracing::debug!(key = %key.key, key.id=%key.id, key.name=%key.name);
-            }
-        }
+            });
+        });
     }
 
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -175,7 +180,7 @@ impl Client {
         &self,
         url: U,
     ) -> Result<reqwest::RequestBuilder, APIError> {
-        if !*self.ready.lock() {
+        if !self.ready.load(Ordering::SeqCst) {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.get(url).bearer_auth(self.get_next_key()))
@@ -186,7 +191,7 @@ impl Client {
         url: U,
         body: T,
     ) -> Result<reqwest::RequestBuilder, APIError> {
-        if !*self.ready.lock() {
+        if !self.ready.load(Ordering::SeqCst) {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.post(url).bearer_auth(self.get_next_key()).body(body))
@@ -663,44 +668,50 @@ impl Client {
 
     fn get_next_key(&self) -> String {
         // increment key_token_index, unless it would be larger than the account's token size (10), then reset to 0 and increment key_account_index
-        let mut index = self.index.lock();
+        // let mut index = self.index.lock();
+        let mut account_index = self.account_index.load(Ordering::SeqCst);
+        let mut key_index = self.key_index.load(Ordering::SeqCst);
 
-        let accounts = self.accounts.lock();
-        let size_of_keys = accounts[index.key_account_index].keys.keys.len();
+        let accounts = self.accounts.iter().collect::<Vec<_>>();
+        let size_of_keys = accounts[account_index].keys.keys.len();
 
         // if we're at the end of this account's keys..
-        if index.key_token_index == size_of_keys - 1 {
+        if key_index == size_of_keys - 1 {
             // reset token index anyways
-            index.key_token_index = 0;
+            key_index = 0;
             // ..and at the end of the accounts
-            if index.key_account_index == (accounts.len() - 1) {
+            if account_index == (accounts.len() - 1) {
                 // then we've reached end of accounts, go back to first account
-                index.key_account_index = 0;
+                account_index = 0;
             } else {
                 // otherwise, just increment account index
-                index.key_account_index += 1;
+                account_index += 1;
             }
         } else {
             // otherwise, just increment token index
-            index.key_token_index += 1;
+            key_index += 1;
         }
 
         let token = accounts
-            .get(index.key_account_index)
+            .get(account_index)
             .unwrap_or_else(|| {
                 #[cfg(feature = "tracing")]
-                tracing::warn!("No account found at index {}", index.key_account_index);
-                panic!("No account found at index {}", index.key_account_index)
+                tracing::warn!("No account found at index {account_index}");
+                panic!("No account found at index {account_index}")
             })
             .keys
             .keys
-            .get(index.key_token_index)
+            .get(key_index)
             .unwrap_or_else(|| {
                 #[cfg(feature = "tracing")]
-                tracing::warn!("No key found at index {}", index.key_token_index);
-                panic!("No key found at index {}", index.key_token_index);
+                tracing::warn!("No key found at index {key_index}");
+                panic!("No key found at index {key_index}");
             })
             .clone();
+
+        self.account_index.store(account_index, Ordering::SeqCst);
+        self.key_index.store(key_index, Ordering::SeqCst);
+
         token.key
     }
 }
