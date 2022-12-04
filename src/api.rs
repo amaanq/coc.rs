@@ -39,6 +39,11 @@ impl Client {
 
     const BASE_URL: &'static str = "https://api.clashofclans.com/v1";
 
+    /// Returns a [`Client`]
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the credentials are invalid
     pub async fn new(credentials: Credentials) -> Result<Self, APIError> {
         let client = Self {
             credentials: Arc::new(Mutex::new(credentials)),
@@ -92,7 +97,7 @@ impl Client {
                     .unwrap_or_else(|| {
                         #[cfg(feature = "tracing")]
                         tracing::warn!("could not find account with email {}", email);
-                        panic!("could not find account with email {}", email)
+                        panic!("could not find account with email {email}")
                     });
                 accounts[index] = api_account;
             }
@@ -103,7 +108,11 @@ impl Client {
 
     /// Here you can create a client yourself and load them here later (for example .env parsing)
     ///
-    /// Example:
+    /// # Errors
+    ///
+    /// This function will return an error if the credentials are invalid
+    ///
+    /// # Example
     /// ```no_run
     /// use coc_rs::{api::Client, credentials::Credentials};
     ///
@@ -140,6 +149,8 @@ impl Client {
     }
 
     /// This is purely for diagnostics, it's not used anywhere else.
+    ///
+    /// # Example
     /// ```no_run
     /// use coc_rs::Client;
     ///
@@ -252,6 +263,10 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Clan Methods
     //_______________________________________________________________________
+
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_clan_warlog(
         &self,
         clan_tag: &str,
@@ -263,6 +278,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_clans(
         &self,
         options: clan_search::ClanSearchOptions,
@@ -273,6 +291,9 @@ impl Client {
         self.parse_json(self.get(url.to_string()), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_current_war(&self, clan_tag: &str) -> Result<war::War, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_current_war({})", clan_tag);
@@ -281,6 +302,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_clan(&self, clan_tag: &str) -> Result<clan::Clan, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_clan({})", clan_tag);
@@ -289,6 +313,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_clan_members(
         &self,
         clan_tag: &str,
@@ -300,6 +327,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_clan_capital_raid_seasons(
         &self,
         clan_tag: &str,
@@ -318,6 +348,10 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Player Methods
     //_______________________________________________________________________
+
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_player(&self, player_tag: &str) -> Result<player::Player, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_player({})", player_tag);
@@ -326,6 +360,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn verify_player_token(
         &self,
         player_tag: &str,
@@ -343,6 +380,10 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // League Methods
     //_______________________________________________________________________
+
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_leagues(&self) -> Result<APIResponse<leagues::League>, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_leagues()");
@@ -350,7 +391,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
-    // /leagues/{leagueId}/seasons/{seasonId}
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_league_season_rankings(
         &self,
         league_id: leagues::LeagueKind,
@@ -373,6 +416,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_league(
         &self,
         league_id: leagues::LeagueKind,
@@ -383,6 +429,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_league_seasons(
         &self,
         league_id: leagues::LeagueKind,
@@ -399,6 +448,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_war_league(
         &self,
         war_league: leagues::WarLeagueKind,
@@ -409,6 +461,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_war_leagues(&self) -> Result<APIResponse<leagues::WarLeague>, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_war_leagues()");
@@ -420,6 +475,9 @@ impl Client {
     // Location Methods
     //_______________________________________________________________________
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_clan_rankings(
         &self,
         location: location::Local,
@@ -430,6 +488,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_player_rankings(
         &self,
         location: location::Local,
@@ -440,6 +501,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_versus_clan_rankings(
         &self,
         location: location::Local,
@@ -450,6 +514,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_versus_player_rankings(
         &self,
         location: location::Local,
@@ -461,6 +528,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_locations(&self) -> Result<APIResponse<location::Location>, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_locations()");
@@ -468,6 +538,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_location(
         &self,
         location: location::Local,
@@ -481,6 +554,10 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Gold Pass Method
     //_______________________________________________________________________
+
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails
     pub async fn get_goldpass(&self) -> Result<gold_pass::GoldPass, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_goldpass()");
@@ -491,6 +568,10 @@ impl Client {
     //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // Label Methods
     //_______________________________________________________________________
+
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails.
     pub async fn get_player_labels(&self) -> Result<APIResponse<labels::PlayerLabel>, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_player_labels()");
@@ -498,6 +579,9 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails.
     pub async fn get_clan_labels(&self) -> Result<APIResponse<labels::ClanLabel>, APIError> {
         #[cfg(feature = "tracing")]
         tracing::trace!("get_clan_labels()");
@@ -505,7 +589,15 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
-    /// Runs the future that implements `Send` and parses the reqwest response into a `APIResponse`.
+    /// Runs the future that implements `Send` and parses the reqwest response into an `APIResponse`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON parsing fails for some odd reason. This is a bug and should be reported.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the request fails.
     #[async_recursion]
     pub(crate) async fn parse_json<T: DeserializeOwned>(
         &self,
@@ -520,24 +612,23 @@ impl Client {
                         match resp.status() {
                             reqwest::StatusCode::OK => {
                                 let text = resp.text().await?;
-                                Ok(serde_json::from_str(&text).unwrap_or_else(|e| panic!("Failure parsing json (please file a bug on the GitHub): {}\nError: {}",
-                                    text, e)))
+                                Ok(serde_json::from_str(&text).unwrap_or_else(|e| panic!("Failure parsing json (please file a bug on the GitHub): {text}\nError: {e}")))
                             }
                             // 400
                             reqwest::StatusCode::BAD_REQUEST => Err(APIError::BadParameters),
                             // 403 - likely means the IP address has changed, let's reinit the client then and try this again
                             reqwest::StatusCode::FORBIDDEN => {
-                                if !is_retry_and_not_cos {
+                                if is_retry_and_not_cos {
+                                    #[cfg(feature = "tracing")]
+                                    tracing::debug!("403 Forbidden, but already retried, try checking your credentials?");
+                                    Err(APIError::AccessDenied)
+                                } else {
                                     self.reinit().await?;
                                     if let Some(rb) = cloned_rb {
                                         self.parse_json(Ok(rb), true).await
                                     } else {
                                         Err(APIError::AccessDenied)
                                     }
-                                } else {
-                                    #[cfg(feature = "tracing")]
-                                    tracing::debug!("403 Forbidden, but already retried, try checking your credentials?");
-                                    Err(APIError::AccessDenied)
                                 }
                             }
                             // 404

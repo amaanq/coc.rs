@@ -27,34 +27,34 @@ impl std::fmt::Display for ClanSearchOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "ClanSearchOptions {{ ")?;
         if let Some(name) = &self.name {
-            writeln!(f, "name: {}", name)?;
+            writeln!(f, "name: {name}")?;
         }
         if let Some(war_frequency) = &self.war_frequency {
-            writeln!(f, "war_frequency: {}", war_frequency)?;
+            writeln!(f, "war_frequency: {war_frequency}")?;
         }
         if let Some(location_id) = &self.location_id {
-            writeln!(f, "location_id: {}", location_id)?;
+            writeln!(f, "location_id: {location_id}")?;
         }
         if let Some(min_members) = &self.min_members {
-            writeln!(f, "min_members: {}", min_members)?;
+            writeln!(f, "min_members: {min_members}")?;
         }
         if let Some(max_members) = &self.max_members {
-            writeln!(f, "max_members: {}", max_members)?;
+            writeln!(f, "max_members: {max_members}")?;
         }
         if let Some(min_clan_points) = &self.min_clan_points {
-            writeln!(f, "min_clan_points: {}", min_clan_points)?;
+            writeln!(f, "min_clan_points: {min_clan_points}")?;
         }
         if let Some(min_clan_level) = &self.min_clan_level {
-            writeln!(f, "min_clan_level: {}", min_clan_level)?;
+            writeln!(f, "min_clan_level: {min_clan_level}")?;
         }
         if let Some(limit) = &self.limit {
-            writeln!(f, "limit: {}", limit)?;
+            writeln!(f, "limit: {limit}")?;
         }
         if let Some(after) = &self.after {
-            writeln!(f, "after: {}", after)?;
+            writeln!(f, "after: {after}")?;
         }
         if let Some(before) = &self.before {
-            writeln!(f, "before: {}", before)?;
+            writeln!(f, "before: {before}")?;
         }
         if let Some(label_ids) = &self.label_ids {
             writeln!(f, "label_ids: {}", label_ids.join(", "))?;

@@ -6,9 +6,13 @@ mod models;
 pub use models::*;
 
 /// Clash of Stats API wrapper
+#[cfg(feature = "cos")]
 mod clash_of_stats;
+#[cfg(feature = "cos")]
 pub use clash_of_stats::*;
+#[cfg(feature = "cos")]
 mod cos_models;
+#[cfg(feature = "cos")]
 pub use cos_models::*;
 
 /// To structure a login
@@ -17,14 +21,11 @@ pub mod credentials;
 /// Developer Site API wrapper
 mod dev;
 
-/// API + `CoS` + General Errors
+/// API + Clash of Stats Errors
 pub mod error;
 
-/// Events to track changes
+/// Events track changes in the API
 pub mod events;
-
-/// To access crates that are interconnected with coc.rs without adding it as a dependency
-pub mod prelude;
 
 mod util;
 
@@ -498,10 +499,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_1000_tags() -> anyhow::Result<()> {
+    async fn test_100_player_ids() -> anyhow::Result<()> {
         use crate::util::HASH_TAG_CODE_GENERATOR;
 
-        let vec_ll = (0..1000).map(|_| LogicLong::random(100)).collect::<Vec<_>>();
+        let vec_ll = (0..100).map(|_| LogicLong::random(100)).collect::<Vec<_>>();
         println!("done creating logic longs");
 
         load_client().await?;
@@ -547,8 +548,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_event() -> anyhow::Result<()> {
-        load_client().await?;
-
         struct S;
 
         #[async_trait]
@@ -571,6 +570,8 @@ mod tests {
                 println!("Houston, we have a problem! {error} with {tag} @ {event_type}");
             }
         }
+
+        load_client().await?;
 
         let task = tokio::spawn(async move {
             let events_listener = EventsListenerBuilder::new(CLIENT.lock().await.clone())
@@ -620,7 +621,7 @@ mod tests {
 
             let cos_player = super::CLIENT.lock().await.cos_get_player("2PP").await?;
 
-            println!("{:?}", cos_player);
+            println!("{cos_player:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -632,7 +633,7 @@ mod tests {
 
             let cos_player_history =
                 super::CLIENT.lock().await.cos_get_player_history("2PP").await?;
-            println!("{:?}", cos_player_history);
+            println!("{cos_player_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -643,7 +644,7 @@ mod tests {
             let now = Instant::now();
 
             let cos_clan = super::CLIENT.lock().await.cos_get_clan("2PP").await?;
-            println!("{:?}", cos_clan);
+            println!("{cos_clan:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -655,7 +656,7 @@ mod tests {
 
             let cos_clan_history =
                 super::CLIENT.lock().await.cos_get_clan_past_members("#2PP").await?;
-            println!("{:?}", cos_clan_history);
+            println!("{cos_clan_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -672,7 +673,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_clan_history);
+            println!("{cos_clan_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -689,7 +690,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_clan_history);
+            println!("{cos_clan_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -706,7 +707,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_clan_history);
+            println!("{cos_clan_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -723,7 +724,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_clan_ranking);
+            println!("{cos_clan_ranking:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -740,7 +741,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_clan_ranking);
+            println!("{cos_clan_ranking:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
             Ok(())
@@ -757,7 +758,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_ranking);
+            println!("{cos_player_ranking:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -773,7 +774,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_ranking);
+            println!("{cos_player_ranking:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -789,7 +790,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_ranking);
+            println!("{cos_player_ranking:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -805,7 +806,7 @@ mod tests {
                     cos_options::Options::builder().page(5555).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -821,7 +822,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -837,7 +838,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -853,7 +854,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -869,7 +870,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -886,7 +887,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -902,7 +903,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -918,7 +919,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -934,7 +935,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -950,7 +951,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -966,7 +967,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -982,7 +983,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -998,7 +999,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -1014,7 +1015,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -1030,7 +1031,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -1046,7 +1047,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -1062,7 +1063,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -1078,7 +1079,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }
@@ -1094,7 +1095,7 @@ mod tests {
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
                 .await?;
-            println!("{:?}", cos_player_versus_trophies_history);
+            println!("{cos_player_versus_trophies_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
             Ok(())
         }

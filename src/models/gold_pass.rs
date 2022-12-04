@@ -9,6 +9,11 @@ pub struct GoldPass {
 }
 
 impl GoldPass {
+    /// Returns the start time of this [`GoldPass`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if parsing the start time fails, which should never happen.
     #[must_use]
     pub fn start_time(&self) -> chrono::DateTime<chrono::Utc> {
         chrono::Utc.from_utc_datetime(
@@ -16,6 +21,11 @@ impl GoldPass {
         )
     }
 
+    /// Returns the end time of this [`GoldPass`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if parsing the end time fails, which should never happen.
     #[must_use]
     pub fn end_time(&self) -> chrono::DateTime<chrono::Utc> {
         chrono::Utc.from_utc_datetime(

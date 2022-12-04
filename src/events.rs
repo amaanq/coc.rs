@@ -43,24 +43,24 @@ impl std::fmt::Display for EventType {
 
 impl EventsListenerBuilder {
     #[must_use]
-    pub fn new(client: Client) -> Self {
+    pub const fn new(client: Client) -> Self {
         Self { event_type: vec![], client }
     }
 
     #[must_use]
-    pub fn add_clan(mut self, tag: &(impl ToString + ?Sized)) -> Self {
+    pub fn add_clan(mut self, tag: &str) -> Self {
         self.event_type.push(EventType::Clan(tag.to_string(), Instant::now(), None));
         self
     }
 
     #[must_use]
-    pub fn add_player(mut self, tag: &(impl ToString + ?Sized)) -> Self {
+    pub fn add_player(mut self, tag: &str) -> Self {
         self.event_type.push(EventType::Player(tag.to_string(), Instant::now(), None));
         self
     }
 
     #[must_use]
-    pub fn add_war(mut self, tag: &(impl ToString + ?Sized)) -> Self {
+    pub fn add_war(mut self, tag: &str) -> Self {
         self.event_type.push(EventType::War(tag.to_string(), Instant::now(), None));
         self
     }
@@ -93,16 +93,11 @@ impl EventsListenerBuilder {
         self
     }
 
-    pub fn build<T: EventHandler>(self, handler: T) -> EventsListener<T>
+    pub fn build<T>(self, handler: T) -> EventsListener<T>
     where
         T: EventHandler + Sync + Send,
     {
-        EventsListener {
-            event_type: self.event_type,
-            client: self.client,
-            handler,
-            last_time_fired: Instant::now(),
-        }
+        EventsListener { event_type: self.event_type, client: self.client, handler }
     }
 }
 
@@ -113,8 +108,6 @@ where
     event_type: Vec<EventType>,
     client: Client,
     handler: T,
-    #[allow(dead_code)]
-    last_time_fired: Instant,
 }
 
 pub struct EventsError {
@@ -143,6 +136,10 @@ where
     T: EventHandler + Sync + Send,
 {
     /// Start the events listener, note that if duration is None, it will run forever
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if [`Client::get_player`], [`Client::get_clan`], or [`Client::get_current_war`] fails
     pub async fn start(mut self, duration: Option<Duration>) -> Result<(), EventsError> {
         if let Some(duration) = duration {
             let start = Instant::now();
@@ -164,17 +161,22 @@ where
         Ok(())
     }
 
-    async fn fire_events(&mut self) -> Result<bool, EventsError> {
-        #[inline(always)]
-        const fn should_fire_again(duration: Duration, seconds: u64) -> bool {
-            duration.as_secs() >= seconds
-        }
+    #[inline(always)]
+    const fn should_fire_again(duration: Duration, seconds: u64) -> bool {
+        duration.as_secs() >= seconds
+    }
 
+    /// Returns true if a new event was fired for any [`EventType`]
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if [`crate::api::Client::get_player`] [`crate::api::Client::get_clan`], or [`crate::api::Client::get_current_war`] fails
+    async fn fire_events(&mut self) -> Result<bool, EventsError> {
         for (i, event) in self.event_type.iter().enumerate() {
             match event {
                 EventType::Player(tag, last_fired, old) => {
                     if let Some(duration) = Instant::now().checked_duration_since(*last_fired) {
-                        if should_fire_again(duration, 10) {
+                        if Self::should_fire_again(duration, 10) {
                             return match self.client.get_player(tag).await {
                                 Ok(new) => {
                                     self.handler.player(old.clone(), new.clone()).await; // invoking the handler function the user defined
@@ -194,7 +196,7 @@ where
                 }
                 EventType::Clan(tag, last_fired, old) => {
                     if let Some(duration) = Instant::now().checked_duration_since(*last_fired) {
-                        if should_fire_again(duration, 10) {
+                        if Self::should_fire_again(duration, 10) {
                             return match self.client.get_clan(tag).await {
                                 Ok(new) => {
                                     self.handler.clan(old.clone(), new.clone()).await; // invoking the handler function the user defined
@@ -214,7 +216,7 @@ where
                 }
                 EventType::War(tag, last_fired, old) => {
                     if let Some(duration) = Instant::now().checked_duration_since(*last_fired) {
-                        if should_fire_again(duration, 60 * 10) {
+                        if Self::should_fire_again(duration, 60 * 10) {
                             return match self.client.get_current_war(tag).await {
                                 Ok(new) => {
                                     self.handler.war(old.clone(), new.clone()).await; // invoking the handler function the user defined
@@ -234,6 +236,7 @@ where
                 }
             }
         }
+
         Ok(false)
     }
 }

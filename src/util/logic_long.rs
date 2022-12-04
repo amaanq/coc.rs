@@ -11,15 +11,15 @@ pub struct LogicLong {
 }
 
 impl LogicLong {
-    pub fn new(high_integer: i32, low_integer: i32) -> Self {
+    pub const fn new(high_integer: i32, low_integer: i32) -> Self {
         Self { high_integer, low_integer }
     }
 
-    pub fn get_higher_int(&self) -> i32 {
+    pub const fn get_higher_int(self) -> i32 {
         self.high_integer
     }
 
-    pub fn get_lower_int(&self) -> i32 {
+    pub const fn get_lower_int(self) -> i32 {
         self.low_integer
     }
 

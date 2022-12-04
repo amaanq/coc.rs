@@ -39,6 +39,11 @@ pub struct Opponent {
 }
 
 impl WarLog {
+    /// Returns the end time of this [`WarLog`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if parsing the end time fails, which should never happen.
     #[must_use]
     pub fn end_time(&self) -> chrono::DateTime<chrono::Utc> {
         chrono::Utc.from_utc_datetime(

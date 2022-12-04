@@ -30,7 +30,7 @@ impl HashTagCodeGenerator {
     pub fn to_id(&self, value: &str) -> Result<LogicLong, APIError> {
         let id = self.code_converter_util.to_id(value);
 
-        if self.is_id_valid(id) {
+        if Self::is_id_valid(id) {
             Ok(id)
         } else {
             Err(APIError::InvalidTag(value.to_string()))
@@ -38,7 +38,7 @@ impl HashTagCodeGenerator {
     }
 
     #[must_use]
-    pub fn is_id_valid(&self, id: LogicLong) -> bool {
+    pub const fn is_id_valid(id: LogicLong) -> bool {
         id.get_higher_int() != -1 && id.get_lower_int() != -1
     }
 }

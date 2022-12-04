@@ -134,7 +134,7 @@ impl APIAccount {
     const KEY_CREATE_ENDPOINT: &'static str = "/api/apikey/create";
     const KEY_REVOKE_ENDPOINT: &'static str = "/api/apikey/revoke";
 
-    pub async fn login(credential: Credential, ip: impl AsRef<str>) -> Result<Self, APIError> {
+    pub async fn login(credential: Credential, ip: &str) -> Result<Self, APIError> {
         let login_response = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
@@ -158,13 +158,13 @@ impl APIAccount {
             #[cfg(feature = "tracing")]
             tracing::debug!("creating {} keys", 10 - account.keys.keys.len());
             for _ in 0..(10 - account.keys.keys.len()) {
-                account.create_key(ip.as_ref()).await?;
+                account.create_key(ip).await?;
             }
         }
 
         #[cfg(feature = "tracing")]
         tracing::debug!("updating keys");
-        account.update_all_keys(ip.as_ref()).await?;
+        account.update_all_keys(ip).await?;
 
         Ok(account)
     }
@@ -188,7 +188,7 @@ impl APIAccount {
             .filter(|key| !key.cidr_ranges.iter().any(|cidr| ip.contains(cidr)))
             .collect::<Vec<_>>();
 
-        let tasks = bad_keys.iter().map(|key| self.revoke_key(key.id.clone())).collect::<Vec<_>>();
+        let tasks = bad_keys.iter().map(|key| self.revoke_key(&key.id)).collect::<Vec<_>>();
         futures::future::join_all(tasks).await.into_iter().for_each(|maybe_key| match maybe_key {
             Ok(_) => {
                 // in revokes, we don't get a key back. we must remove the key ourselves.
@@ -196,7 +196,7 @@ impl APIAccount {
             }
             #[cfg(feature = "tracing")]
             Err(e) => {
-                tracing::warn!(error.message = %format!("{:?}", e))
+                tracing::warn!(error.message = %format!("{e:?}"))
             }
             #[cfg(not(feature = "tracing"))]
             Err(_) => {}
@@ -216,7 +216,7 @@ impl APIAccount {
             }
             #[cfg(feature = "tracing")]
             Err(e) => {
-                tracing::warn!(error.message = %format!("{:?}", e))
+                tracing::warn!(error.message = %format!("{e:?}"))
             }
             #[cfg(not(feature = "tracing"))]
             Err(_) => {}
@@ -242,11 +242,11 @@ impl APIAccount {
         Ok(key)
     }
 
-    pub async fn revoke_key(&self, key_id: impl ToString) -> Result<KeyResponse, APIError> {
+    pub async fn revoke_key(&self, key_id: &str) -> Result<KeyResponse, APIError> {
         let key = CLIENT
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
             .header("Content-Type", "application/json")
-            .body(format!("{{\"id\":\"{}\"}}", key_id.to_string()))
+            .body(format!("{{\"id\":\"{key_id}\"}}"))
             .send()
             .await?
             .json()
