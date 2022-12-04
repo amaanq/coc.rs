@@ -23,6 +23,13 @@ pub struct Keys {
     pub keys: Vec<Key>,
 }
 
+impl Keys {
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.keys.len()
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct LoginResponse {
     pub status: Status,
@@ -144,20 +151,16 @@ impl APIAccount {
             .json()
             .await?;
 
-        let mut account = Self {
-            credential: credential.clone(),
-            response: login_response,
-            keys: Keys::default(),
-        };
+        let mut account = Self { credential, response: login_response, keys: Keys::default() };
 
         #[cfg(feature = "tracing")]
         tracing::debug!("getting keys");
         account.get_keys().await?;
 
-        if account.keys.keys.len() != 10 {
+        if account.keys.len() != 10 {
             #[cfg(feature = "tracing")]
-            tracing::debug!("creating {} keys", 10 - account.keys.keys.len());
-            for _ in 0..(10 - account.keys.keys.len()) {
+            tracing::debug!("creating {} keys", 10 - account.keys.len());
+            for _ in 0..(10 - account.keys.len()) {
                 account.create_key(ip).await?;
             }
         }
@@ -167,6 +170,39 @@ impl APIAccount {
         account.update_all_keys(ip).await?;
 
         Ok(account)
+    }
+
+    pub async fn re_login(&mut self, ip: &str) -> Result<(), APIError> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!("re-login");
+        let login_response = CLIENT
+            .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .json::<Credential>(&self.credential)
+            .send()
+            .await?
+            .json()
+            .await?;
+
+        self.response = login_response;
+
+        #[cfg(feature = "tracing")]
+        tracing::debug!("getting keys");
+        self.get_keys().await?;
+
+        if self.keys.len() != 10 {
+            #[cfg(feature = "tracing")]
+            tracing::debug!("creating {} keys", 10 - self.keys.len());
+            for _ in 0..(10 - self.keys.len()) {
+                self.create_key(ip).await?;
+            }
+        }
+
+        #[cfg(feature = "tracing")]
+        tracing::debug!("updating keys");
+        self.update_all_keys(ip).await?;
+
+        Ok(())
     }
 
     pub async fn get_keys(&mut self) -> Result<(), APIError> {

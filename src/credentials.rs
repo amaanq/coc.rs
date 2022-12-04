@@ -8,7 +8,7 @@ pub struct CredentialsBuilder {
 #[derive(Clone, Debug, Default)]
 pub struct Credentials(pub Vec<Credential>);
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Credential {
     email: String,
     password: String,
