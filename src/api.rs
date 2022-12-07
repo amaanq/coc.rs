@@ -46,7 +46,7 @@ impl Client {
     /// # Errors
     ///
     /// This function will return an error if the credentials are invalid
-    pub async fn new(credentials: Credentials) -> Result<Self, APIError> {
+    pub async fn new(credentials: Credentials) -> anyhow::Result<Self> {
         let client = Self {
             ready: Arc::new(AtomicBool::new(false)),
 
@@ -68,11 +68,9 @@ impl Client {
     }
 
     /// Called when the client is created to initialize every credential.
-    async fn init(&self, credentials: Credentials) -> Result<(), APIError> {
+    async fn init(&self, credentials: Credentials) -> anyhow::Result<()> {
         let ip = Self::get_ip().await?;
         *self.ip_address.lock() = ip.clone();
-
-        // println!("credentials={credentials:?}");
 
         let tasks =
             credentials.0.into_iter().map(|credential| dev::APIAccount::login(credential, &ip));
@@ -87,7 +85,7 @@ impl Client {
     }
 
     /// Called when an IP address change is detected
-    async fn reinit(&self) -> Result<(), APIError> {
+    async fn reinit(&self) -> anyhow::Result<()> {
         #[cfg(feature = "tracing")]
         tracing::debug!("reinitializing client");
 
@@ -134,7 +132,7 @@ impl Client {
     ///     Ok(())
     /// }
     /// ```
-    pub async fn load(&self, credentials: Credentials) -> Result<(), APIError> {
+    pub async fn load(&self, credentials: Credentials) -> anyhow::Result<()> {
         #[cfg(feature = "tracing")]
         tracing::trace!(credentials = ?credentials, "Loading credentials");
 
@@ -168,16 +166,13 @@ impl Client {
     ///     .add_credential("email2", "password2")
     ///     .build();
     /// let client = Client::new(credentials);
-    /// client.print_keys().await;
+    /// client.debug_keys().await;
     /// ```
     #[cfg(feature = "tracing")]
     pub fn debug_keys(&self) {
         self.accounts.iter().for_each(|account| {
             account.keys.keys.iter().for_each(|key| {
-                #[cfg(feature = "tracing")]
                 tracing::debug!(key = %key.key, key.id=%key.id, key.name=%key.name);
-
-                println!("Key: {}", key.key);
             });
         });
     }
@@ -639,7 +634,9 @@ impl Client {
                                     tracing::debug!("403 Forbidden, but already retried, try checking your credentials?");
                                     Err(APIError::AccessDenied)
                                 } else {
-                                    self.reinit().await?;
+                                    if let Err(e) = self.reinit().await {
+                                        return Err(APIError::LoginFailed(e.to_string()));
+                                    }
                                     if let Some(rb) = cloned_rb {
                                         self.parse_json(Ok(rb), true).await
                                     } else {
