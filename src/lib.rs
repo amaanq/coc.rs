@@ -251,6 +251,8 @@ mod tests {
     async fn test_get_league_season_rankings() -> anyhow::Result<()> {
         let now = Instant::now();
 
+        println!("Logging in!");
+
         load_client().await?;
 
         println!("Logged in! {:?}", now.elapsed());
@@ -491,6 +493,19 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    #[cfg(feature = "tracing")]
+    async fn test_delete_and_readd_keys() -> anyhow::Result<()> {
+        let now = Instant::now();
+
+        load_client().await?;
+
+        let mut client = CLIENT.lock().await;
+        client.debug_keys();
+
+        Ok(())
+    }
+
     #[test]
     fn test_url() {
         let tag = "2PP";
@@ -511,7 +526,7 @@ mod tests {
 
         let now = Instant::now();
 
-        let tasks = (0..20000)
+        let tasks = (0..2000)
             .map(|_| {
                 let logic_long = LogicLong::random(100);
                 let client = client.clone();
@@ -522,10 +537,14 @@ mod tests {
                         {
                             Ok(_) => break,
                             Err(e) => match e {
+                                APIError::NotFound => break,
                                 APIError::RequestThrottled => {
                                     *cloned_throttle_counter.lock().await += 1
                                 }
-                                _ => break,
+                                _ => {
+                                    println!("Error: {e:?}");
+                                    break;
+                                }
                             },
                         }
                     }
@@ -568,15 +587,15 @@ mod tests {
 
         load_client().await?;
 
-        let task = tokio::spawn(async move {
+        let task = async move {
             let events_listener = EventsListenerBuilder::new(CLIENT.lock().await.clone())
                 .add_player("2PP")
                 .add_clans(vec!["2PP"])
                 .build(S);
             events_listener.start(Some(std::time::Duration::from_secs(5))).await
-        });
+        };
 
-        match task.await? {
+        match task.await {
             Ok(_) => println!("Done running task!"),
             Err(e) => println!("Error running task: {e}"),
         }

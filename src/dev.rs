@@ -169,6 +169,10 @@ impl APIAccount {
         tracing::debug!("updating keys");
         account.update_all_keys(ip).await?;
 
+        #[cfg(feature = "tracing")]
+        tracing::debug!("getting keys");
+        account.get_keys().await?;
+
         Ok(account)
     }
 
@@ -201,6 +205,10 @@ impl APIAccount {
         #[cfg(feature = "tracing")]
         tracing::debug!("updating keys");
         self.update_all_keys(ip).await?;
+
+        #[cfg(feature = "tracing")]
+        tracing::debug!("getting keys");
+        self.get_keys().await?;
 
         Ok(())
     }
