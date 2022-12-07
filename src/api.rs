@@ -72,7 +72,7 @@ impl Client {
         let ip = Self::get_ip().await?;
         *self.ip_address.lock() = ip.clone();
 
-        println!("credentials={credentials:?}");
+        // println!("credentials={credentials:?}");
 
         let tasks =
             credentials.0.into_iter().map(|credential| dev::APIAccount::login(credential, &ip));
