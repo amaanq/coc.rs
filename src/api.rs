@@ -169,6 +169,8 @@ impl Client {
             account.keys.keys.iter().for_each(|key| {
                 #[cfg(feature = "tracing")]
                 tracing::debug!(key = %key.key, key.id=%key.id, key.name=%key.name);
+
+                println!("Key: {}", key.key);
             });
         });
     }
