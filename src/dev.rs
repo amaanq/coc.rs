@@ -136,10 +136,10 @@ lazy_static! {
 
 impl APIAccount {
     const BASE_DEV_URL: &'static str = "https://developer.clashofclans.com";
-    const LOGIN_ENDPOINT: &'static str = "/api/login";
-    const KEY_LIST_ENDPOINT: &'static str = "/api/apikey/list";
     const KEY_CREATE_ENDPOINT: &'static str = "/api/apikey/create";
+    const KEY_LIST_ENDPOINT: &'static str = "/api/apikey/list";
     const KEY_REVOKE_ENDPOINT: &'static str = "/api/apikey/revoke";
+    const LOGIN_ENDPOINT: &'static str = "/api/login";
 
     pub async fn login(credential: Credential, ip: &str) -> Result<Self, APIError> {
         let login_response = CLIENT
@@ -161,11 +161,11 @@ impl APIAccount {
             #[cfg(feature = "tracing")]
             tracing::debug!("creating {} keys", 10 - account.keys.len());
 
-            if account.keys.len() > 10 {
-                panic!("account.keys={:?}", account.keys);
-            }
+            // if account.keys.len() > 10 {
+            //     panic!("account.keys={:?}", account.keys);
+            // }
 
-            for _ in 0..(10 - account.keys.len()) {
+            for _ in 0..(10 - account.keys.len().min(10)) {
                 account.create_key(ip).await?;
             }
         }
