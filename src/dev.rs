@@ -1,4 +1,5 @@
-use crate::{credentials::Credential, error::APIError};
+use crate::credentials::Credential;
+use anyhow::Context;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
@@ -141,95 +142,123 @@ impl APIAccount {
     const KEY_REVOKE_ENDPOINT: &'static str = "/api/apikey/revoke";
     const LOGIN_ENDPOINT: &'static str = "/api/login";
 
-    pub async fn login(credential: Credential, ip: &str) -> Result<Self, APIError> {
-        let login_response = CLIENT
+    pub async fn login(credential: Credential, ip: &str) -> anyhow::Result<Self> {
+        let client = reqwest::Client::builder().cookie_store(true).build().unwrap();
+        let login_response = client
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
             .json::<Credential>(&credential)
             .send()
-            .await?
+            .await
+            .context(format!("login request failed for {}", credential.email()))?
             .json()
-            .await?;
+            .await
+            .context(format!("login response failed to parse for {}", credential.email()))?;
 
         let mut account = Self { credential, response: login_response, keys: Keys::default() };
 
         #[cfg(feature = "tracing")]
-        tracing::debug!("getting keys");
-        account.get_keys().await?;
+        tracing::debug!("fetching {}'s keys", account.credential.email());
+        account
+            .get_keys(&client)
+            .await
+            .context(format!("failed to get keys for {}", account.credential.email()))?;
 
         if account.keys.len() != 10 {
             #[cfg(feature = "tracing")]
-            tracing::debug!("creating {} keys", 10 - account.keys.len());
-
-            // if account.keys.len() > 10 {
-            //     panic!("account.keys={:?}", account.keys);
-            // }
+            tracing::debug!(
+                "creating {} keys for {}",
+                10 - account.keys.len().min(10),
+                account.credential.email()
+            );
 
             for _ in 0..(10 - account.keys.len().min(10)) {
-                account.create_key(ip).await?;
+                account
+                    .create_key(&client, ip)
+                    .await
+                    .context(format!("failed to create key for {}", account.credential.email()))?;
             }
         }
 
         #[cfg(feature = "tracing")]
-        tracing::debug!("updating keys");
-        account.update_all_keys(ip).await?;
+        tracing::debug!("updating {}'s keys", account.credential.email());
+        account
+            .update_all_keys(&client, ip)
+            .await
+            .context(format!("failed to update all keys for {}", account.credential.email()))?;
 
         #[cfg(feature = "tracing")]
-        tracing::debug!("getting keys");
-        account.get_keys().await?;
+        tracing::debug!("fetching {}'s keys (post update)", account.credential.email());
+        account
+            .get_keys(&client)
+            .await
+            .context(format!("failed to get keys for {}", account.credential.email()))?;
 
         Ok(account)
     }
 
-    pub async fn re_login(&mut self, ip: &str) -> Result<(), APIError> {
+    pub async fn re_login(&mut self, ip: &str) -> anyhow::Result<()> {
+        let client = reqwest::Client::builder().cookie_store(true).build().unwrap();
         #[cfg(feature = "tracing")]
-        tracing::debug!("re-login");
-        let login_response = CLIENT
+        tracing::debug!("re-login for {}", self.credential.email());
+        let login_response = client
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
             .header("Content-Type", "application/json")
             .json::<Credential>(&self.credential)
             .send()
-            .await?
+            .await
+            .context(format!("login request failed for {}", self.credential.email()))?
             .json()
-            .await?;
+            .await
+            .context(format!("login response failed to parse for {}", self.credential.email()))?;
 
         self.response = login_response;
 
         #[cfg(feature = "tracing")]
-        tracing::debug!("getting keys");
-        self.get_keys().await?;
+        tracing::debug!("fetching {}'s keys", self.credential.email());
+        self.get_keys(&client).await?;
 
         if self.keys.len() != 10 {
             #[cfg(feature = "tracing")]
-            tracing::debug!("creating {} keys", 10 - self.keys.len());
-            for _ in 0..(10 - self.keys.len()) {
-                self.create_key(ip).await?;
+            tracing::debug!(
+                "creating {} keys for {}",
+                10 - self.keys.len().min(10),
+                self.credential.email()
+            );
+            for _ in 0..(10 - self.keys.len().min(10)) {
+                self.create_key(&client, ip).await?;
             }
         }
 
         #[cfg(feature = "tracing")]
-        tracing::debug!("updating keys");
-        self.update_all_keys(ip).await?;
+        tracing::debug!("updating {}'s keys", self.credential.email());
+        self.update_all_keys(&client, ip).await?;
 
         #[cfg(feature = "tracing")]
-        tracing::debug!("getting keys");
-        self.get_keys().await?;
+        tracing::debug!("fetching {}'s keys (post update)", self.credential.email());
+        self.get_keys(&client).await?;
 
         Ok(())
     }
 
-    pub async fn get_keys(&mut self) -> Result<(), APIError> {
-        self.keys = CLIENT
+    pub async fn get_keys(&mut self, client: &reqwest::Client) -> anyhow::Result<()> {
+        self.keys = client
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_LIST_ENDPOINT))
             .send()
-            .await?
+            .await
+            .context("get_keys request failed")?
             .json::<Keys>()
-            .await?;
+            .await
+            .context("get_keys response failed to parse")?;
 
         Ok(())
     }
 
-    pub async fn update_all_keys(&mut self, ip: &str) -> Result<(), APIError> {
+    pub async fn update_all_keys(
+        &mut self,
+        client: &reqwest::Client,
+        ip: &str,
+    ) -> anyhow::Result<()> {
         let cloned_keys = self.keys.clone();
         let bad_keys = cloned_keys
             .keys
@@ -237,7 +266,7 @@ impl APIAccount {
             .filter(|key| !key.cidr_ranges.iter().any(|cidr| ip.contains(cidr)))
             .collect::<Vec<_>>();
 
-        let tasks = bad_keys.iter().map(|key| self.revoke_key(&key.id)).collect::<Vec<_>>();
+        let tasks = bad_keys.iter().map(|key| self.revoke_key(client, &key.id)).collect::<Vec<_>>();
         futures::future::join_all(tasks).await.into_iter().for_each(|maybe_key| match maybe_key {
             Ok(_) => {
                 // in revokes, we don't get a key back. we must remove the key ourselves.
@@ -251,7 +280,7 @@ impl APIAccount {
             Err(_) => {}
         });
 
-        let tasks = (0..bad_keys.len()).map(|_| self.create_key(ip));
+        let tasks = (0..bad_keys.len()).map(|_| self.create_key(client, ip));
         futures::future::join_all(tasks).await.into_iter().for_each(|maybe_key| match maybe_key {
             Ok(key_response) => {
                 if let Some(key) = key_response.key {
@@ -274,8 +303,12 @@ impl APIAccount {
         Ok(())
     }
 
-    pub async fn create_key(&self, ip: &str) -> Result<KeyResponse, APIError> {
-        let key = CLIENT
+    pub async fn create_key(
+        &self,
+        client: &reqwest::Client,
+        ip: &str,
+    ) -> anyhow::Result<KeyResponse> {
+        let key = client
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_CREATE_ENDPOINT))
             .header("Content-Type", "application/json")
             .body(format!(
@@ -284,22 +317,28 @@ impl APIAccount {
                 ip
             ))
             .send()
-            .await?
+            .await.context("create_key request failed")?
             .json()
-            .await?;
+            .await.context("create_key response failed to parse")?;
 
         Ok(key)
     }
 
-    pub async fn revoke_key(&self, key_id: &str) -> Result<KeyResponse, APIError> {
-        let key = CLIENT
+    pub async fn revoke_key(
+        &self,
+        client: &reqwest::Client,
+        key_id: &str,
+    ) -> anyhow::Result<KeyResponse> {
+        let key = client
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::KEY_REVOKE_ENDPOINT))
             .header("Content-Type", "application/json")
             .body(format!("{{\"id\":\"{key_id}\"}}"))
             .send()
-            .await?
+            .await
+            .context("revoke_key request failed")?
             .json()
-            .await?;
+            .await
+            .context("revoke_key response failed to parse")?;
 
         Ok(key)
     }
