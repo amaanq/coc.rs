@@ -160,6 +160,11 @@ impl APIAccount {
         if account.keys.len() != 10 {
             #[cfg(feature = "tracing")]
             tracing::debug!("creating {} keys", 10 - account.keys.len());
+
+            if account.keys.len() > 10 {
+                panic!("account.keys={:?}", account.keys);
+            }
+
             for _ in 0..(10 - account.keys.len()) {
                 account.create_key(ip).await?;
             }
