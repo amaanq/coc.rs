@@ -38,9 +38,8 @@ pub struct Client {
 }
 
 impl Client {
-    const IP_URL: &'static str = "https://api.ipify.org";
-
     const BASE_URL: &'static str = "https://api.clashofclans.com/v1";
+    const IP_URL: &'static str = "https://api.ipify.org";
 
     /// Returns a [`Client`]
     ///
@@ -72,6 +71,8 @@ impl Client {
     async fn init(&self, credentials: Credentials) -> Result<(), APIError> {
         let ip = Self::get_ip().await?;
         *self.ip_address.lock() = ip.clone();
+
+        println!("credentials={credentials:?}");
 
         let tasks =
             credentials.0.into_iter().map(|credential| dev::APIAccount::login(credential, &ip));
@@ -124,7 +125,10 @@ impl Client {
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
     ///     let client = Client::default();
-    ///     let credentials = Credentials::builder().add_credential("email", "password").add_credential("email2", "password2").build();
+    ///     let credentials = Credentials::builder()
+    ///         .add_credential("email", "password")
+    ///         .add_credential("email2", "password2")
+    ///         .build();
     ///     client.load(credentials).await?;
     ///
     ///     Ok(())
@@ -159,7 +163,10 @@ impl Client {
     /// ```no_run
     /// use coc_rs::Client;
     ///
-    /// let credentials = Credentials::builder().add_credential("email", "password").add_credential("email2", "password2").build();
+    /// let credentials = Credentials::builder()
+    ///     .add_credential("email", "password")
+    ///     .add_credential("email2", "password2")
+    ///     .build();
     /// let client = Client::new(credentials);
     /// client.print_keys().await;
     /// ```
@@ -596,7 +603,8 @@ impl Client {
         self.parse_json(self.get(url), false).await
     }
 
-    /// Runs the future that implements `Send` and parses the reqwest response into an `APIResponse`.
+    /// Runs the future that implements `Send` and parses the reqwest response into an
+    /// `APIResponse`.
     ///
     /// # Panics
     ///
@@ -623,7 +631,8 @@ impl Client {
                             }
                             // 400
                             reqwest::StatusCode::BAD_REQUEST => Err(APIError::BadParameters),
-                            // 403 - likely means the IP address has changed, let's reinit the client then and try this again
+                            // 403 - likely means the IP address has changed, let's reinit the
+                            // client then and try this again
                             reqwest::StatusCode::FORBIDDEN => {
                                 if is_retry_and_not_cos {
                                     #[cfg(feature = "tracing")]
@@ -669,8 +678,9 @@ impl Client {
     }
 
     fn get_next_key(&self) -> String {
-        // increment key_token_index, unless it would be larger than the account's token size (10), then reset to 0 and increment key_account_index
-        // let mut index = self.index.lock();
+        // increment key_token_index, unless it would be larger than the account's token size (10),
+        // then reset to 0 and increment key_account_index let mut index =
+        // self.index.lock();
         let mut account_index = self.account_index.load(Ordering::SeqCst);
         let mut key_index = self.key_index.load(Ordering::SeqCst);
 
