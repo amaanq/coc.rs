@@ -20,7 +20,7 @@ Add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
 
 ```toml
 [dependencies]
-coc-rs = "0.7.3"
+coc-rs = "0.7.7"
 ```
 
 Alternatively with `cargo add`
