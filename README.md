@@ -137,33 +137,38 @@ Each event will be fired at the exact time of new cache data in the API.
 
 ### Features
 
-To Enable the `cos` feature (to use the Clash of Stats API), add this to your `Cargo.toml`
+To enable the `cos` feature (to use the Clash of Stats API), add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-coc-rs = { version = "0.7.3", features = ["cos"] }
+coc-rs = { version = "0.7.7", features = ["cos"] }
 ```
 
-To Enable the `extra` feature (which gives you extra tools), add this to your `Cargo.toml`
+To enable the `extra` feature (which gives you extra tools), add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-coc-rs = { version = "0.7.3", features = ["extra"] }
+coc-rs = { version = "0.7.7", features = ["extra"] }
 ```
 
-Or for both...
-
-To Enable the `cos` feature, add this to your `Cargo.toml`
+To enable the `tracing` feature (which provides built-in debugging/tracing tools), add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-coc-rs = { version = "0.7.3", features = ["all"] }
+coc-rs = { version = "0.7.7", features = ["tracing"] }
+```
+
+Or for all 3
+
+```toml
+[dependencies]
+coc-rs = { version = "0.7.7", features = ["all"] }
 ```
 
 - Alternately with `cargo add`
 
 ```shell
-$ cargo add coc-rs --features cos # or extra...or all (you get it)
+$ cargo add coc-rs --features cos # or extra...or tracing...or all (you get it)
 ```
 
 ## Tests
