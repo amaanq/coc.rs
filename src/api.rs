@@ -682,7 +682,7 @@ impl Client {
         let mut key_index = self.key_index.load(Ordering::SeqCst);
 
         let accounts = self.accounts.iter().collect::<Vec<_>>();
-        let size_of_keys = accounts[account_index].keys.keys.len();
+        let size_of_keys = accounts[account_index].keys.len().min(10);
 
         // if we're at the end of this account's keys..
         if key_index == size_of_keys - 1 {

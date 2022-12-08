@@ -164,7 +164,7 @@ impl APIAccount {
             .await
             .context(format!("failed to get keys for {}", account.credential.email()))?;
 
-        if account.keys.len() != 10 {
+        if account.keys.len() < 10 {
             #[cfg(feature = "tracing")]
             tracing::debug!(
                 "creating {} keys for {}",
@@ -218,7 +218,7 @@ impl APIAccount {
         tracing::debug!("fetching {}'s keys", self.credential.email());
         self.get_keys(&client).await?;
 
-        if self.keys.len() != 10 {
+        if self.keys.len() < 10 {
             #[cfg(feature = "tracing")]
             tracing::debug!(
                 "creating {} keys for {}",
@@ -280,7 +280,7 @@ impl APIAccount {
             Err(_) => {}
         });
 
-        let tasks = (0..bad_keys.len()).map(|_| self.create_key(client, ip));
+        let tasks = (0..bad_keys.len().min(10)).map(|_| self.create_key(client, ip));
         futures::future::join_all(tasks).await.into_iter().for_each(|maybe_key| match maybe_key {
             Ok(key_response) => {
                 if let Some(key) = key_response.key {
