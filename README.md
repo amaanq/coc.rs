@@ -1,6 +1,6 @@
 # coc.rs
 
-A Clash of Clans API wrapper written in rust!
+A Clash of Clans API wrapper written in Rust!
 
 ## Key Features
 
