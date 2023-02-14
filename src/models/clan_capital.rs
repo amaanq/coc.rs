@@ -112,20 +112,22 @@ pub struct Member {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DistrictName {
-    #[serde(rename = "Balloon Lagoon")]
-    BalloonLagoon,
-    #[serde(rename = "Barbarian Camp")]
-    BarbarianCamp,
-    #[serde(rename = "Builder's Workshop")]
-    BuilderSWorkshop,
     #[serde(rename = "Capital Peak")]
     CapitalPeak,
+    #[serde(rename = "Barbarian Camp")]
+    BarbarianCamp,
+    #[serde(rename = "Wizard Valley")]
+    WizardValley,
+    #[serde(rename = "Balloon Lagoon")]
+    BalloonLagoon,
+    #[serde(rename = "Builder's Workshop")]
+    BuildersWorkshop,
     #[serde(rename = "Dragon Cliffs")]
     DragonCliffs,
     #[serde(rename = "Golem Quarry")]
     GolemQuarry,
-    #[serde(rename = "Wizard Valley")]
-    WizardValley,
+    #[serde(rename = "Skeleton Park")]
+    SkeletonPark,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
