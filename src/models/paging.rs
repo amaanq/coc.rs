@@ -1,4 +1,12 @@
+use base64::{
+    alphabet,
+    engine::{self, general_purpose},
+    Engine as _,
+};
 use serde::{Deserialize, Serialize};
+
+const BASE64_ENGINE: engine::GeneralPurpose =
+    engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Paging {
@@ -101,11 +109,11 @@ impl Cursor {
     }
 
     fn set_before(&mut self, before: i32) {
-        self.before = Some(base64::encode(format!("{{\"pos\":{before}}}")));
+        self.before = Some(BASE64_ENGINE.encode(format!("{{\"pos\":{before}}}")));
     }
 
     fn set_after(&mut self, after: i32) {
-        self.after = Some(base64::encode(format!("{{\"pos\":{after}}}")));
+        self.after = Some(BASE64_ENGINE.encode(format!("{{\"pos\":{after}}}")));
     }
 
     #[must_use]

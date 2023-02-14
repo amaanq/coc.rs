@@ -16,17 +16,16 @@ A Clash of Clans API wrapper written in Rust!
 ### Installing
 
 Add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
-<br/>
 
 ```toml
 [dependencies]
 coc-rs = "0.7.7"
 ```
 
-Alternatively with `cargo add`
+Or with `cargo add`
 
-```shell
-$ cargo add coc-rs --features=all
+```sh
+cargo add coc-rs --features=all
 ```
 
 ### Quick Example
@@ -133,7 +132,6 @@ async fn main() {
 
 _Note_: Each endpoint has a different cache refresh time.
 Each event will be fired at the exact time of new cache data in the API.
-<br/>
 
 ### Features
 
@@ -151,7 +149,8 @@ To enable the `extra` feature (which gives you extra tools), add this to your `C
 coc-rs = { version = "0.7.7", features = ["extra"] }
 ```
 
-To enable the `tracing` feature (which provides built-in debugging/tracing tools), add this to your `Cargo.toml`
+To enable the `tracing` feature (which provides built-in debugging/tracing tools),
+add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
@@ -167,8 +166,8 @@ coc-rs = { version = "0.7.7", features = ["all"] }
 
 - Alternately with `cargo add`
 
-```shell
-$ cargo add coc-rs --features cos # or extra...or tracing...or all (you get it)
+```sh
+cargo add coc-rs --features cos # or extra...or tracing...or all (you get it)
 ```
 
 ## Tests

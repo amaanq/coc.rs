@@ -496,11 +496,9 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "tracing")]
     async fn test_delete_and_readd_keys() -> anyhow::Result<()> {
-        let now = Instant::now();
-
         load_client().await?;
 
-        let mut client = CLIENT.lock().await;
+        let client = CLIENT.lock().await;
         client.debug_keys();
 
         Ok(())
