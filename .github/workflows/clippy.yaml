@@ -1,10 +1,10 @@
-on: 
+name: Clippy
+
+on:
   push:
     branches:
       - master
   pull_request:
-
-name: clippy
 
 jobs:
   clippy:

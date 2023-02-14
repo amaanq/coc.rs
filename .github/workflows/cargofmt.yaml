@@ -1,6 +1,6 @@
-on: [push, pull_request]
+name: Cargo Format
 
-name: cargo fmt
+on: [push, pull_request]
 
 jobs:
   cargofmt:

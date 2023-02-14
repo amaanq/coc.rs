@@ -18,7 +18,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          
+
       - name: Debug Build
         run: cargo build
 

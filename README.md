@@ -19,7 +19,7 @@ Add the version from [here](https://crates.io/crates/coc-rs) in your Cargo.toml
 
 ```toml
 [dependencies]
-coc-rs = "0.7.7"
+coc-rs = "0.8.0"
 ```
 
 Or with `cargo add`
@@ -139,14 +139,14 @@ To enable the `cos` feature (to use the Clash of Stats API), add this to your `C
 
 ```toml
 [dependencies]
-coc-rs = { version = "0.7.7", features = ["cos"] }
+coc-rs = { version = "0.8.0", features = ["cos"] }
 ```
 
 To enable the `extra` feature (which gives you extra tools), add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-coc-rs = { version = "0.7.7", features = ["extra"] }
+coc-rs = { version = "0.8.0", features = ["extra"] }
 ```
 
 To enable the `tracing` feature (which provides built-in debugging/tracing tools),
@@ -154,14 +154,14 @@ add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-coc-rs = { version = "0.7.7", features = ["tracing"] }
+coc-rs = { version = "0.8.0", features = ["tracing"] }
 ```
 
 Or for all 3
 
 ```toml
 [dependencies]
-coc-rs = { version = "0.7.7", features = ["all"] }
+coc-rs = { version = "0.8.0", features = ["all"] }
 ```
 
 - Alternately with `cargo add`
