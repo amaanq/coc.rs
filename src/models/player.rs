@@ -163,7 +163,7 @@ pub struct LegendStatistics {
 
 #[cfg(feature = "extra")]
 impl Player {
-    const HOME_TROOP_ORDER: [&'static str; 24] = [
+    const HOME_TROOP_ORDER: [&'static str; 25] = [
         "Barbarian",
         "Archer",
         "Giant",
@@ -188,15 +188,17 @@ impl Player {
         "Bowler",
         "Ice Golem",
         "Headhunter",
+        "Electro Titan",
     ];
 
-    const SIEGE_MACHINE_ORDER: [&'static str; 6] = [
+    const SIEGE_MACHINE_ORDER: [&'static str; 7] = [
         "Wall Wrecker",
         "Battle Blimp",
         "Stone Slammer",
         "Siege Barracks",
         "Log Launcher",
         "Flame Flinger",
+        "Battle Drill",
     ];
 
     const SUPER_TROOP_ORDER: [&'static str; 14] = [
@@ -230,7 +232,7 @@ impl Player {
         "Hog Glider",
     ];
 
-    const SPELL_ORDER: [&'static str; 12] = [
+    const SPELL_ORDER: [&'static str; 13] = [
         "Lightning Spell",
         "Healing Spell",
         "Rage Spell",
@@ -238,6 +240,7 @@ impl Player {
         "Freeze Spell",
         "Clone Spell",
         "Invisibility Spell",
+        "Recall Spell",
         "Poison Spell",
         "Earthquake Spell",
         "Haste Spell",
@@ -251,8 +254,17 @@ impl Player {
     const HERO_ORDER: [&'static str; 5] =
         ["Barbarian King", "Archer Queen", "Grand Warden", "Royal Champion", "Battle Machine"];
 
-    const HERO_PETS_ORDER: [&'static str; 4] =
-        ["L.A.S.S.I", "Electro Owl", "Mighty Yak", "Unicorn"];
+    const HERO_PETS_ORDER: [&'static str; 8] = [
+        "L.A.S.S.I",
+        "Electro Owl",
+        "Mighty Yak",
+        "Unicorn",
+        "Phoenix",
+        "Poison Lizard",
+        "Diggy",
+        "Frosty",
+    ];
+
     #[allow(dead_code)]
     const ACHIEVEMENT_ORDER: [&'static str; 43] = [
         // Home Base
