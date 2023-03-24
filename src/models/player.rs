@@ -259,7 +259,7 @@ impl Player {
         "Electro Owl",
         "Mighty Yak",
         "Unicorn",
-        "Phoenix",
+        "Phoenix", 
         "Poison Lizard",
         "Diggy",
         "Frosty",
