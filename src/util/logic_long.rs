@@ -23,7 +23,7 @@ impl LogicLong {
         self.low_integer
     }
 
-    #[cfg(test)]
+    #[cfg(feature = "extra")]
     #[must_use]
     /// Player ids have a max high of 100, all others seem to be much higher
     pub fn random(max_high: i32) -> Self {

@@ -679,8 +679,8 @@ impl Client {
         // increment key_token_index, unless it would be larger than the account's token size (10),
         // then reset to 0 and increment key_account_index let mut index =
         // self.index.lock();
-        let mut account_index = self.account_index.load(Ordering::SeqCst);
-        let mut key_index = self.key_index.load(Ordering::SeqCst);
+        let mut account_index = self.account_index.load(Ordering::Relaxed);
+        let mut key_index = self.key_index.load(Ordering::Relaxed);
 
         let accounts = self.accounts.iter().collect::<Vec<_>>();
         let size_of_keys = accounts[account_index].keys.len().min(10);
@@ -719,8 +719,8 @@ impl Client {
             })
             .clone();
 
-        self.account_index.store(account_index, Ordering::SeqCst);
-        self.key_index.store(key_index, Ordering::SeqCst);
+        self.account_index.store(account_index, Ordering::Relaxed);
+        self.key_index.store(key_index, Ordering::Relaxed);
 
         token.key
     }

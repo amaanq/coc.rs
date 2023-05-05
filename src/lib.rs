@@ -27,6 +27,10 @@ pub mod error;
 /// Events track changes in the API
 pub mod events;
 
+#[cfg(feature = "extra")]
+pub mod util;
+
+#[cfg(not(feature = "extra"))]
 mod util;
 
 #[macro_use]
@@ -34,7 +38,7 @@ extern crate num_derive;
 
 #[cfg(test)]
 mod tests {
-    use std::{env, sync::Arc, time::Instant};
+    use std::{env, time::Instant};
 
     use anyhow::{Context, Result};
     use async_trait::async_trait;
@@ -48,7 +52,6 @@ mod tests {
         events::{EventHandler, EventType, EventsListenerBuilder},
         location::Local,
         models::{clan, clan_search, leagues, location, paging, player, season},
-        util::LogicLong,
     };
 
     static mut LOADED: bool = false;
@@ -510,10 +513,12 @@ mod tests {
         let encoded = urlencoding::encode(tag);
         println!("{encoded}");
     }
-
+    #[cfg(feature = "extra")]
     #[tokio::test]
     async fn test_1000_player_ids() -> anyhow::Result<()> {
-        use crate::util::HASH_TAG_CODE_GENERATOR;
+        use std::sync::Arc;
+
+        use crate::util::{LogicLong, HASH_TAG_CODE_GENERATOR};
 
         load_client().await?;
 

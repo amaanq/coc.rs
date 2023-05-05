@@ -77,7 +77,7 @@ pub struct Key {
     pub tier: String,
     pub name: String,
     pub description: Option<String>,
-    pub origins: Option<String>,
+    pub origins: Option<Vec<String>>,
     pub scopes: Vec<Scope>,
     #[serde(rename = "cidrRanges")]
     pub cidr_ranges: Vec<String>,
