@@ -63,7 +63,7 @@ impl Client {
 
         client.init(credentials).await?;
         // *client.ready.lock() = true;
-        client.ready.store(true, Ordering::SeqCst);
+        client.ready.store(true, Ordering::Relaxed);
         Ok(client)
     }
 
@@ -89,7 +89,7 @@ impl Client {
         #[cfg(feature = "tracing")]
         tracing::debug!("reinitializing client");
 
-        self.ready.store(false, Ordering::SeqCst);
+        self.ready.store(false, Ordering::Relaxed);
 
         let ip = Self::get_ip().await?;
         if ip != *self.ip_address.lock() {
@@ -105,7 +105,7 @@ impl Client {
             }
         }
 
-        self.ready.store(true, Ordering::SeqCst);
+        self.ready.store(true, Ordering::Relaxed);
 
         Ok(())
     }
@@ -136,9 +136,9 @@ impl Client {
         #[cfg(feature = "tracing")]
         tracing::trace!(credentials = ?credentials, "Loading credentials");
 
-        self.ready.store(false, Ordering::SeqCst);
+        self.ready.store(false, Ordering::Relaxed);
         self.init(credentials).await?;
-        self.ready.store(true, Ordering::SeqCst);
+        self.ready.store(true, Ordering::Relaxed);
         Ok(())
     }
 
@@ -185,7 +185,7 @@ impl Client {
         &self,
         url: U,
     ) -> Result<reqwest::RequestBuilder, APIError> {
-        if !self.ready.load(Ordering::SeqCst) {
+        if !self.ready.load(Ordering::Relaxed) {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.get(url).bearer_auth(self.get_next_key()))
@@ -196,7 +196,7 @@ impl Client {
         url: U,
         body: T,
     ) -> Result<reqwest::RequestBuilder, APIError> {
-        if !self.ready.load(Ordering::SeqCst) {
+        if !self.ready.load(Ordering::Relaxed) {
             return Err(APIError::ClientNotReady);
         }
         Ok(CLIENT.post(url).bearer_auth(self.get_next_key()).body(body))

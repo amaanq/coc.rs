@@ -12,12 +12,11 @@ impl LogicLongToCodeConverterUtil {
     }
 
     pub fn to_code(&self, logic_long: LogicLong) -> String {
-        let high_value = logic_long.get_higher_int();
+        let high_value = i64::from(logic_long.get_higher_int());
 
         if high_value < 256 {
             return self.hash_tag.clone()
-                + &self
-                    .convert((i64::from(logic_long.get_lower_int()) << 8) | i64::from(high_value));
+                + &self.convert((i64::from(logic_long.get_lower_int()) << 8) | high_value);
         }
 
         #[cfg(feature = "tracing")]
@@ -65,25 +64,26 @@ impl LogicLongToCodeConverterUtil {
     }
 
     fn convert(&self, mut value: i64) -> String {
-        let mut code = vec![' '; self.conversion_chars.len()];
-
         if value > -1 {
             let conversion_chars_count = self.conversion_chars.len();
+            let mut code = [' '; 12];
 
             for i in (0..12).rev() {
-                code[i] = self
-                    .conversion_chars
-                    .chars()
-                    .nth((value % conversion_chars_count as i64) as usize)
-                    .unwrap();
+                let index = (value % conversion_chars_count as i64) as usize;
+                if let Some(char) = self.conversion_chars.get(index..=index) {
+                    code[i] = char.chars().next().unwrap();
+                }
                 value /= conversion_chars_count as i64;
 
-                if value == 0 {
-                    return code[i..].iter().collect::<String>().trim().to_string();
+                if value == 0 || i == 0 {
+                    let start_idx = code.iter().take_while(|&&c| c == ' ').count();
+                    let mut result = String::with_capacity(12 - start_idx);
+                    for ch in code[start_idx..].iter() {
+                        result.push(*ch);
+                    }
+                    return result;
                 }
             }
-
-            return code.iter().collect::<String>().trim().to_string();
         }
 
         #[cfg(feature = "tracing")]
