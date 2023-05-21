@@ -28,7 +28,7 @@ pub struct Player {
     pub league: Option<leagues::League>,
     pub legend_statistics: Option<LegendStatistics>,
     pub achievements: Vec<Achievement>,
-    pub versus_battle_win_count: i32,
+    pub versus_battle_win_count: Option<i32>,
     pub labels: Vec<labels::PlayerLabel>,
     pub troops: Vec<Troop>,
     pub heroes: Vec<Hero>,

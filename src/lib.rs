@@ -213,7 +213,7 @@ mod tests {
 
         load_client().await?;
 
-        let player = CLIENT.lock().await.get_player("2PP").await?;
+        let player = CLIENT.lock().await.get_player("2pp").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Player: {player:?}");
