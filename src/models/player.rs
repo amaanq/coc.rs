@@ -120,6 +120,9 @@ pub enum Village {
 
     #[serde(rename = "home")]
     HomeVillage,
+
+    #[serde(rename = "clanCapital")]
+    ClanCapital,
 }
 
 impl Village {
@@ -138,6 +141,7 @@ impl ToString for Village {
         match self {
             Self::HomeVillage => "Home Village".to_string(),
             Self::BuilderBase => "Builder Base".to_string(),
+            Self::ClanCapital => "Clan Capital".to_string(),
         }
     }
 }
