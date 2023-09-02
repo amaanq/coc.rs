@@ -57,7 +57,7 @@ mod tests {
     static mut LOADED: bool = false;
 
     lazy_static::lazy_static!(
-        pub static ref CLIENT: Mutex<Client> = Mutex::new(Client::default());
+        pub static ref CLIENT: Client = Client::default();
     );
 
     /// Get an environment variable, returning an Err with a
@@ -69,8 +69,6 @@ mod tests {
     async fn load_client() -> anyhow::Result<()> {
         unsafe {
             if !LOADED {
-                let client = CLIENT.lock().await; // lock the client so no others can take it while we're loading
-
                 let credentials = Credentials::builder();
                 let credentials = required_env_var("emails")?
                     .split(',')
@@ -85,7 +83,7 @@ mod tests {
                     })
                     .build();
 
-                client.load(credentials).await?;
+                CLIENT.load(credentials).await?;
                 LOADED = true;
             }
         }
@@ -111,7 +109,7 @@ mod tests {
 
         load_client().await.unwrap();
 
-        let clan_warlog = CLIENT.lock().await.get_clan_warlog("2PJP2Q0PY").await?;
+        let clan_warlog = CLIENT.get_clan_warlog("2PJP2Q0PY").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Clan warlog: {clan_warlog:?}");
@@ -125,8 +123,8 @@ mod tests {
         load_client().await?;
 
         let clans = CLIENT
-            .lock()
-            .await
+            // .lock()
+            // .await
             .get_clans(
                 clan_search::ClanSearchOptionsBuilder::new()
                     .location_id(location::Local::UnitedStates)
@@ -149,7 +147,7 @@ mod tests {
 
         load_client().await?;
 
-        let current_war = CLIENT.lock().await.get_current_war("2L29GJ0G0").await?;
+        let current_war = CLIENT.get_current_war("2L29GJ0G0").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Current war: {current_war:?}");
@@ -162,7 +160,7 @@ mod tests {
 
         load_client().await?;
 
-        let clan = CLIENT.lock().await.get_clan("90PU0RRG").await?;
+        let clan = CLIENT.get_clan("90PU0RRG").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Clan: {clan:?}");
@@ -176,7 +174,7 @@ mod tests {
 
         load_client().await?;
 
-        let clan_members = CLIENT.lock().await.get_clan_members("2PP").await?;
+        let clan_members = CLIENT.get_clan_members("2PP").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         // retain clan members where role is Role::CoLeader and print each one when iterating, then collect
@@ -199,8 +197,7 @@ mod tests {
 
         load_client().await?;
 
-        let clan_capital_raid_seasons =
-            CLIENT.lock().await.get_clan_capital_raid_seasons("2PP").await?;
+        let clan_capital_raid_seasons = CLIENT.get_clan_capital_raid_seasons("2PP").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Clan capital raid seasons: {clan_capital_raid_seasons:?}");
@@ -213,7 +210,7 @@ mod tests {
 
         load_client().await?;
 
-        let player = CLIENT.lock().await.get_player("2pp").await?;
+        let player = CLIENT.get_player("2pp").await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Player: {player:?}");
@@ -228,7 +225,7 @@ mod tests {
 
         load_client().await?;
 
-        let verified = CLIENT.lock().await.verify_player_token("CVJLQOLR", "").await?;
+        let verified = CLIENT.verify_player_token("CVJLQOLR", "").await?;
 
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Verified: {verified:?}");
@@ -242,7 +239,7 @@ mod tests {
 
         load_client().await?;
 
-        let leagues = CLIENT.lock().await.get_leagues().await?;
+        let leagues = CLIENT.get_leagues().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Leagues: {leagues:?}");
@@ -261,8 +258,8 @@ mod tests {
         println!("Logged in! {:?}", now.elapsed());
 
         let league_season_rankings = CLIENT
-            .lock()
-            .await
+            // .lock()
+            // .await
             .get_league_season_rankings(
                 leagues::LeagueKind::LegendLeague,
                 season::Season::builder().year(2015).month(Month::August).build(),
@@ -289,7 +286,7 @@ mod tests {
 
         load_client().await?;
 
-        let league = CLIENT.lock().await.get_league(leagues::LeagueKind::LegendLeague).await?;
+        let league = CLIENT.get_league(leagues::LeagueKind::LegendLeague).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("League: {league:?}");
@@ -303,8 +300,7 @@ mod tests {
 
         load_client().await?;
 
-        let league_seasons =
-            CLIENT.lock().await.get_league_seasons(leagues::LeagueKind::LegendLeague).await?;
+        let league_seasons = CLIENT.get_league_seasons(leagues::LeagueKind::LegendLeague).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         league_seasons.items.iter().for_each(|season| {
@@ -320,8 +316,7 @@ mod tests {
 
         load_client().await?;
 
-        let war_league =
-            CLIENT.lock().await.get_war_league(leagues::WarLeagueKind::ChampionLeagueI).await?;
+        let war_league = CLIENT.get_war_league(leagues::WarLeagueKind::ChampionLeagueI).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("War league: {war_league:?}");
@@ -335,7 +330,7 @@ mod tests {
 
         load_client().await?;
 
-        let war_leagues = CLIENT.lock().await.get_war_leagues().await?;
+        let war_leagues = CLIENT.get_war_leagues().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("War leagues: {war_leagues:?}");
@@ -349,8 +344,7 @@ mod tests {
 
         load_client().await?;
 
-        let mut clan_rankings =
-            CLIENT.lock().await.get_clan_rankings(location::Local::UnitedStates).await?;
+        let mut clan_rankings = CLIENT.get_clan_rankings(location::Local::UnitedStates).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         clan_rankings.items.sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
@@ -367,8 +361,7 @@ mod tests {
 
         load_client().await?;
 
-        let player_rankings =
-            CLIENT.lock().await.get_player_rankings(location::Local::UnitedStates).await?;
+        let player_rankings = CLIENT.get_player_rankings(location::Local::UnitedStates).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         for p in player_rankings
@@ -397,7 +390,7 @@ mod tests {
         load_client().await?;
 
         let mut versus_clan_rankings =
-            CLIENT.lock().await.get_versus_clan_rankings(location::Local::UnitedStates).await?;
+            CLIENT.get_versus_clan_rankings(location::Local::UnitedStates).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         versus_clan_rankings.items.sort_by(|a, b| a.clan_level.cmp(&b.clan_level));
@@ -415,7 +408,7 @@ mod tests {
         load_client().await?;
 
         let mut versus_player_rankings =
-            CLIENT.lock().await.get_versus_player_rankings(location::Local::UnitedStates).await?;
+            CLIENT.get_versus_player_rankings(location::Local::UnitedStates).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         versus_player_rankings.items.sort_by(|a, b| a.exp_level.cmp(&b.exp_level));
@@ -432,7 +425,7 @@ mod tests {
 
         load_client().await?;
 
-        let locations = CLIENT.lock().await.get_locations().await?;
+        let locations = CLIENT.get_locations().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Locations: {locations:?}");
@@ -446,7 +439,7 @@ mod tests {
 
         load_client().await?;
 
-        let location = CLIENT.lock().await.get_location(location::Local::UnitedStates).await?;
+        let location = CLIENT.get_location(location::Local::UnitedStates).await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Location: {location:?}");
@@ -460,7 +453,7 @@ mod tests {
 
         load_client().await?;
 
-        let goldpass = CLIENT.lock().await.get_goldpass().await?;
+        let goldpass = CLIENT.get_goldpass().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Goldpass Start: {}", goldpass.start_time());
@@ -475,7 +468,7 @@ mod tests {
 
         load_client().await?;
 
-        let player_labels = CLIENT.lock().await.get_player_labels().await?;
+        let player_labels = CLIENT.get_player_labels().await?;
         println!("Time elapsed! {:?}", now.elapsed());
         println!("Player Labels: {player_labels:?}");
 
@@ -488,7 +481,7 @@ mod tests {
 
         load_client().await?;
 
-        let player_label = CLIENT.lock().await.get_clan_labels().await?;
+        let player_label = CLIENT.get_clan_labels().await?;
         println!("Time elapsed! {:?}", now.elapsed());
 
         println!("Player Label: {player_label:?}");
@@ -501,8 +494,7 @@ mod tests {
     async fn test_delete_and_readd_keys() -> anyhow::Result<()> {
         load_client().await?;
 
-        let client = CLIENT.lock().await;
-        client.debug_keys();
+        CLIENT.debug_keys();
 
         Ok(())
     }
@@ -523,7 +515,6 @@ mod tests {
         load_client().await?;
 
         // hold the lock for the entire test so it's not dropped and another test picks it up
-        let client = CLIENT.lock().await;
 
         let throttle_counter = Arc::new(Mutex::new(0));
 
@@ -532,7 +523,7 @@ mod tests {
         let tasks = (0..2000)
             .map(|_| {
                 let logic_long = LogicLong::random(100);
-                let client = client.clone();
+                let client = CLIENT.clone();
                 let cloned_throttle_counter = throttle_counter.clone();
                 async move {
                     loop {
@@ -591,7 +582,7 @@ mod tests {
         load_client().await?;
 
         let task = async move {
-            let events_listener = EventsListenerBuilder::new(CLIENT.lock().await.clone())
+            let events_listener = EventsListenerBuilder::new(CLIENT.clone())
                 .add_player("2PP")
                 .add_clans(vec!["2PP"])
                 .build(S);
@@ -625,7 +616,7 @@ mod tests {
             let credentials = Credentials::builder()
                 .add_credential(env::var("cosemail").unwrap(), env::var("cospassword").unwrap())
                 .build();
-            super::CLIENT.lock().await.cos_login(&credentials).await?;
+            super::CLIENT.cos_login(&credentials).await?;
 
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -636,7 +627,7 @@ mod tests {
         async fn test_cos_get_player() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_player = super::CLIENT.lock().await.cos_get_player("2PP").await?;
+            let cos_player = super::CLIENT.cos_get_player("2PP").await?;
 
             println!("{cos_player:?}");
             println!("Time elapsed! {:?}", now.elapsed());
@@ -648,8 +639,7 @@ mod tests {
         async fn test_cos_get_player_history() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_player_history =
-                super::CLIENT.lock().await.cos_get_player_history("2PP").await?;
+            let cos_player_history = super::CLIENT.cos_get_player_history("2PP").await?;
             println!("{cos_player_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -660,7 +650,7 @@ mod tests {
         async fn test_cos_get_clan() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_clan = super::CLIENT.lock().await.cos_get_clan("2PP").await?;
+            let cos_clan = super::CLIENT.cos_get_clan("2PP").await?;
             println!("{cos_clan:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -671,8 +661,7 @@ mod tests {
         async fn test_cos_get_clan_past_members() -> Result<(), APIError> {
             let now = Instant::now();
 
-            let cos_clan_history =
-                super::CLIENT.lock().await.cos_get_clan_past_members("#2PP").await?;
+            let cos_clan_history = super::CLIENT.cos_get_clan_past_members("#2PP").await?;
             println!("{cos_clan_history:?}");
             println!("Time elapsed! {:?}", now.elapsed());
 
@@ -684,8 +673,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_clan_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_war_wins_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
@@ -701,8 +688,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_clan_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_war_win_streak_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
@@ -718,8 +703,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_clan_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_best_war_win_streak_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
@@ -735,8 +718,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_clan_ranking = super::CLIENT
-                .lock()
-                .await
                 .cos_get_clan_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
@@ -752,8 +733,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_clan_ranking = super::CLIENT
-                .lock()
-                .await
                 .cos_get_clan_versus_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::None).page(1).build(),
                 )
@@ -769,8 +748,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_ranking = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -785,8 +762,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_ranking = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_versus_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -801,8 +776,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_ranking = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_best_versus_trophies_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -817,8 +790,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_legend_trophies_leaderboard(
                     cos_options::Options::builder().page(5555).build(),
                 )
@@ -833,8 +804,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_war_stars_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -849,8 +818,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_cwl_war_stars_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -865,8 +832,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_attack_wins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -881,8 +846,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_defense_wins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -898,8 +861,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_versus_battle_wins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -914,8 +875,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_heroic_heist_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -930,8 +889,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_conqueror_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -946,8 +903,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_unbreakable_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -962,8 +917,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_humiliator_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -978,8 +931,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_un_build_it_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -994,8 +945,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_games_champion_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -1010,8 +959,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_troops_donated_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -1026,8 +973,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_troops_received_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -1042,8 +987,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_friend_in_need_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -1058,8 +1001,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_exp_level_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -1074,8 +1015,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_well_seasoned_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -1090,8 +1029,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_get_those_goblins_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
@@ -1106,8 +1043,6 @@ mod tests {
             let now = Instant::now();
 
             let cos_player_versus_trophies_history = super::CLIENT
-                .lock()
-                .await
                 .cos_get_player_nice_and_tidy_leaderboard(
                     cos_options::Options::builder().location(Local::UnitedStates).page(1).build(),
                 )
