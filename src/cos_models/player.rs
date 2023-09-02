@@ -107,7 +107,7 @@ pub mod cos_player {
         pub is_active: bool,
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
     pub enum Village {
         #[serde(rename = "builder")]
         BuilderBase,

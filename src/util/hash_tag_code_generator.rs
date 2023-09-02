@@ -9,8 +9,8 @@ pub struct HashTagCodeGenerator {
 }
 
 impl HashTagCodeGenerator {
-    pub const CONVERSION_CHARS: &str = "0289PYLQGRJCUV";
-    pub const CONVERSION_TAG: &str = "#";
+    pub const CONVERSION_CHARS: &'static str = "0289PYLQGRJCUV";
+    pub const CONVERSION_TAG: &'static str = "#";
 
     #[must_use]
     pub fn new() -> Self {

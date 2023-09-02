@@ -130,9 +130,10 @@ pub mod cos_options {
         }
     }
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub enum Level {
         /// All Town Halls
+        #[default]
         None = 0,
         /// Town Hall 1
         One = 1,
@@ -164,12 +165,6 @@ pub mod cos_options {
         Fourteen = 14,
         /// Town Hall 15
         Fifteen = 15,
-    }
-
-    impl Default for Level {
-        fn default() -> Self {
-            Level::None
-        }
     }
 
     impl std::fmt::Display for Level {

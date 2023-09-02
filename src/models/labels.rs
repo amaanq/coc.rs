@@ -3,7 +3,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use super::icon_urls;
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 #[repr(i32)]
 pub enum PlayerLabelKind {
     ClanWars = 57_000_000,
@@ -27,7 +27,7 @@ pub enum PlayerLabelKind {
     ClanCapital = 57_000_018,
 }
 
-#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 #[repr(i32)]
 pub enum ClanLabelKind {
     ClanWars = 56_000_000,

@@ -54,7 +54,7 @@ impl Clan {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Ord)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Copy, Ord)]
 pub enum Privacy {
     #[serde(rename = "open")]
     Open,
@@ -89,7 +89,7 @@ impl ToString for Privacy {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Ord)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Copy, Ord)]
 pub enum WarFrequency {
     #[serde(rename = "unknown")]
     Unknown,
@@ -176,7 +176,7 @@ pub struct ClanMember {
     pub donations_received: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Role {
     #[serde(rename = "notMember")]
     NotMember,

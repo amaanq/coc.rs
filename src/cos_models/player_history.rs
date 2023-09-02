@@ -41,7 +41,7 @@ pub mod cos_player_history {
         pub roles: Vec<i64>,
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
     pub enum Type {
         #[serde(rename = "SEEN")]
         Seen,

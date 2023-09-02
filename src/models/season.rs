@@ -1,18 +1,18 @@
 use serde::{Deserialize, Serialize};
 use time::Month;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SeasonError {
     InvalidSeason,
     ParseFailed(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SeasonBuilder {
     season: Season,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Season {
     #[serde(rename = "id")]
     id: String,
@@ -113,7 +113,7 @@ impl std::str::FromStr for Season {
             id: season.to_string(),
             year: season_split.next().ok_or(SeasonError::InvalidSeason)?.parse()?,
             month: Month::try_from(
-                season_split.next().ok_or(SeasonError::InvalidSeason)?.parse::<i32>()? as u8,
+                season_split.next().ok_or(SeasonError::InvalidSeason)?.parse::<u8>()?,
             )
             .unwrap(),
         })
@@ -124,8 +124,7 @@ impl std::fmt::Display for Season {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut season_split = self.id.split('-');
         let year = season_split.next().unwrap().parse::<i32>().unwrap();
-        let month =
-            Month::try_from(season_split.next().unwrap().parse::<i32>().unwrap() as u8).unwrap();
+        let month = Month::try_from(season_split.next().unwrap().parse::<u8>().unwrap()).unwrap();
         write!(f, "{year}-{:02}", month as i32)
     }
 }

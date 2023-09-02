@@ -110,7 +110,7 @@ pub struct Member {
     pub capital_resources_looted: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum DistrictName {
     #[serde(rename = "Capital Peak")]
     CapitalPeak,
@@ -130,7 +130,7 @@ pub enum DistrictName {
     SkeletonPark,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum State {
     Ended,

@@ -35,7 +35,7 @@ pub struct Player {
     pub spells: Vec<Spell>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum WarPreference {
     #[serde(rename = "in")]
@@ -112,7 +112,7 @@ pub struct Troop {
     pub village: Village,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum Village {
     #[serde(rename = "builderBase")]

@@ -107,7 +107,7 @@ impl std::fmt::Display for Key {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Scope {
     #[serde(rename = "clash")]
     #[default]
@@ -121,7 +121,7 @@ pub struct Status {
     detail: Option<String>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct KeyResponse {
     status: Status,
     #[serde(rename = "sessionExpiresInSeconds")]

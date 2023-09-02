@@ -327,16 +327,16 @@ impl Local {
 
     #[must_use]
     pub fn to_i32(&self) -> i32 {
-        num_traits::ToPrimitive::to_i32(self).unwrap()
+        num_traits::ToPrimitive::to_i32(self).unwrap_or_default()
     }
 
     #[must_use]
     pub fn to_u32(&self) -> u32 {
-        num_traits::ToPrimitive::to_u32(self).unwrap()
+        num_traits::ToPrimitive::to_u32(self).unwrap_or_default()
     }
 
     #[must_use]
     pub fn to_usize(&self) -> usize {
-        num_traits::ToPrimitive::to_usize(self).unwrap()
+        num_traits::ToPrimitive::to_usize(self).unwrap_or_default()
     }
 }
