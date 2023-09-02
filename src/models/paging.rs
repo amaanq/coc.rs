@@ -5,7 +5,7 @@ use base64::{
 };
 use serde::{Deserialize, Serialize};
 
-const BASE64_ENGINE: engine::GeneralPurpose =
+pub(crate) const BASE64_ENGINE: engine::GeneralPurpose =
     engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
 #[derive(Debug, Serialize, Deserialize)]

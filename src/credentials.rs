@@ -48,4 +48,9 @@ impl Credentials {
     pub const fn builder() -> CredentialsBuilder {
         CredentialsBuilder::new()
     }
+
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self(Vec::new())
+    }
 }

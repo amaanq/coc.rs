@@ -26,7 +26,7 @@ use crate::{
 #[derive(Clone, Debug, Default)]
 pub struct Client {
     ready: Arc<AtomicBool>,
-    accounts: Arc<DashMap<Credential, dev::APIAccount>>,
+    pub(crate) accounts: Arc<DashMap<Credential, dev::APIAccount>>,
 
     account_index: Arc<AtomicUsize>,
     key_index: Arc<AtomicUsize>,
@@ -39,7 +39,6 @@ pub struct Client {
 
 impl Client {
     const BASE_URL: &'static str = "https://api.clashofclans.com/v1";
-    const IP_URL: &'static str = "https://api.ipify.org";
 
     /// Returns a [`Client`]
     ///
@@ -62,22 +61,20 @@ impl Client {
         };
 
         client.init(credentials).await?;
-        // *client.ready.lock() = true;
         client.ready.store(true, Ordering::Relaxed);
         Ok(client)
     }
 
     /// Called when the client is created to initialize every credential.
     async fn init(&self, credentials: Credentials) -> anyhow::Result<()> {
-        let ip = Self::get_ip().await?;
-        *self.ip_address.lock() = ip.clone();
-
-        let tasks =
-            credentials.0.into_iter().map(|credential| dev::APIAccount::login(credential, &ip));
+        let tasks = credentials.0.into_iter().map(dev::APIAccount::login);
 
         let accounts =
             futures::future::join_all(tasks).await.into_iter().collect::<Result<Vec<_>, _>>()?;
-        for account in accounts {
+
+        *self.ip_address.lock() = accounts[0].1.clone();
+
+        for (account, _) in accounts {
             self.accounts.insert(account.credential.clone(), account);
         }
 
@@ -85,24 +82,19 @@ impl Client {
     }
 
     /// Called when an IP address change is detected
-    async fn reinit(&self) -> anyhow::Result<()> {
+    pub(crate) async fn reinit(&self) -> anyhow::Result<()> {
         #[cfg(feature = "tracing")]
         tracing::debug!("reinitializing client");
 
         self.ready.store(false, Ordering::Relaxed);
 
-        let ip = Self::get_ip().await?;
-        if ip != *self.ip_address.lock() {
-            *self.ip_address.lock() = ip.clone();
+        let accounts = self.accounts.iter().map(|account| account.clone()).collect::<Vec<_>>();
 
-            let accounts = self.accounts.iter().map(|account| account.clone()).collect::<Vec<_>>();
+        for mut account in accounts {
+            account.re_login().await?;
 
-            for mut account in accounts {
-                account.re_login(&ip).await?;
-
-                // update the account in the DashMap
-                self.accounts.insert(account.credential.clone(), account);
-            }
+            // update the account in the DashMap
+            self.accounts.insert(account.credential.clone(), account);
         }
 
         self.ready.store(true, Ordering::Relaxed);
@@ -122,7 +114,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() -> anyhow::Result<()> {
-    ///     let client = Client::default();
+    ///     let client = Client::new(None);
     ///     let credentials = Credentials::builder()
     ///         .add_credential("email", "password")
     ///         .add_credential("email2", "password2")
@@ -140,19 +132,6 @@ impl Client {
         self.init(credentials).await?;
         self.ready.store(true, Ordering::Relaxed);
         Ok(())
-    }
-
-    async fn get_ip() -> Result<String, APIError> {
-        let res = CLIENT.get(Self::IP_URL).send().await;
-        let ip = match res {
-            Ok(res) => res.text().await?,
-            Err(err) => {
-                return Err(APIError::FailedGetIP(format!("coc.rs: Client::get_ip(): `{err}`")))
-            }
-        };
-        #[cfg(feature = "tracing")]
-        tracing::trace!(ip = ip, "Got public IP");
-        Ok(ip)
     }
 
     /// This is purely for diagnostics, it's not used anywhere else.
@@ -677,8 +656,8 @@ impl Client {
 
     fn get_next_key(&self) -> String {
         // increment key_token_index, unless it would be larger than the account's token size (10),
-        // then reset to 0 and increment key_account_index let mut index =
-        // self.index.lock();
+        // then reset to 0 and increment key_account_index
+
         let mut account_index = self.account_index.load(Ordering::Relaxed);
         let mut key_index = self.key_index.load(Ordering::Relaxed);
 

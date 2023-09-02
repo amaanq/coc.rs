@@ -43,7 +43,6 @@ mod tests {
     use anyhow::{Context, Result};
     use async_trait::async_trait;
     use time::Month;
-    use tokio::sync::Mutex;
 
     use crate::{
         api::Client,
@@ -101,6 +100,39 @@ mod tests {
         assert_eq!(credentials.0[0].password(), "pass1");
         assert_eq!(credentials.0[1].email(), "user2");
         assert_eq!(credentials.0[1].password(), "pass2");
+    }
+
+    #[tokio::test]
+    async fn test_new_client() -> anyhow::Result<()> {
+        let credentials = Credentials::builder();
+        let credentials = required_env_var("emails")?
+            .split(',')
+            .map(std::string::ToString::to_string)
+            .zip(required_env_var("passwords")?.split(',').map(std::string::ToString::to_string))
+            .fold(credentials, |credentials, (email, password)| {
+                credentials.add_credential(email, password)
+            })
+            .build();
+
+        Client::new(credentials).await.map(|_| ())
+    }
+
+    #[tokio::test]
+    async fn test_reinit_client() -> anyhow::Result<()> {
+        let credentials = Credentials::builder();
+        let credentials = required_env_var("emails")?
+            .split(',')
+            .map(std::string::ToString::to_string)
+            .zip(required_env_var("passwords")?.split(',').map(std::string::ToString::to_string))
+            .fold(credentials, |credentials, (email, password)| {
+                credentials.add_credential(email, password)
+            })
+            .build();
+
+        let client = Client::new(credentials).await?;
+        client.reinit().await?;
+
+        Ok(())
     }
 
     #[tokio::test]
@@ -516,7 +548,7 @@ mod tests {
 
         // hold the lock for the entire test so it's not dropped and another test picks it up
 
-        let throttle_counter = Arc::new(Mutex::new(0));
+        let throttle_counter = Arc::new(tokio::sync::Mutex::new(0));
 
         let now = Instant::now();
 

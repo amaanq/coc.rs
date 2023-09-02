@@ -1,5 +1,6 @@
-use crate::credentials::Credential;
+use crate::{credentials::Credential, paging::BASE64_ENGINE};
 use anyhow::Context;
+use base64::Engine;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +32,7 @@ impl Keys {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct LoginResponse {
     pub status: Status,
     #[serde(rename = "sessionExpiresInSeconds")]
@@ -39,12 +40,12 @@ pub struct LoginResponse {
     pub auth: Auth,
     pub developer: Developer,
     #[serde(rename = "temporaryAPIToken")]
-    pub temporary_api_token: String,
+    pub temporary_api_token: TemporaryAPIToken,
     #[serde(rename = "swaggerUrl")]
     pub swagger_url: String,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct Auth {
     pub uid: String,
     pub token: String,
@@ -52,7 +53,7 @@ pub struct Auth {
     pub ip: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct Developer {
     pub id: String,
     pub name: String,
@@ -67,6 +68,30 @@ pub struct Developer {
     pub prev_login_ip: String,
     #[serde(rename = "prevLoginUa")]
     pub prev_login_ua: String,
+}
+
+// {"iss":"supercell","aud":"supercell:gameapi","jti":"6b59b631-e755-6c1f-b3be-a919949ee139","iat":1693633017,"exp":1693636617,"sub":"developer/54161cdf-f667-b806-56b7-4769c3e49c53","scopes":["clash"],"limits":[{"tier":"developer/bronze","type":"throttling"},{"cidrs":["108.30.223.213/32"],"typ
+// e":"client"},{"origins":["developer.clashofclans.com"],"type":"cors"}]}
+
+#[derive(Clone, Debug, Default)]
+pub struct TemporaryAPIToken {
+    pub iss: String,
+    pub aud: String,
+    pub jti: String,
+    pub iat: i64,
+    pub exp: i64,
+    pub sub: String,
+    pub scopes: Vec<Scope>,
+    pub limits: Vec<Limit>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Limit {
+    pub tier: Option<String>,
+    pub cidrs: Option<Vec<String>>,
+    pub origins: Option<Vec<String>>,
+    #[serde(rename = "type")]
+    pub type_: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, Eq)]
@@ -121,11 +146,12 @@ pub struct Status {
     detail: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct KeyResponse {
-    status: Status,
+    #[serde(rename = "status")]
+    _status: Status,
     #[serde(rename = "sessionExpiresInSeconds")]
-    session_expires_in_seconds: i64,
+    _session_expires_in_seconds: i64,
     key: Option<Key>,
 }
 
@@ -142,7 +168,7 @@ impl APIAccount {
     const KEY_REVOKE_ENDPOINT: &'static str = "/api/apikey/revoke";
     const LOGIN_ENDPOINT: &'static str = "/api/login";
 
-    pub async fn login(credential: Credential, ip: &str) -> anyhow::Result<Self> {
+    pub async fn login(credential: Credential) -> anyhow::Result<(Self, String)> {
         let client = reqwest::Client::builder().cookie_store(true).build().unwrap();
         let login_response = client
             .post(format!("{}{}", Self::BASE_DEV_URL, Self::LOGIN_ENDPOINT))
@@ -156,6 +182,8 @@ impl APIAccount {
             .context(format!("login response failed to parse for {}", credential.email()))?;
 
         let mut account = Self { credential, response: login_response, keys: Keys::default() };
+
+        let ip = account.response.temporary_api_token.limits[1].cidrs.as_ref().unwrap()[0].clone();
 
         #[cfg(feature = "tracing")]
         tracing::debug!("fetching {}'s keys", account.credential.email());
@@ -174,7 +202,7 @@ impl APIAccount {
 
             for _ in 0..(10 - account.keys.len().min(10)) {
                 account
-                    .create_key(&client, ip)
+                    .create_key(&client, &ip)
                     .await
                     .context(format!("failed to create key for {}", account.credential.email()))?;
             }
@@ -183,7 +211,7 @@ impl APIAccount {
         #[cfg(feature = "tracing")]
         tracing::debug!("updating {}'s keys", account.credential.email());
         account
-            .update_all_keys(&client, ip)
+            .update_all_keys(&client, &ip)
             .await
             .context(format!("failed to update all keys for {}", account.credential.email()))?;
 
@@ -194,10 +222,10 @@ impl APIAccount {
             .await
             .context(format!("failed to get keys for {}", account.credential.email()))?;
 
-        Ok(account)
+        Ok((account, ip))
     }
 
-    pub async fn re_login(&mut self, ip: &str) -> anyhow::Result<()> {
+    pub async fn re_login(&mut self) -> anyhow::Result<()> {
         let client = reqwest::Client::builder().cookie_store(true).build().unwrap();
         #[cfg(feature = "tracing")]
         tracing::debug!("re-login for {}", self.credential.email());
@@ -214,6 +242,8 @@ impl APIAccount {
 
         self.response = login_response;
 
+        let ip = self.response.temporary_api_token.limits[1].cidrs.as_ref().unwrap()[0].clone();
+
         #[cfg(feature = "tracing")]
         tracing::debug!("fetching {}'s keys", self.credential.email());
         self.get_keys(&client).await?;
@@ -226,13 +256,13 @@ impl APIAccount {
                 self.credential.email()
             );
             for _ in 0..(10 - self.keys.len().min(10)) {
-                self.create_key(&client, ip).await?;
+                self.create_key(&client, &ip).await?;
             }
         }
 
         #[cfg(feature = "tracing")]
         tracing::debug!("updating {}'s keys", self.credential.email());
-        self.update_all_keys(&client, ip).await?;
+        self.update_all_keys(&client, &ip).await?;
 
         #[cfg(feature = "tracing")]
         tracing::debug!("fetching {}'s keys (post update)", self.credential.email());
@@ -341,5 +371,48 @@ impl APIAccount {
             .context("revoke_key response failed to parse")?;
 
         Ok(key)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for TemporaryAPIToken {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct Base64Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Base64Visitor {
+            type Value = TemporaryAPIToken;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("base64 encoded JSON")
+            }
+
+            fn visit_str<E: serde::de::Error>(self, value: &str) -> Result<Self::Value, E> {
+                // Decode base64
+                let value = value.split('.').nth(1).ok_or_else(|| {
+                    E::custom("failed to get the second part of the base64 encoded string")
+                })?;
+                let decoded = BASE64_ENGINE
+                    .decode(value)
+                    .map_err(|err| E::custom(format!("Base64 decode failed: {err}")))?;
+
+                // Create generic json struct to index
+                let token_inner = serde_json::from_slice::<serde_json::Value>(&decoded)
+                    .map_err(|err| E::custom(format!("JSON deserialization failed: {err}")))?;
+
+                let token = TemporaryAPIToken {
+                    iss: token_inner["iss"].as_str().unwrap().to_string(),
+                    aud: token_inner["aud"].as_str().unwrap().to_string(),
+                    jti: token_inner["jti"].as_str().unwrap().to_string(),
+                    iat: token_inner["iat"].as_i64().unwrap(),
+                    exp: token_inner["exp"].as_i64().unwrap(),
+                    sub: token_inner["sub"].as_str().unwrap().to_string(),
+                    scopes: serde_json::from_value(token_inner["scopes"].clone()).unwrap(),
+                    limits: serde_json::from_value(token_inner["limits"].clone()).unwrap(),
+                };
+
+                Ok(token)
+            }
+        }
+
+        deserializer.deserialize_str(Base64Visitor)
     }
 }
