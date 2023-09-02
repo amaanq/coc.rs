@@ -9,7 +9,6 @@ jobs:
   push:
     name: Release Packaging
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v3

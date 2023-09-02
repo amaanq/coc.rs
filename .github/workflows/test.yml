@@ -16,7 +16,7 @@ jobs:
       RUSTDOCFLAGS: -Cpanic=abort
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -35,25 +35,17 @@ jobs:
             ~/.cargo/registry/cache
             target
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}
-      - name: Generate test result and coverage report
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
         env:
           emails: ${{ secrets.EMAIL }}
           passwords: ${{ secrets.PASSWORD }}
-        run: |
-          cargo install cargo2junit grcov;
-          emails=$emails passwords=$passwords cargo test $CARGO_OPTIONS -- -Z unstable-options --format json | cargo2junit > results.xml;
-          zip -0 ccov.zip `find . \( -name "$PROJECT_NAME_UNDERSCORE*.gc*" \) -print`;
-          grcov ccov.zip -s . -t lcov --llvm --ignore-not-existing --ignore "/*" --ignore "tests/*" -o lcov.info;
-      - name: Upload test results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+        run: cargo llvm-cov --all-features --workspace --codecov --output-path codecov.json -- --test-threads 1
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
         with:
-          check_name: Test Results
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files: results.xml
-      - name: Upload to CodeCov
-        uses: codecov/codecov-action@v1
-        with:
-          # required for private repositories:
-          # token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: codecov.json
           fail_ci_if_error: true
